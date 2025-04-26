@@ -1,0 +1,136 @@
+{
+  "missions": [
+    {
+      "id": 101,
+      "title": "SDG Tutorial: Education Access Data",
+      "description": "The UN Education Division is analyzing school enrollment data across different regions. They need information about specific countries and regions to identify areas with the lowest primary school enrollment rates.<br><br><strong>Try this:</strong><br><code class='pixel-inline-code'>SELECT * FROM education_metrics;</code>",
+      "hint": "Use <code>SELECT *</code> to get all columns from <code>education_metrics</code>.",
+      "difficulty": 1,
+      "points": 40,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Great! You've identified countries with the lowest primary school enrollment rates.",
+      "database": "sdg_education",
+      "validationCriteria": {
+        "expectedRows": 7,
+        "mustContainColumns": ["country_name", "region", "primary_enrollment_rate", "secondary_enrollment_rate"]
+      }
+    },
+    {
+      "id": 102,
+      "title": "SDG Tutorial: Education Access Filtering",
+      "description": "The UN Education Division needs to focus their resources on the most critical areas. Find countries with <strong>primary enrollment rates below 50%</strong>, ordered from lowest to highest.<br><br><strong>Hint:</strong> Use WHERE to filter and ORDER BY to sort.",
+      "hint": "Try this query:<br><code>SELECT country_name, region, primary_enrollment_rate<br>FROM education_metrics<br>WHERE primary_enrollment_rate < 50<br>ORDER BY primary_enrollment_rate ASC;</code>",
+      "difficulty": 2,
+      "points": 60,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Excellent work! These countries need immediate attention to improve education access.",
+      "database": "sdg_education",
+      "validationCriteria": {
+        "filters": [
+          {"column": "primary_enrollment_rate", "operator": "<", "value": 50}
+        ],
+        "ordered": {
+          "column": "primary_enrollment_rate",
+          "direction": "asc"
+        },
+        "mustContainColumns": ["country_name", "primary_enrollment_rate"]
+      }
+    },
+    {
+      "id": 103,
+      "title": "SDG Tutorial: Education Funding Analysis",
+      "description": "The Global Education Foundation wants to know which countries get the most education results relative to their spending. Calculate a literacy per spending point metric.<br><br><strong>Challenge:</strong> Divide literacy rates by education spending percentages.",
+      "hint": "You can perform calculations in SELECT statements:<br><code>SELECT country_name, education_spending_percent_gdp, literacy_rate,<br>ROUND(literacy_rate / education_spending_percent_gdp, 2) as literacy_per_spending_point<br>FROM education_funding<br>ORDER BY literacy_per_spending_point DESC;</code>",
+      "difficulty": 3,
+      "points": 80,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Great analysis! You've identified which countries achieve strong literacy outcomes relative to their education spending.",
+      "database": "sdg_education",
+      "validationCriteria": {
+        "expectedRows": 7,
+        "mustContainColumns": ["country_name", "literacy_rate", "education_spending_percent_gdp"],
+        "ordered": {
+          "column": "literacy_per_spending_point",
+          "direction": "desc"
+        }
+      }
+    },
+    {
+      "id": 104,
+      "title": "SDG Tutorial: Gender Equality in Education",
+      "description": "The Gender Equality in Education Initiative is analyzing the gap between male and female enrollment rates. Identify countries with the largest gender gaps favoring males in primary education.<br><br><strong>Challenge:</strong> Calculate the difference between male and female enrollment rates.",
+      "hint": "Use subtraction to find gender gaps:<br><code>SELECT country_name, region, male_primary_enrollment, female_primary_enrollment,<br>male_primary_enrollment - female_primary_enrollment as primary_gender_gap<br>FROM gender_education_metrics<br>WHERE male_primary_enrollment > female_primary_enrollment<br>ORDER BY primary_gender_gap DESC;</code>",
+      "difficulty": 3,
+      "points": 80,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Excellent analysis! You've identified countries with significant gender disparities in education access.",
+      "database": "sdg_education",
+      "validationCriteria": {
+        "mustContainColumns": ["country_name", "male_primary_enrollment", "female_primary_enrollment"],
+        "ordered": {
+          "column": "primary_gender_gap",
+          "direction": "desc"
+        }
+      }
+    },
+    {
+      "id": 105,
+      "title": "SDG Tutorial: Technology and Education",
+      "description": "The Future Learning Foundation is studying the correlation between technology access and educational outcomes. Join the <strong>country_tech_access</strong> and <strong>education_outcomes</strong> tables to analyze this relationship.<br><br><strong>Challenge:</strong> Use JOIN to combine data from two tables.",
+      "hint": "Join tables on country_id:<br><code>SELECT<br>  cta.country_name, cta.region, cta.internet_access_schools_percent,<br>  cta.computers_per_student, eo.literacy_rate, eo.primary_completion_rate<br>FROM country_tech_access cta<br>JOIN education_outcomes eo ON cta.country_id = eo.country_id<br>ORDER BY cta.internet_access_schools_percent DESC;</code>",
+      "difficulty": 4,
+      "points": 100,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Excellent work! You've successfully joined tables to analyze the relationship between technology access and educational outcomes.",
+      "database": "sdg_education",
+      "validationCriteria": {
+        "keywords": ["join"],
+        "mustContainColumns": ["country_name", "internet_access_schools_percent", "literacy_rate"]
+      }
+    },
+    {
+      "id": 106,
+      "title": "SDG Advanced: Regional Education Analysis",
+      "description": "The UN Education Division wants to understand regional patterns in education metrics. Analyze the <strong>regional_metrics</strong> table to identify regions with both low primary and secondary enrollment rates.<br><br><strong>Challenge:</strong> Create a comprehensive regional analysis.",
+      "hint": "Analyze regional enrollment patterns:<br><code>SELECT region_name, primary_enrollment_rate, secondary_enrollment_rate, post_secondary_enrollment_rate<br>FROM regional_metrics<br>WHERE primary_enrollment_rate < 90 OR secondary_enrollment_rate < 70<br>ORDER BY secondary_enrollment_rate ASC;</code>",
+      "difficulty": 4,
+      "points": 100,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Great regional analysis! You've identified regions that need significant educational support.",
+      "database": "sdg_education",
+      "validationCriteria": {
+        "mustContainColumns": ["region_name", "primary_enrollment_rate", "secondary_enrollment_rate"],
+        "ordered": {
+          "column": "secondary_enrollment_rate",
+          "direction": "asc"
+        }
+      }
+    },
+    {
+      "id": 107,
+      "title": "SDG Advanced: Education Intervention Analysis",
+      "description": "The SDG Education Task Force is evaluating different intervention programs. Find which types of educational interventions have been most effective by analyzing the <strong>intervention_programs</strong> and <strong>intervention_results</strong> tables.<br><br><strong>Challenge:</strong> Join tables and calculate effectiveness by intervention type.",
+      "hint": "Analyze intervention effectiveness:<br><code>SELECT<br>  ip.intervention_type,<br>  COUNT(*) as program_count,<br>  ROUND(AVG(ir.completion_percent_change), 1) as avg_completion_increase<br>FROM intervention_programs ip<br>JOIN intervention_results ir ON ip.program_id = ir.program_id<br>GROUP BY ip.intervention_type<br>ORDER BY avg_completion_increase DESC;</code>",
+      "difficulty": 5,
+      "points": 120,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Excellent analysis! You've identified which education interventions have been most effective at improving completion rates.",
+      "database": "sdg_education",
+      "validationCriteria": {
+        "keywords": ["join", "group by"],
+        "mustContainColumns": ["intervention_type", "avg_completion_increase"],
+        "ordered": {
+          "column": "avg_completion_increase", 
+          "direction": "desc"
+        }
+      }
+    }
+  ]
+}
