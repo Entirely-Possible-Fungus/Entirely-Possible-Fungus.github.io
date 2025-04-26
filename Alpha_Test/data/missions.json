@@ -1,0 +1,106 @@
+{
+  "missions": [
+    {
+      "id": 1,
+      "title": "Mission: First Contact",
+      "description": "The Galactic Council needs information about the planets in the Proxima system.\n\n<strong>Objective:</strong> Retrieve a list of all planets, ordered by their distance from the sun.",
+      "hint": "Use SELECT to retrieve data, and ORDER BY to arrange the results.<br>Example: SELECT * FROM table_name ORDER BY column_name;",
+      "difficulty": 1,
+      "points": 100,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Excellent work, SQL Knight! You've successfully retrieved the planetary data for the Galactic Council.",
+      "database": "proxima",
+      "validationCriteria": {
+        "expectedRows": 5,
+        "ordered": true,
+        "orderColumn": "distance_from_sun",
+        "orderDirection": "asc",
+        "firstRowCheck": {"column": "name", "value": "Volcanus"},
+        "lastRowCheck": {"column": "name", "value": "Novaria"}
+      }
+    },
+    {
+      "id": 2,
+      "title": "Mission: Resource Discovery",
+      "description": "The Galactic Trading Federation needs to know which resources are most valuable for interstellar commerce.\n\n<strong>Objective:</strong> Find all resources with a market value greater than 5000, ordered by value (highest first).",
+      "hint": "Use WHERE to filter results and ORDER BY with DESC to sort in descending order.<br>Example: SELECT * FROM table_name WHERE column_name > value ORDER BY column_name DESC;",
+      "difficulty": 2,
+      "points": 150,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Outstanding work! The Galactic Trading Federation can now prioritize the most valuable resources for their commercial routes.",
+      "database": "proxima",
+      "validationCriteria": {
+        "expectedRows": 4,
+        "filters": [
+          {"column": "market_value", "operator": ">", "value": 5000}
+        ],
+        "ordered": true,
+        "orderColumn": "market_value",
+        "orderDirection": "desc",
+        "firstRowCheck": {"column": "name", "value": "Quantium"}
+      }
+    },
+    {
+      "id": 3,
+      "title": "Mission: Population Census",
+      "description": "The Interstellar Health Organization needs to identify which alien species have the largest populations to prioritize medical aid.\n\n<strong>Objective:</strong> Find all species with a population greater than 3 million, ordered by intelligence level.",
+      "hint": "Combine WHERE and ORDER BY to filter and sort the results.<br>Example: SELECT * FROM table_name WHERE column_name > value ORDER BY other_column;",
+      "difficulty": 2,
+      "points": 200,
+      "timeLimit": 300,
+      "timerEnabled": false,
+      "successMessage": "Well done! The Interstellar Health Organization can now allocate medical resources effectively based on population and intelligence levels.",
+      "database": "proxima",
+      "validationCriteria": {
+        "expectedRows": 3,
+        "filters": [
+          {"column": "population", "operator": ">", "value": 3000000}
+        ],
+        "ordered": true,
+        "orderColumn": "intelligence_level",
+        "orderDirection": "asc"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Mission: Planetary Relations",
+      "description": "Scientists need to understand the relationship between planets and their native species.\n\n<strong>Objective:</strong> Find all planets and their corresponding species, including planets without any species.",
+      "hint": "Use JOIN operations to combine data from multiple tables.<br>Example: SELECT * FROM table1 LEFT JOIN table2 ON table1.id = table2.foreign_id;",
+      "difficulty": 3,
+      "points": 250,
+      "timeLimit": 420,
+      "timerEnabled": false,
+      "successMessage": "Excellent analysis! The scientists now have a complete picture of planetary habitation patterns.",
+      "database": "proxima",
+      "validationCriteria": {
+        "expectedRows": 5,
+        "joinTables": ["planets", "species"],
+        "joinType": "left",
+        "joinColumns": {"planets": "id", "species": "home_planet_id"}
+      }
+    },
+    {
+      "id": 5,
+      "title": "Mission: Resource Analysis",
+      "description": "The Galactic Trading Federation needs a summary of resource value by planet.\n\n<strong>Objective:</strong> Calculate the total market value of resources for each planet and order by total value (highest first).",
+      "hint": "Use GROUP BY with aggregate functions to summarize data.<br>Example: SELECT column1, SUM(column2) FROM table GROUP BY column1;",
+      "difficulty": 4,
+      "points": 300,
+      "timeLimit": 480,
+      "timerEnabled": false,
+      "successMessage": "Outstanding work! The Federation now has clear insight into the resource value distribution across planets.",
+      "database": "proxima",
+      "validationCriteria": {
+        "aggregation": true,
+        "groupBy": ["planet_id"],
+        "aggregateFunction": "SUM",
+        "aggregateColumn": "market_value",
+        "ordered": true,
+        "orderColumn": "total_market_value",
+        "orderDirection": "desc"
+      }
+    }
+  ]
+}
