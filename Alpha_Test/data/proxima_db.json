@@ -1,0 +1,25 @@
+{
+  "planets": [
+    { "id": 1, "name": "Proxima Prime", "size": 12742, "type": "Terrestrial", "atmosphere": "Oxygen-rich", "distance_from_sun": 150 },
+    { "id": 2, "name": "Novaria", "size": 120536, "type": "Gas Giant", "atmosphere": "Hydrogen-dominant", "distance_from_sun": 778 },
+    { "id": 3, "name": "Ferron", "size": 6792, "type": "Rocky", "atmosphere": "Thin CO2", "distance_from_sun": 228 },
+    { "id": 4, "name": "Aquatica", "size": 10531, "type": "Ocean", "atmosphere": "Nitrogen-Oxygen", "distance_from_sun": 385 },
+    { "id": 5, "name": "Volcanus", "size": 4879, "type": "Volcanic", "atmosphere": "Sulfuric", "distance_from_sun": 58 }
+  ],
+  "species": [
+    { "id": 1, "name": "Proxians", "home_planet_id": 1, "population": 8200000, "intelligence_level": 95 },
+    { "id": 2, "name": "Novarites", "home_planet_id": 2, "population": 3500000, "intelligence_level": 88 },
+    { "id": 3, "name": "Ferrites", "home_planet_id": 3, "population": 1200000, "intelligence_level": 75 },
+    { "id": 4, "name": "Aquarians", "home_planet_id": 4, "population": 5100000, "intelligence_level": 92 },
+    { "id": 5, "name": "Volcanoids", "home_planet_id": 5, "population": 980000, "intelligence_level": 79 }
+  ],
+  "resources": [
+    { "id": 1, "name": "Quantium", "planet_id": 1, "rarity": 9, "market_value": 15000 },
+    { "id": 2, "name": "Helium-3", "planet_id": 2, "rarity": 6, "market_value": 8000 },
+    { "id": 3, "name": "Ferroxide", "planet_id": 3, "rarity": 4, "market_value": 3500 },
+    { "id": 4, "name": "Aqua Crystal", "planet_id": 4, "rarity": 8, "market_value": 12000 },
+    { "id": 5, "name": "Magma Stone", "planet_id": 5, "rarity": 7, "market_value": 7500 },
+    { "id": 6, "name": "Proxima Silk", "planet_id": 1, "rarity": 5, "market_value": 5000 },
+    { "id": 7, "name": "Nova Gas", "planet_id": 2, "rarity": 3, "market_value": 2000 }
+  ]
+}
