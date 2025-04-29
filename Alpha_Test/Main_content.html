@@ -7,8 +7,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+    <!-- OpenLayers Map Library -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <!-- Google Fonts - Share Tech Mono (for map styling) -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
+    
+    <!-- Audio element for button click sound with absolute path -->
+    <audio id="click-sound" preload="auto"></audio>
 
+    <!-- Sound debug indicator style -->
     <style>
         /* --- Base & Pixel Font --- */
         body { background-color: #1a1a1a; color: #e0e0e0; font-family: 'Silkscreen', sans-serif; font-size: 15px; line-height: 1.6; margin: 0; padding: 0; font-smooth: never; -webkit-font-smoothing: none; image-rendering: pixelated; image-rendering: crisp-edges; overflow: hidden; }
@@ -112,6 +121,7 @@
             left: 0;
             width: 100%;
             height: 100%;
+            animation: scanline-animation 1s infinite; /* Added animation for scanlines */
             pointer-events: none;
             z-index: 9998;
             background: linear-gradient(
@@ -234,7 +244,8 @@
             height: 100%;
             pointer-events: none;
             z-index: 9993;
-            animation: flicker 10s infinite;
+            box-shadow: inset 0 0 20px rgba(184, 47, 47, 0.5);
+            animation: flicker 100s infinite;
             background: transparent;
         }
         
@@ -254,7 +265,7 @@
             z-index: 9992;
             background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAF7klEQVR4nO2dW29cRRCFz57EjmMnEAgKiiAIQbyheIKH8P//B0RC4iIhgQSJC3EgJiFx7L3DrF1dXV0zZ9buck6VRqv17B5P1+nuqq6uLrsAJpPJYh/ioKqqINjrj4qeh8GruvfRsGp6MQSP6t5H1r9Z/gadPACP6HELfAM/88Jt0HWhj8P2nq5not8K87RgU3W5jjZU8OpC9d/DVBoXnWmQnYCb+IG+B+5CPNLj++AE3ATPwR3wLrgFtsEtibkBroMNsAY2JWZd/9ZBk8QNiVmXuDWwJjHruk8fa9JWraMfNeZxsUMSblkonoN9sAt2wDNwAP4CT8FT8AT8AfZg7/sV9v4/Se/71NqnrZ9dafMpbPvU9gn6+UzanqGf9PRcQz8toa8a+joTnYMp7HOkn3Pg+AfKwcpF9GvB12D3vYvWuNaaxrbWnGpbco6srYK8kYs5ImantWl6PlsvgvQ4Tn09E5j0rqAvIRrT4zqE+NIjBprxNcPXpmcNc+9j8KfHywcxZsA3OIcQCookSE+i+8N4RAc3MP89XNao1ppfQ6+3GruE5DAPcogkeFjlZl0UsT2PU0aKGLW+H8a9Ed4eL4pPGiLXSGDOYXwSxCKSUFpXJGLk+rpe41rzBO9hYS6WIR4JhRAZezxBMib1GukRQ5oPdMghTAuLXCzUdUVkVCTislzPJCLDfO9J8JIwQrlYZv/GQiRZkiDvMhliXENGza1q9za5WDh3zV24xXwLFN0dlwWHSEKDeRJSuwbX5Gal+UJqXVGDvMrFImbUWE+fK/tcLDqGGZl72hAI/SQkiotmb1xDRu0xSRiVi7U9nN14LpZYzA+eQ5rdzpIkJEYJ866CXKtuPSTUsrbeObRzkynW3Mxde9SYIPePfZKQwgJxi3urTdX7isl3WeYuHK5DzpmmWHxu1hd79+Aq5WLM60qAuVgk9UeYc3mokGMWpKgYNOHDyyAXC+HnlqflYoybW1TvMkXhlctDYiNJCLGJZXgbmf2tmouVlBGF3Ky7rEhZu1guFrLr91UNk9C4NhGLBeViK+m6LIksJrmsZd0gHsXUemmRmo9IEkJsYhk+xs+NfZNhfHdHX0TFsC+2OBdLwl0WiQOKWDKKG/IK95BhZKFhyhbv2VoXoFxMuCzENpvfGe0PGCZXjeNbsyS8TS4WwrOGWWS2tW9DZCLzZ8Ob1jwFCW9KLubeqZAESUKMXrSNPK+Jmaw/FyPJvWsuFib3g9rqelvRxchHfGTO0UFd1xDmYuTLhjEXe9XA+xaTGAsAr0nCUHKxGWJk5J0sJmGNEnLh5eZiJdUXDeNmqe9lfQ365tLcMGVLwloXdF0WJSGCXEauy2q3SfKwnHWB8rIwf5OSizHrkmUDfJEKSo9UIS2pbCEJJqZsaV1guZi0Lr+sodvxVl9xrLyB3dLbby+QO7lYDZYONSgl4TI9huVlPkoDOliXBM/EepxWUV0SLDql7JB9ymrcOmlRPMVjH7d8vH2OGFN2a1u3hIEXSYglIZmjHRklBtbKrCuAECTrcu9UmITBtfxGOU2SLUmMNwEMS8AhNw7vwn4OFXpZQ8vFGJfVaYqBNUnwcjFvTV6OhIHnYuf+dB3ufas+uRiTimVJgM2DekmIrTPTunzt8m61n1e4xyydVnXLvigyasquEjCZP1iXNYwIkYMZDKzcgrAvoZdu1isbXl4Ga9QrggC99Ug5EnoozMVcv5WEKAhmXdnCMInVXlcpFmLlJKyqGw0uFQJYhRukxTX8M7WLgSRhBH1J6IdwN1opCQXt+EloxuBOHVCIvGaYIauShCFs0V0MxTbe3eRpyMWm6Gfe3vtmzRSScA9jEkYjIRcXUdlcuXDRrLoOQUKAKVwSLoaE5rXBj+Z1yCThMkjwxixRpr70yJEw7F0eWBg8CUuSkGDhoo/mdfkXqC4QCTW6v2qJvyRcjN3/LoSSwCCmUriGnB4luVht3CGrB0fCRIsVS0IkxmVqwhQk1C/2ysU63z7HElwmCS4JcULW5QKS0P5glXiSUERCsNRIQlOVrVjmzUk1T8JQpSnRRz6n4Zr4n6f54G/S9ccAHqRvgQAAAABJRU5ErkJggg==');
             background-size: 100px 100px;
-            animation: noise 0.2s infinite;
+            animation: noise 10.2s infinite;
             opacity: 0.03;
         }
 
@@ -871,9 +882,154 @@
         .db-header-button:hover {
             box-shadow: 0 0 10px rgba(39, 215, 251, 0.5);
         }
+
+        /* Map element positioning */
+        #interactive-map-area {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* New top controls bar */
+        .map-top-controls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background-color: rgba(20, 20, 20, 0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            border-bottom: 2px solid #555;
+            z-index: 1000;
+        }
+
+        .view-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .view-controls h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #fff;
+            text-align: left;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-group button {
+            padding: 5px 8px;
+            font-size: 12px;
+        }
+
+        .btn-group button.active {
+            background-color: #33ffee;
+            box-shadow: none;
+            transform: translate(1px, 1px);
+        }
+
+        /* Moved info box to top */
+        .top-info-box {
+            max-width: 250px;
+            background-color: rgba(30, 30, 30, 0.7);
+            padding: 10px;
+            border: 2px solid #555;
+            border-radius: 4px;
+        }
+
+        #info-box h2 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            color: #00ffcc;
+            text-align: center;
+        }
+
+        #info-content {
+            font-size: 13px;
+        }
+
+        #info-content p {
+            margin: 3px 0;
+        }
+
+        #info-content strong {
+            color: #ccc;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background-color: rgba(30, 30, 30, 0.8);
+            padding: 10px;
+            border: 2px solid #555;
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 4px;
+        }
+
+        .legend h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .color-box {
+            width: 15px;
+            height: 15px;
+            margin-right: 8px;
+            border: 1px solid #555;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(30, 30, 30, 0.9);
+            padding: 15px 25px;
+            border: 2px solid #555;
+            z-index: 9999;
+            font-size: 16px;
+            color: #fff;
+            border-radius: 4px;
+            display: none;
+        }
+
+        #loading.error {
+            background-color: rgba(150, 30, 30, 0.9);
+            border-color: #ff6b6b;
+        }
+
+        /* Close button styling */
+        #close-map-btn {
+            padding: 5px 10px;
+        }
     </style>
 </head>
 <body>
+    
     <!-- CRT Monitor Effects Overlay -->
     <div class="crt-overlay"></div>
     <div class="scanlines"></div>
@@ -921,6 +1077,48 @@
                      <button id="complete-mission-btn" class="pixel-btn">Complete Mission</button>
                 </div>
                 <div id="error-message" class="error"></div> <!-- General JS errors -->
+
+                <!-- Interactive Map Container -->
+                <div id="interactive-map-area" style="display: none; position: relative; height: 100%; width: 100%; flex-grow: 1; background-color: #111; border: 3px solid var(--border-color, #555);">
+                    <!-- Map Controls Top Bar -->
+                    <div class="map-top-controls">
+                        <div class="view-controls">
+                            <h3>VIEW MODE</h3>
+                            <div class="btn-group">
+                                <button id="countries-view" class="pixel-btn active">Countries</button>
+                                <button id="regions-view" class="pixel-btn">Regions</button>
+                                <button id="continents-view" class="pixel-btn">Continents</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Info Box moved to top -->
+                        <div id="info-box" class="top-info-box">
+                            <h2 id="info-title">Country Information</h2>
+                            <div id="info-content">
+                                <p><strong>Name:</strong> <span id="info-name">N/A</span></p>
+                                <p><strong>Code:</strong> <span id="info-code">N/A</span></p>
+                                <p><strong>Region:</strong> <span id="info-region">N/A</span></p>
+                                <p><strong>Continent:</strong> <span id="info-continent">N/A</span></p>
+                                <p><strong>Population:</strong> <span id="info-population">N/A</span></p>
+                            </div>
+                        </div>
+                        
+                        <!-- Close Button moved to top bar -->
+                        <button id="close-map-btn" class="pixel-btn">Close Map</button>
+                    </div>
+                    
+                    <!-- Map Element (now takes full space) -->
+                    <div id="map" style="width: 100%; height: calc(100% - 70px); margin-top: 70px;"></div>
+                    
+                    <!-- Legend (positioned at bottom left) -->
+                    <div class="legend">
+                        <h3>Legend</h3>
+                        <div id="legend-content"></div>
+                    </div>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="loading">Loading map data...</div>
+                </div>
 
              </main>
 
@@ -1091,10 +1289,881 @@
                     }, 100);
                 }
             }, 500);
-        });
-    </script>
+            
+            // Add click sound to all mouse clicks
+            const clickSound = document.getElementById('click-sound');
+            
+            // Try multiple audio sources until one works
+            const possiblePaths = [
+                "../mixkit-old-camera-shutter-click-1137.ogg", // Parent directory
+                "/mixkit-old-camera-shutter-click-1137.ogg", // Root
+                "./mixkit-old-camera-shutter-click-1137.ogg", // Same directory
+                "../1256_interface-sound-01.ogg" // Alternate sound file
+            ];
+            
+            // Function to attempt loading audio with each path
+            function tryLoadAudio() {
+                let currentPathIndex = 0;
+                
+                function tryNextPath() {
+                    if (currentPathIndex >= possiblePaths.length) {
+                        console.error("All audio paths failed to load");
+                        return;
+                    }
+                    
+                    const path = possiblePaths[currentPathIndex];
+                    console.log(`Attempting to load audio from: ${path}`);
+                    clickSound.src = path;
+                    
+                    // Force load and check error
+                    clickSound.load();
+                    
+                    clickSound.onerror = () => {
+                        console.error(`Failed to load audio from: ${path}`);
+                        currentPathIndex++;
+                        tryNextPath(); // Try next path
+                    };
+                    
+                    clickSound.onloadeddata = () => {
+                        console.log(`Successfully loaded audio from: ${path}`);
+                    };
+                }
+                
+                tryNextPath();
+            }
+            
+            // Start trying to load audio
+            tryLoadAudio();
+            
+            // Check if audio element exists
+            console.log("Audio element found:", clickSound !== null);
+            
+            // Define typewriter sound paths
+            const typewriterSoundPaths = [
+                "../mixkit-typewriter-soft-click-1125_r.wav", // Parent directory
+                "/mixkit-typewriter-soft-click-1125_r.wav", // Root
+                "./mixkit-typewriter-soft-click-1125_r.wav" // Same directory
+            ];
+            
+            // Listen for mousedown events (press)
+            document.addEventListener('mousedown', (e) => {
+                // Create a new audio element for each press to allow overlapping sounds
+                const tempSound = new Audio(clickSound?.src || possiblePaths[0]);
+                // Skip the initial silence by starting 0.103 seconds into the file
+                tempSound.currentTime = 0.103;
+                tempSound.volume = 0.25;
+                
+                tempSound.play()
+                    .catch(err => {
+                        console.error("Mousedown audio play failed:", err);
+                    });
+                
+                // Set the element to null once it's done playing to help with garbage collection
+                tempSound.onended = () => {
+                    tempSound.src = '';
+                };
+            });
+            
+            // Listen for mouseup events (release)
+            document.addEventListener('mouseup', (e) => {
+                // Create a new audio element for the typewriter sound
+                const typewriterSound = new Audio(typewriterSoundPaths[0]);
+                typewriterSound.volume = 0.25;
+                
+                typewriterSound.play()
+                    .catch(err => {
+                        console.error("Mouseup audio play failed:", err);
+                    });
+                
+                // Set the element to null once it's done playing
+                typewriterSound.onended = () => {
+                    typewriterSound.src = '';
+                };
+            });
 
-    <script>
+            // ==================================================
+            // MAP INTEGRATION MODULE
+            // ==================================================
+            // Make MapIntegration globally accessible
+            window.MapIntegration = (() => {
+                // --- Map State ---
+                let worldMap = null;
+                let countriesLayer = null;
+                let countrySource = null;
+                let currentView = 'countries'; // Default map view
+                let selectInteraction = null;
+                let isMapInitialized = false;
+                let isMapVisible = false;
+                let debugMode = false; // Disable debug by default
+
+                // --- Map Config ---
+                const GEOJSON_FILE_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
+                const GEOJSON_LINK_PROPERTY = 'ISO_A3';
+                const GEOJSON_NAME_PROPERTY = 'ADMIN';
+                const GEOJSON_REGION_PROPERTY = 'REGION_WB';
+                const GEOJSON_CONTINENT_PROPERTY = 'CONTINENT';
+                const GEOJSON_POPULATION_PROPERTY = 'POP_EST';
+
+                // --- Map Styling ---
+                const continentColors = {
+                    'North America': '#8FBC8F', // Dark Sea Green
+                    'South America': '#6B8E23', // Olive Drab
+                    'Europe': '#4682B4',        // Steel Blue
+                    'Africa': '#D2691E',        // Chocolate
+                    'Asia': '#9370DB',          // Medium Purple
+                    'Oceania': '#20B2AA',       // Light Sea Green
+                    'Antarctica': '#B0C4DE'     // Light Steel Blue
+                };
+                
+                const defaultFillColor = 'rgba(85, 85, 85, 0.6)';
+                const defaultStroke = new ol.style.Stroke({ color: '#aaaaaa', width: 1 });
+                const hoverStroke = new ol.style.Stroke({ color: '#4CAF50', width: 2.5 });
+                
+                // Style for hover/select highlighting
+                const hoverStyle = new ol.style.Style({
+                    stroke: hoverStroke,
+                    fill: new ol.style.Fill({ color: 'rgba(76, 175, 80, 0.2)' })
+                });
+
+                // --- Helper Functions ---
+                function debugLog(message, object) {
+                    if (!debugMode) return;
+                    
+                    if (object !== undefined) {
+                        console.log(`[MAP DEBUG] ${message}`, object);
+                    } else {
+                        console.log(`[MAP DEBUG] ${message}`);
+                    }
+                }
+                
+                function setLoadingState(isLoading, message = "Loading...", isError = false) {
+                    const loadingIndicator = document.getElementById('loading');
+                    if (!loadingIndicator) return;
+                    
+                    loadingIndicator.style.display = isLoading ? 'block' : 'none';
+                    loadingIndicator.textContent = message;
+                    if (isError) {
+                        loadingIndicator.classList.add('error');
+                    } else {
+                        loadingIndicator.classList.remove('error');
+                    }
+                }
+                
+                function hashStringToColor(str) {
+                    let hash = 0;
+                    for (let i = 0; i < str.length; i++) {
+                        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                    }
+                    
+                    let color = '#';
+                    for (let i = 0; i < 3; i++) {
+                        const value = (hash >> (i * 8)) & 0xFF;
+                        color += ('00' + value.toString(16)).substr(-2);
+                    }
+                    return color;
+                }
+                
+                function getUniqueValues(propertyName) {
+                    if (!countrySource) return [];
+                    
+                    const features = countrySource.getFeatures();
+                    const uniqueValues = new Set();
+                    
+                    features.forEach(feature => {
+                        const value = feature.get(propertyName);
+                        if (value) uniqueValues.add(value);
+                    });
+                    
+                    return Array.from(uniqueValues).sort();
+                }
+                
+                function addLegendItem(label, color) {
+                    const legendContent = document.getElementById('legend-content');
+                    if (!legendContent) return;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'legend-item';
+                    
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'color-box';
+                    colorBox.style.backgroundColor = color;
+                    
+                    const labelText = document.createElement('span');
+                    labelText.textContent = label;
+                    
+                    item.appendChild(colorBox);
+                    item.appendChild(labelText);
+                    legendContent.appendChild(item);
+                }
+                
+                function updateLegend() {
+                    const legendContent = document.getElementById('legend-content');
+                    if (!legendContent) return;
+                    legendContent.innerHTML = ''; // Clear existing items
+                    
+                    if (!countrySource || !countriesLayer) {
+                        addLegendItem('No data available', '#555');
+                        return;
+                    }
+                    
+                    let propertyName, colorFunction;
+                    
+                    switch (currentView) {
+                        case 'continents':
+                            propertyName = GEOJSON_CONTINENT_PROPERTY;
+                            colorFunction = (value) => continentColors[value] || hashStringToColor(value);
+                            break;
+                        case 'regions':
+                            propertyName = GEOJSON_REGION_PROPERTY;
+                            colorFunction = hashStringToColor;
+                            break;
+                        case 'countries':
+                        default:
+                            addLegendItem('Countries', defaultFillColor);
+                            addLegendItem('Selected', 'rgba(76, 175, 80, 0.2)');
+                            return;
+                    }
+                    
+                    const uniqueValues = getUniqueValues(propertyName);
+                    uniqueValues.forEach(value => {
+                        if (value) addLegendItem(value, colorFunction(value));
+                    });
+                }
+                
+                function featureStyleFunction(feature) {
+                    let fillColor = defaultFillColor;
+                    
+                    if (currentView === 'continents') {
+                        const continent = feature.get(GEOJSON_CONTINENT_PROPERTY);
+                        fillColor = continent && continentColors[continent] 
+                            ? continentColors[continent] 
+                            : hashStringToColor(continent || 'unknown');
+                    } else if (currentView === 'regions') {
+                        const region = feature.get(GEOJSON_REGION_PROPERTY);
+                        fillColor = region ? hashStringToColor(region) : defaultFillColor;
+                    }
+                    
+                    return new ol.style.Style({
+                        fill: new ol.style.Fill({ color: fillColor }),
+                        stroke: defaultStroke
+                    });
+                }
+                
+                function updateInfoBox(feature) {
+                    const infoTitle = document.getElementById('info-title');
+                    const infoName = document.getElementById('info-name');
+                    const infoCode = document.getElementById('info-code');
+                    const infoRegion = document.getElementById('info-region');
+                    const infoContinent = document.getElementById('info-continent');
+                    const infoPopulation = document.getElementById('info-population');
+                    
+                    if (!infoTitle || !infoName) return;
+                    
+                    if (!feature) {
+                        infoTitle.textContent = 'Select a Feature';
+                        infoName.textContent = 'N/A';
+                        if (infoCode) infoCode.textContent = 'N/A';
+                        if (infoRegion) infoRegion.textContent = 'N/A';
+                        if (infoContinent) infoContinent.textContent = 'N/A';
+                        if (infoPopulation) infoPopulation.textContent = 'N/A';
+                        return;
+                    }
+                    
+                    const name = feature.get(GEOJSON_NAME_PROPERTY) || 'Unknown';
+                    const code = feature.get(GEOJSON_LINK_PROPERTY) || 'N/A';
+                    const region = feature.get(GEOJSON_REGION_PROPERTY) || 'N/A';
+                    const continent = feature.get(GEOJSON_CONTINENT_PROPERTY) || 'N/A';
+                    const population = feature.get(GEOJSON_POPULATION_PROPERTY) || 'N/A';
+                    
+                    infoTitle.textContent = name;
+                    infoName.textContent = name;
+                    if (infoCode) infoCode.textContent = code;
+                    if (infoRegion) infoRegion.textContent = region;
+                    if (infoContinent) infoContinent.textContent = continent;
+                    if (infoPopulation) infoPopulation.textContent = population.toLocaleString();
+                }
+                
+                function getFeatureName(feature) {
+                    if (!feature) return 'none';
+                    return feature.get(GEOJSON_NAME_PROPERTY) || 'Unknown';
+                }
+
+                // --- Core Map Functions ---
+                function setupMapInteractions() {
+                    debugLog('Setting up map interactions');
+                    
+                    if (selectInteraction) {
+                        debugLog('Removing previous select interaction');
+                        worldMap.removeInteraction(selectInteraction);
+                    }
+                    
+                    // Create selection interaction
+                    selectInteraction = new ol.interaction.Select({
+                        condition: ol.events.condition.click,
+                        style: hoverStyle,
+                        multi: false
+                    });
+                    
+                    worldMap.addInteraction(selectInteraction);
+                    
+                    // Selection event handler
+                    selectInteraction.on('select', (event) => {
+                        // Reset styles for deselected features
+                        if (event.deselected.length > 0) {
+                            event.deselected.forEach(feature => {
+                                feature.setStyle(undefined);
+                            });
+                        }
+                        
+                        // Keep only the most recently selected feature
+                        if (event.selected.length > 0) {
+                            const currentFeatures = selectInteraction.getFeatures();
+                            if (currentFeatures.getLength() > 1) {
+                                const selectedFeature = event.selected[0];
+                                currentFeatures.clear();
+                                currentFeatures.push(selectedFeature);
+                            }
+                            
+                            const feature = event.selected[0];
+                            updateInfoBox(feature);
+                        } else if (event.deselected.length > 0) {
+                            updateInfoBox(null);
+                        }
+                    });
+                    
+                    // Track hovered feature
+                    let hoveredFeature = null;
+                    
+                    // Hover interaction
+                    worldMap.on('pointermove', (evt) => {
+                        if (evt.dragging) return;
+                        
+                        const pixel = worldMap.getEventPixel(evt.originalEvent);
+                        let hitFeature = worldMap.forEachFeatureAtPixel(pixel, feature => feature);
+                        
+                        const selectedFeatures = selectInteraction.getFeatures().getArray();
+                        const isHitFeatureSelected = hitFeature && selectedFeatures.includes(hitFeature);
+                        
+                        if (isHitFeatureSelected) {
+                            hitFeature = null;
+                        }
+                        
+                        if (hitFeature !== hoveredFeature) {
+                            if (hoveredFeature) {
+                                if (!selectedFeatures.includes(hoveredFeature)) {
+                                    hoveredFeature.setStyle(undefined);
+                                }
+                            }
+                            
+                            hoveredFeature = hitFeature;
+                            if (hitFeature && !selectedFeatures.includes(hitFeature)) {
+                                hitFeature.setStyle(hoverStyle);
+                            }
+                        }
+                        
+                        // Update cursor
+                        const shouldShowPointer = hitFeature ? true : false;
+                        worldMap.getTargetElement().style.cursor = shouldShowPointer ? 'pointer' : '';
+                    });
+                    
+                    // Click handler for map background to clear selection
+                    worldMap.on('click', (evt) => {
+                        const pixel = evt.pixel;
+                        const hasFeature = worldMap.hasFeatureAtPixel(pixel);
+                        
+                        if (!hasFeature) {
+                            const hadSelection = selectInteraction.getFeatures().getLength() > 0;
+                            if (hadSelection) {
+                                const currentlySelectedFeatures = selectInteraction.getFeatures().getArray();
+                                
+                                currentlySelectedFeatures.forEach(feature => {
+                                    feature.setStyle(undefined);
+                                });
+                                
+                                selectInteraction.getFeatures().clear();
+                                updateInfoBox(null);
+                            }
+                            
+                            if (hoveredFeature) {
+                                hoveredFeature.setStyle(undefined);
+                                hoveredFeature = null;
+                            }
+                        }
+                    });
+                }
+
+                async function addFeatureLayerFromGeoJSON() {
+                    setLoadingState(true, "Loading Map Data...");
+                    
+                    countrySource = new ol.source.Vector({
+                        url: GEOJSON_FILE_URL,
+                        format: new ol.format.GeoJSON()
+                    });
+                    
+                    // Setup load events
+                    countrySource.on('featuresloadstart', () => setLoadingState(true, "Loading Map Data..."));
+                    
+                    countrySource.on('featuresloadend', (event) => {
+                        console.log(`Loaded ${event.features.length} map features`);
+                        setLoadingState(false);
+                        updateLegend();
+                    });
+                    
+                    countrySource.on('featuresloaderror', (event) => {
+                        console.error("Error loading GeoJSON:", event);
+                        setLoadingState(true, "Error loading map data.", true);
+                    });
+                    
+                    countriesLayer = new ol.layer.Vector({
+                        source: countrySource,
+                        style: featureStyleFunction
+                    });
+                    
+                    worldMap.addLayer(countriesLayer);
+                }
+
+                async function initializeMapInternal() {
+                    if (isMapInitialized) return;
+                    
+                    const mapElement = document.getElementById('map');
+                    if (!mapElement) {
+                        console.error("Map element not found!");
+                        return;
+                    }
+                    
+                    try {
+                        debugLog('Initializing map');
+                        
+                        // Define world extent (in Web Mercator projection)
+                        const worldExtent = ol.proj.transformExtent([-180, -90, 180, 90], 'EPSG:4326', 'EPSG:3857');
+                        
+                        // Initialize the map with base layers
+                        worldMap = new ol.Map({
+                            target: mapElement,
+                            layers: [
+                                // Dark styled base layer
+                                new ol.layer.Tile({
+                                    source: new ol.source.XYZ({
+                                        url: 'https://cartodb-basemaps-{a-d}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
+                                        attributions: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                                    })
+                                })
+                            ],
+                            view: new ol.View({
+                                center: ol.proj.fromLonLat([0, 20]),
+                                zoom: 2,
+                                extent: worldExtent,
+                                maxZoom: 8,
+                                minZoom: 1
+                            }),
+                            controls: [
+                                new ol.control.Zoom(),
+                                new ol.control.Attribution(),
+                                new ol.control.ScaleLine()
+                            ]
+                        });
+                        
+                        // Add GeoJSON feature layer
+                        await addFeatureLayerFromGeoJSON();
+                        
+                        // Setup interactions (hover, select)
+                        setupMapInteractions();
+                        
+                        // Setup view buttons
+                        setupMapViewButtonListeners();
+                        
+                        // Update UI elements
+                        updateViewButtons();
+                        
+                        isMapInitialized = true;
+                        debugLog('Map initialized successfully');
+                        
+                    } catch (error) {
+                        console.error("Failed to initialize map:", error);
+                        setLoadingState(true, "Error initializing map", true);
+                    }
+                }
+
+                function switchView(view) {
+                    if (currentView === view) return;
+                    
+                    currentView = view;
+                    updateViewButtons();
+                    
+                    if (countriesLayer) {
+                        countriesLayer.setStyle(featureStyleFunction);
+                    }
+                    
+                    updateLegend();
+                }
+                
+                function updateViewButtons() {
+                    document.querySelectorAll('#interactive-map-area .btn-group button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    const activeBtn = document.getElementById(`${currentView}-view`);
+                    if (activeBtn) {
+                        activeBtn.classList.add('active');
+                    }
+                }
+
+                function setupMapViewButtonListeners() {
+                    const countriesBtn = document.getElementById('countries-view');
+                    const regionsBtn = document.getElementById('regions-view');
+                    const continentsBtn = document.getElementById('continents-view');
+                    
+                    if (countriesBtn) {
+                        countriesBtn.addEventListener('click', () => switchView('countries'));
+                    }
+                    
+                    if (regionsBtn) {
+                        regionsBtn.addEventListener('click', () => switchView('regions'));
+                    }
+                    
+                    if (continentsBtn) {
+                        continentsBtn.addEventListener('click', () => switchView('continents'));
+                    }
+                }
+
+                // --- Public Methods ---
+                return {
+                    show: async function() {
+                        const interactiveMapArea = document.getElementById('interactive-map-area');
+                        const missionArea = document.getElementById('mission-area');
+                        const resultsArea = document.querySelector('.results-area');
+                        
+                        if (!interactiveMapArea) {
+                            console.error("Interactive map area not found!");
+                            return;
+                        }
+                        
+                        console.log("Showing Interactive Map...");
+                        
+                        // Hide the mission area to give more space to the map
+                        if (missionArea) missionArea.style.display = 'none';
+                        if (resultsArea) resultsArea.style.display = 'none';
+                        
+                        // Show the map and set it to fill the available space
+                        interactiveMapArea.style.display = 'block';
+                        isMapVisible = true;
+                        
+                        // Initialize if not already done
+                        if (!isMapInitialized) {
+                            console.log("Map not initialized yet, initializing now...");
+                            await initializeMapInternal();
+                        }
+                        
+                        // Update map size after container becomes visible
+                        if (worldMap) {
+                            console.log("Updating map size");
+                            worldMap.updateSize();
+                        }
+                    },
+                    
+                    hide: function() {
+                        const interactiveMapArea = document.getElementById('interactive-map-area');
+                        const missionArea = document.getElementById('mission-area');
+                        const resultsArea = document.querySelector('.results-area');
+                        
+                        if (!interactiveMapArea) {
+                            console.error("Interactive map area not found!");
+                            return;
+                        }
+                        
+                        console.log("Hiding Interactive Map...");
+                        interactiveMapArea.style.display = 'none';
+                        
+                        // Show back the mission area and results area
+                        if (missionArea) missionArea.style.display = 'block';
+                        if (resultsArea) resultsArea.style.display = 'block';
+                        
+                        isMapVisible = false;
+                    },
+                    
+                    isVisible: function() {
+                        return isMapVisible;
+                    },
+                    
+                    debug: function(enable) {
+                        debugMode = enable;
+                        return `Debug mode ${enable ? 'enabled' : 'disabled'}`;
+                    }
+                };
+            })();
+            // END OF MAP INTEGRATION MODULE
+
+            // Add CSS for map elements
+            const mapStyles = document.createElement('style');
+            mapStyles.textContent = `
+                /* Map element positioning */
+                #interactive-map-area {
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                #map {
+                    width: 100%;
+                    height: 100%;
+                }
+
+                .view-controls {
+                    position: absolute;
+                    top: 15px;
+                    left: 15px;
+                    background-color: rgba(30, 30, 30, 0.8);
+                    padding: 10px;
+                    border: 2px solid #555;
+                    z-index: 1000;
+                    border-radius: 4px;
+                }
+
+                .view-controls h3 {
+                    margin: 0 0 8px 0;
+                    font-size: 14px;
+                    color: #fff;
+                    text-align: center;
+                }
+
+                .btn-group {
+                    display: flex;
+                    gap: 5px;
+                }
+
+                .btn-group button {
+                    flex: 1;
+                    padding: 5px 8px;
+                    font-size: 12px;
+                }
+
+                .btn-group button.active {
+                    background-color: #33ffee;
+                    box-shadow: none;
+                    transform: translate(1px, 1px);
+                }
+
+                #info-box {
+                    position: absolute;
+                    top: 60px;
+                    right: 15px;
+                    background-color: rgba(30, 30, 30, 0.8);
+                    padding: 15px;
+                    border: 2px solid #555;
+                    min-width: 200px;
+                    z-index: 1000;
+                    border-radius: 4px;
+                }
+
+                #info-box h2 {
+                    margin: 0 0 10px 0;
+                    font-size: 16px;
+                    color: #00ffcc;
+                    text-align: center;
+                }
+
+                #info-content {
+                    font-size: 13px;
+                }
+
+                #info-content p {
+                    margin: 5px 0;
+                }
+
+                #info-content span.label {
+                    color: #ccc;
+                    display: inline-block;
+                    width: 85px;
+                }
+
+                #info-content span.value {
+                    color: #fff;
+                }
+
+                .legend {
+                    position: absolute;
+                    bottom: 15px;
+                    left: 15px;
+                    background-color: rgba(30, 30, 30, 0.8);
+                    padding: 10px;
+                    border: 2px solid #555;
+                    z-index: 1000;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    border-radius: 4px;
+                }
+
+                .legend h3 {
+                    margin: 0 0 8px 0;
+                    font-size: 14px;
+                    color: #fff;
+                    text-align: center;
+                }
+
+                .legend-item {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 5px;
+                }
+
+                .color-box {
+                    width: 15px;
+                    height: 15px;
+                    margin-right: 8px;
+                    border: 1px solid #555;
+                }
+
+                #loading {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background-color: rgba(30, 30, 30, 0.9);
+                    padding: 15px 25px;
+                    border: 2px solid #555;
+                    z-index: 9999;
+                    font-size: 16px;
+                    color: #fff;
+                    border-radius: 4px;
+                    display: none;
+                }
+
+                #loading.error {
+                    background-color: rgba(150, 30, 30, 0.9);
+                    border-color: #ff6b6b;
+                }
+
+                /* Override OpenLayers controls */
+                .ol-zoom {
+                    top: unset;
+                    bottom: 15px;
+                    right: 15px;
+                    left: unset;
+                    background-color: rgba(30, 30, 30, 0.85);
+                    border: 2px solid #555;
+                    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.3);
+                    padding: 5px;
+                }
+
+                .ol-zoom button {
+                    margin: 2px 0;
+                }
+
+                .ol-attribution {
+                    bottom: 2px;
+                    right: 60px;
+                    background: rgba(0, 0, 0, 0.7) !important;
+                }
+
+                .ol-attribution ul {
+                    color: #ccc;
+                }
+
+                .ol-scale-line {
+                    bottom: 2px;
+                    left: 180px;
+                    background: rgba(0, 0, 0, 0.7) !important;
+                }
+            `;
+            document.head.appendChild(mapStyles);
+
+            // --- EXTEND EXISTING executeQueryAndVisualize FUNCTION ---
+            const originalExecuteQueryAndVisualize = window.executeQueryAndVisualize || function() {};
+            
+            window.executeQueryAndVisualize = function() {
+                const query = sqlInput.value.trim();
+                clearResults(); // Clear previous results/errors/status
+                if (!query) return;
+
+                // Check for map-specific commands
+                const lowerQuery = query.toLowerCase().trim();
+                
+                if (lowerQuery === 'select earth from maps;') {
+                    if (typeof window.MapIntegration === 'undefined') {
+                        showError("Map integration module not available. Please refresh the page.");
+                        return;
+                    }
+                    window.MapIntegration.show(); // Show the map area
+                    displayMessage("Displaying Interactive World Map...", "status-success");
+                    // Add placeholder in results area
+                    resultsDiv.innerHTML = '<p style="padding: 10px; color: #aaa;">Map controls active. Use map below or type `HIDE MAP;`</p>';
+                    return; // Don't execute with AlaSQL
+                } else if (lowerQuery === 'hide map;') {
+                    if (typeof window.MapIntegration === 'undefined') {
+                        showError("Map integration module not available. Please refresh the page.");
+                        return;
+                    }
+                    window.MapIntegration.hide();
+                    displayMessage("Interactive World Map hidden.", "status-success");
+                    return; // Don't execute with AlaSQL
+                }
+
+                // For regular queries, proceed with original function
+                if (typeof originalExecuteQueryAndVisualize === 'function') {
+                    originalExecuteQueryAndVisualize.apply(this, arguments);
+                } else {
+                    // Fallback if original function wasn't properly saved
+                    if (!alasqlInitialized || mountedDbAliases.size === 0) {
+                        showError("No database mounted. Please mount a database from the DB Registry.");
+                        return;
+                    }
+                
+                    console.log("Executing Query:", query);
+                    let results;
+                    try {
+                        results = alasql(query);
+                        console.log("AlaSQL Result:", results);
+                        lastResults = results; // Store results
+                
+                        displayResults(results, resultsDiv); // Display results/missions
+                
+                        // Validation for missions
+                        if (currentMissionId !== null && currentMissionData && Array.isArray(results)) {
+                             isMissionSolved = false;
+                            completeMissionBtn.style.display = 'none';
+                             if (validateMissionQuery(query, results, currentMissionData.validationCriteria)) {
+                                isMissionSolved = true;
+                                completeMissionBtn.style.display = 'block';
+                                 displayMessage("Validation successful! Ready to complete mission.", "status-success");
+                            }
+                        }
+                
+                        // Map Visualization for database schema
+                         const parsedInfo = parseQueryForVis(query);
+                         updateVisualization(parsedInfo);
+                
+                    } catch (e) {
+                        console.error("SQL Error:", e);
+                        if (e.message.toLowerCase().includes("table does not exist")) {
+                             showError(`SQL Error: ${e.message}. Is the correct database mounted?`);
+                        } else {
+                             showError(`SQL Error: ${e.message}`);
+                        }
+                        updateVisualization(null);
+                        isMissionSolved = false;
+                        completeMissionBtn.style.display = 'none';
+                    }
+                }
+            };
+
+            // --- ADD MAP CLOSE BUTTON HANDLER ---
+            const closeMapBtn = document.getElementById('close-map-btn');
+            if (closeMapBtn) {
+                closeMapBtn.addEventListener('click', () => MapIntegration.hide());
+            }
+
+            // --- ENSURE MAP IS HIDDEN ON MISSION RESET ---
+            const originalResetMissionDisplay = window.resetMissionDisplay || function() {};
+            
+            window.resetMissionDisplay = function() {
+                if (typeof originalResetMissionDisplay === 'function') {
+                    originalResetMissionDisplay.apply(this, arguments);
+                }
+                
+                // Additionally ensure map is hidden
+                MapIntegration.hide();
+            };
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             console.log("Pixel SQL Adventure - Missions Initializing...");
 
@@ -1157,6 +2226,13 @@
                            data: [ { country_name: 'South Sudan', region: 'Sub-Saharan Africa', primary_enrollment_rate: 32.1, secondary_enrollment_rate: 10.3 }, { country_name: 'Niger', region: 'Sub-Saharan Africa', primary_enrollment_rate: 38.4, secondary_enrollment_rate: 12.8 }, { country_name: 'Chad', region: 'Sub-Saharan Africa', primary_enrollment_rate: 43.8, secondary_enrollment_rate: 22.6 }, { country_name: 'Mali', region: 'Sub-Saharan Africa', primary_enrollment_rate: 58.7, secondary_enrollment_rate: 33.9 }, { country_name: 'Burkina Faso', region: 'Sub-Saharan Africa', primary_enrollment_rate: 62.3, secondary_enrollment_rate: 29.5 }, { country_name: 'Guinea', region: 'Sub-Saharan Africa', primary_enrollment_rate: 65.1, secondary_enrollment_rate: 38.9 }, { country_name: 'Senegal', region: 'Sub-Saharan Africa', primary_enrollment_rate: 68.7, secondary_enrollment_rate: 41.2 } ]
                        }
                    },
+                    // Add maps database for the map command functionality
+                    maps: {
+                        earth: {
+                            columns: { id: 'NUMBER', name: 'STRING', type: 'STRING' },
+                            data: [{ id: 1, name: 'Earth', type: 'Planet' }]
+                        }
+                    },
                     // Add other database structures here...
                 },
                 // We need the mission details (description, hint, solution, validation) somewhere.
@@ -1340,6 +2416,29 @@
                 const query = sqlInput.value.trim();
                 clearResults(); // Clear previous results/errors/status
                 if (!query) return;
+
+                // Check for map-specific commands BEFORE trying to execute with AlaSQL
+                const lowerQuery = query.toLowerCase().trim();
+                if (lowerQuery === 'select earth from maps;') {
+                    if (typeof window.MapIntegration === 'undefined') {
+                        showError("Map integration module not available. Please refresh the page.");
+                        return;
+                    }
+                    window.MapIntegration.show(); // Show the map area
+                    displayMessage("Displaying Interactive World Map...", "status-success");
+                    // Add placeholder in results area
+                    resultsDiv.innerHTML = '<p style="padding: 10px; color: #aaa;">Map controls active. Use map below or type `HIDE MAP;`</p>';
+                    return; // Don't execute with AlaSQL
+                } else if (lowerQuery === 'hide map;') {
+                    if (typeof window.MapIntegration === 'undefined') {
+                        showError("Map integration module not available. Please refresh the page.");
+                        return;
+                    }
+                    window.MapIntegration.hide();
+                    displayMessage("Interactive World Map hidden.", "status-success");
+                    return; // Don't execute with AlaSQL
+                }
+                
                 if (!alasqlInitialized || mountedDbAliases.size === 0) { // Check if ANY DB is mounted
                     showError("No database mounted. Please mount a database from the DB Registry.");
                     return;
@@ -1583,7 +2682,6 @@
                             completedRow.style.textDecoration = 'line-through';
                             completedRow.style.color = '#888';
                             completedRow.style.cursor = 'default';
-                            completedRow.onclick = null; // Disable click handler
                             console.log(`Styled mission row ${currentMissionId} as completed.`);
                         } else {
                             console.log(`Mission row ${currentMissionId} not found in the current results table.`);
@@ -1680,7 +2778,6 @@
                 currentMissionId = null;
                 currentMissionData = null;
                 isMissionSolved = false;
-                completeMissionBtn.style.display = 'none';
                 // Optionally clear results here too, or leave them
                 // clearResults();
             }
