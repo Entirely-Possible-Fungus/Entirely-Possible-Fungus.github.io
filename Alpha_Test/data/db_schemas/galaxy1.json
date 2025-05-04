@@ -1,0 +1,67 @@
+{
+    "planets": { 
+        "columns": { 
+            "id": "INT PRIMARY KEY", 
+            "name": "STRING", 
+            "type": "STRING", 
+            "atmosphere": "STRING", 
+            "distance_from_sun": "INT" 
+        }, 
+        "data": [ 
+            { "id": 1, "name": "Terra Prime", "type": "Terrestrial", "atmosphere": "Nitrogen", "distance_from_sun": 100 }, 
+            { "id": 2, "name": "Xylos", "type": "Jungle", "atmosphere": "Oxygen Rich", "distance_from_sun": 150 }, 
+            { "id": 3, "name": "Cryonia", "type": "Ice Giant", "atmosphere": "Methane", "distance_from_sun": 400 }, 
+            { "id": 4, "name": "Vulcanis", "type": "Volcanic", "atmosphere": "Sulfur", "distance_from_sun": 80 }, 
+            { "id": 5, "name": "Aetheria", "type": "Gas Giant", "atmosphere": "Hydrogen", "distance_from_sun": 600 } 
+        ] 
+    },
+    "species": { 
+        "columns": { 
+            "id": "INT PRIMARY KEY", 
+            "name": "STRING", 
+            "home_planet_id": "INT", 
+            "intelligence_level": "INT", 
+            "temperament": "STRING" 
+        }, 
+        "data": [ 
+            { "id": 101, "name": "Humans", "home_planet_id": 1, "intelligence_level": 7, "temperament": "Neutral" }, 
+            { "id": 102, "name": "Grox", "home_planet_id": 4, "intelligence_level": 8, "temperament": "Aggressive" }, 
+            { "id": 103, "name": "Florans", "home_planet_id": 2, "intelligence_level": 5, "temperament": "Peaceful" }, 
+            { "id": 104, "name": "Cryonians", "home_planet_id": 3, "intelligence_level": 9, "temperament": "Neutral" }, 
+            { "id": 105, "name": "Void Spawn", "home_planet_id": null, "intelligence_level": 10, "temperament": "Aggressive"} 
+        ] 
+    },
+    "ships": { 
+        "columns": { 
+            "id": "INT PRIMARY KEY", 
+            "name": "STRING", 
+            "`class`": "STRING", 
+            "captain_species_id": "INT", 
+            "cargo_capacity": "INT" 
+        }, 
+        "data": [ 
+            { "id": 501, "name": "Stardust", "`class`": "Freighter", "captain_species_id": 101, "cargo_capacity": 5000 }, 
+            { "id": 502, "name": "Void Ripper", "`class`": "Fighter", "captain_species_id": 102, "cargo_capacity": 50 }, 
+            { "id": 503, "name": "Leaf on the Wind", "`class`": "Frigate", "captain_species_id": 103, "cargo_capacity": 1000 }, 
+            { "id": 504, "name": "Nebula Voyager", "`class`": "Freighter", "captain_species_id": 101, "cargo_capacity": 7500 }, 
+            { "id": 505, "name": "Icebreaker", "`class`": "Frigate", "captain_species_id": 104, "cargo_capacity": 1200 } 
+        ] 
+    },
+    "resources": { 
+        "columns": { 
+            "id": "INT PRIMARY KEY", 
+            "name": "STRING", 
+            "planet_id": "INT", 
+            "rarity": "STRING", 
+            "market_value": "INT" 
+        }, 
+        "data": [ 
+            { "id": 801, "name": "Iron Ore", "planet_id": 1, "rarity": "Common", "market_value": 10 }, 
+            { "id": 802, "name": "Bio-Lumber", "planet_id": 2, "rarity": "Common", "market_value": 15 }, 
+            { "id": 803, "name": "Helium-3", "planet_id": 5, "rarity": "Uncommon", "market_value": 50 }, 
+            { "id": 804, "name": "Magma Crystals", "planet_id": 4, "rarity": "Rare", "market_value": 250 }, 
+            { "id": 805, "name": "Zero-Point Ice", "planet_id": 3, "rarity": "Exotic", "market_value": 1000 }, 
+            { "id": 806, "name": "Adamantium", "planet_id": 4, "rarity": "Rare", "market_value": 500 } 
+        ] 
+    }
+}

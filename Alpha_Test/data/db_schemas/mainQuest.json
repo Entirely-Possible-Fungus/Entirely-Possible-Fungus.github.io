@@ -1,0 +1,1020 @@
+{
+    "quests": {
+        "columns": {
+            "id": "INT PRIMARY KEY",
+            "title": "STRING",
+            "description": "STRING",
+            "hint": "STRING",
+            "difficulty": "INT",
+            "points": "INT",
+            "timeLimit": "INT",
+            "timerEnabled": "BOOLEAN",
+            "successMessage": "STRING",
+            "dbAlias": "STRING",
+            "validationCriteria": "JSON",
+            "mapDetails": "JSON",
+            "nextMissionId": "INT",
+            "submissions": "JSON"
+        },
+        "data": [
+            {
+                "id": 100,
+                "title": "Mission 1.1: Europe - Establish Contact",
+                "description": "Investigator Zorp, initiate reconnaissance of Earth region 'Europe'. Access the 'PlanetaryNations' database.\n\n<strong>Objective:</strong> Extract *all* available data fields for countries located within the continent 'Europe' to get a full initial profile.",
+                "hint": "Use <code>SELECT *</code> to retrieve all columns. Filter the table using <code>WHERE continent = 'Europe'</code>. Ensure your command ends with a semicolon <code>;</code>.",
+                "difficulty": 1,
+                "points": 30,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Data stream active! Full profiles acquired for European entities. We have contact.",
+                "dbAlias": "geo_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "*", "FROM", "PlanetaryNations", "WHERE", "continent", "Europe"],
+                    "mustContainColumns": ["country_id", "country_name", "continent", "population", "capital_city"],
+                    "minRows": 10
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": null,
+                    "location": [15.0, 55.0],
+                    "zoomLevel": 3,
+                    "description": "Scanning European Continent"
+                }
+            },
+            {
+                "id": 101,
+                "title": "Mission 1.2: Europe - Entity Names Only",
+                "description": "The initial scan returned too much data. For the Council's roster, we require only the official designations.\n\n<strong>Objective:</strong> Retrieve *only the names* (<code>country_name</code> column) of all countries located in Europe.",
+                "hint": "Replace <code>*</code> with the specific column name: <code>SELECT country_name</code>. Keep the <code>WHERE continent = 'Europe'</code> filter.",
+                "difficulty": 1,
+                "points": 30,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Designations isolated. Compiling official entity roster.",
+                "dbAlias": "geo_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "FROM", "PlanetaryNations", "WHERE", "continent", "Europe"],
+                    "mustContainColumns": ["country_name"],
+                    "cannotContainColumns": ["country_id", "continent", "population", "capital_city"],
+                    "minRows": 10
+                },
+                "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 102,
+                "title": "Mission 1.3: Europe - Name and Population",
+                "description": "To begin assessing scale, retrieve both the name and population for each European entity.\n\n<strong>Objective:</strong> Select the <code>country_name</code> and <code>population</code> columns for all countries in Europe.",
+                "hint": "Select multiple specific columns by listing them separated by a comma: <code>SELECT country_name, population</code>. Maintain the <code>WHERE</code> filter.",
+                "difficulty": 1,
+                "points": 40,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Name and population data retrieved. Ready for scale analysis.",
+                "dbAlias": "geo_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "population", "FROM", "PlanetaryNations", "WHERE", "continent", "Europe"],
+                    "mustContainColumns": ["country_name", "population"],
+                    "cannotContainColumns": ["country_id", "continent", "capital_city"],
+                    "minRows": 10
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 103,
+                "title": "Mission 1.4: Europe - Confirm Entity Count",
+                "description": "Verify the number of political entities detected. Accuracy is paramount.\n\n<strong>Objective:</strong> Count the total number of distinct countries listed within the European continent.",
+                "hint": "Use the aggregate function <code>COUNT()</code> to count rows. You can count a specific column like <code>COUNT(country_id)</code> or use <code>COUNT(*)</code>. Apply the <code>WHERE continent = 'Europe'</code> filter.",
+                "difficulty": 2,
+                "points": 50,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Entity count confirmed. Scan parameters validated.",
+                "dbAlias": "geo_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "COUNT", "FROM", "PlanetaryNations", "WHERE", "continent", "Europe"],
+                    "expectedRows": 1,
+                    "mustContainColumns": ["count"]
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 104,
+                "title": "Mission 1.5: Europe - Order by Population",
+                "description": "Assess the population distribution. Sort the European entities by their population size, starting with the largest.\n\n<strong>Objective:</strong> Retrieve the name and population of European countries, ordered by population in descending order.",
+                "hint": "Use <code>ORDER BY population DESC</code> after your <code>SELECT</code> and <code>WHERE</code> clauses. <code>DESC</code> means from highest to lowest.",
+                "difficulty": 2,
+                "points": 60,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Population distribution analyzed. Identifying major population centers.",
+                "dbAlias": "geo_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "population", "FROM", "PlanetaryNations", "WHERE", "continent", "Europe", "ORDER", "BY", "DESC"],
+                    "mustContainColumns": ["country_name", "population"],
+                    "checkOrder": { "column": "population", "direction": "DESC" },
+                    "minRows": 10
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 105,
+                "title": "Mission 1.6: Europe - Identify Most Populous",
+                "description": "Pinpoint the single most populous entity in Europe for focused analysis.\n\n<strong>Objective:</strong> Display the name and population of *only* the most populous country in Europe.",
+                "hint": "Add the <code>LIMIT 1</code> clause to the end of the query from the previous step (the one using <code>ORDER BY population DESC</code>).",
+                "difficulty": 2,
+                "points": 60,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Primary population center located. Preparing deep scan protocols.",
+                "dbAlias": "geo_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "population", "FROM", "PlanetaryNations", "WHERE", "continent", "Europe", "ORDER", "BY", "DESC", "LIMIT"],
+                    "expectedRows": 1,
+                    "mustContainColumns": ["country_name", "population"]
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 106,
+                "title": "Mission 1.7: Europe - Filtering Major Powers",
+                "description": "Isolate the entities classified as 'Major Powers' based on population size. The threshold is 50 million inhabitants.\n\n<strong>Objective:</strong> List the names and populations of European countries where the population is greater than 50,000,000.",
+                "hint": "Combine filters in the <code>WHERE</code> clause using <code>AND</code>. You need <code>WHERE continent = 'Europe' AND population > 50000000</code>.",
+                "difficulty": 2,
+                "points": 70,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Major power entities filtered. Ready for geopolitical assessment.",
+                "dbAlias": "geo_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "population", "FROM", "PlanetaryNations", "WHERE", "continent", "Europe", "AND", "population", ">"],
+                    "mustContainColumns": ["country_name", "population"],
+                    "minRows": 2
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+             {
+                "id": 107,
+                "title": "Mission 1.8: Europe - Ranking Major Powers",
+                "description": "Provide the final ranked list of these major powers for the Council's strategic overview.\n\n<strong>Objective:</strong> List the names and populations of European countries with over 50 million inhabitants, ordered from highest population to lowest.",
+                "hint": "Combine the filtering from the previous step (<code>WHERE ... AND population > 50000000</code>) with sorting (<code>ORDER BY population DESC</code>).",
+                "difficulty": 3,
+                "points": 80,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Ranked list of major European powers compiled. Phase 1 European Recon complete. Standby for further tasking.",
+                "dbAlias": "geo_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "population", "FROM", "PlanetaryNations", "WHERE", "continent", "Europe", "AND", "population", ">", "ORDER", "BY", "DESC"],
+                    "mustContainColumns": ["country_name", "population"],
+                     "checkOrder": { "column": "population", "direction": "DESC" },
+                    "minRows": 2
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 200,
+                "title": "Mission 2.1: Oceans - Access Registry",
+                "description": "Zorp, the Galactic Wildlife Federation needs data on marine conservation. Access the 'TerritorialWaters_Registry'.\n\n<strong>Main Objective:</strong> Rank nations by percentage of protected marine territory.\n\n<strong>First Step:</strong> Extract the necessary raw data fields: country name, total water area, and protected area for all nations.",
+                "hint": "Select the specific columns needed: <code>country_name</code>, <code>total_territorial_waters_sqkm</code>, <code>protected_marine_area_sqkm</code>. Use <code>SELECT ... FROM TerritorialWaters_Registry;</code>",
+                "difficulty": 1,
+                "points": 40,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Marine Registry accessed. Raw area data extracted.",
+                "dbAlias": "marine_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "total_territorial_waters_sqkm", "protected_marine_area_sqkm", "FROM", "TerritorialWaters_Registry"],
+                    "mustContainColumns": ["country_name", "total_territorial_waters_sqkm", "protected_marine_area_sqkm"],
+                    "minRows": 50
+                },
+                 "mapDetails": {
+                    "showOnMap": true,
+                    "country": null,
+                    "location": [0, 0],
+                    "zoomLevel": 1,
+                    "description": "Accessing Global Marine Data"
+                }
+            },
+            {
+                "id": 201,
+                "title": "Mission 2.2: Oceans - Calculation Test Case (Australia)",
+                "description": "Before global calculation, test the percentage logic. Focus on 'Australia'.\n\n<strong>Objective:</strong> Calculate the percentage of protected marine area specifically for Australia. Assign the result an alias 'pct_protected'.",
+                "hint": "Use the formula <code>(protected_marine_area_sqkm / total_territorial_waters_sqkm) * 100.0</code> within your SELECT statement. Use <code>AS pct_protected</code> to name the result column. Filter with <code>WHERE country_name = 'Australia'</code>.",
+                "difficulty": 2,
+                "points": 60,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Percentage calculation logic verified for 'Australia'. The alias 'pct_protected' is functional.",
+                "dbAlias": "marine_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "protected_marine_area_sqkm", "total_territorial_waters_sqkm", "FROM", "TerritorialWaters_Registry", "WHERE", "country_name", "Australia", "AS", "pct_protected"],
+                    "mustContainColumns": ["pct_protected"],
+                    "expectedRows": 1
+                },
+                 "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Australia",
+                    "location": [133.7751, -25.2744],
+                     "zoomLevel": 3,
+                    "description": "Calculating for Australia"
+                }
+            },
+            {
+                "id": 202,
+                "title": "Mission 2.3: Oceans - Global Percentage Calculation",
+                "description": "Apply the tested calculation across all nations.\n\n<strong>Objective:</strong> Retrieve the name and the calculated protected marine area percentage (aliased as 'pct_protected') for *all* countries.",
+                "hint": "Combine the name and the calculation: <code>SELECT country_name, (formula...) AS pct_protected</code>. Remove the <code>WHERE</code> clause used in the previous step.",
+                "difficulty": 2,
+                "points": 70,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Global marine protection percentages calculated successfully.",
+                "dbAlias": "marine_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "protected_marine_area_sqkm", "total_territorial_waters_sqkm", "FROM", "TerritorialWaters_Registry", "AS", "pct_protected"],
+                    "mustContainColumns": ["country_name", "pct_protected"],
+                     "minRows": 50
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 203,
+                "title": "Mission 2.4: Oceans - Global Average Protection",
+                "description": "The Federation wants a global benchmark. Calculate the average protected percentage across all nations.\n\n<strong>Objective:</strong> Compute the average of the calculated 'pct_protected' values for all countries. Alias the result as 'global_avg_pct'.",
+                "hint": "Wrap the percentage calculation inside the <code>AVG()</code> function: <code>SELECT AVG((formula...)) AS global_avg_pct</code>. No <code>WHERE</code> or <code>GROUP BY</code> needed for a single global average.",
+                "difficulty": 3,
+                "points": 80,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Global average protection level established. Useful benchmark for the Federation.",
+                "dbAlias": "marine_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "AVG", "protected_marine_area_sqkm", "total_territorial_waters_sqkm", "FROM", "TerritorialWaters_Registry", "AS", "global_avg_pct"],
+                    "mustContainColumns": ["global_avg_pct"],
+                    "expectedRows": 1
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 204,
+                "title": "Mission 2.5: Oceans - Ranking by Protection",
+                "description": "Organize the global data for the Federation. Rank all nations by their protected percentage, highest first.\n\n<strong>Objective:</strong> Retrieve the country name and calculated 'pct_protected', ordered by 'pct_protected' descending.",
+                "hint": "Add <code>ORDER BY pct_protected DESC</code> to the query from step 2.3.",
+                "difficulty": 3,
+                "points": 80,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Global ranking complete. Identifying leaders and areas needing attention.",
+                "dbAlias": "marine_db",
+                "validationCriteria": {
+                     "keywords": ["SELECT", "country_name", "protected_marine_area_sqkm", "total_territorial_waters_sqkm", "FROM", "TerritorialWaters_Registry", "AS", "pct_protected", "ORDER", "BY", "DESC"],
+                    "mustContainColumns": ["country_name", "pct_protected"],
+                    "checkOrder": { "column": "pct_protected", "direction": "DESC" },
+                    "minRows": 50
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+             {
+                "id": 205,
+                "title": "Mission 2.6: Oceans - Top 10 Protectors",
+                "description": "Isolate the elite group for the Federation's commendation list.\n\n<strong>Objective:</strong> Display only the top 10 countries from the ranked list based on 'pct_protected'.",
+                "hint": "Append <code>LIMIT 10</code> to the end of the query from the previous step (the one with <code>ORDER BY pct_protected DESC</code>).",
+                "difficulty": 3,
+                "points": 90,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Top 10 marine protectors identified. Acknowledging significant conservation efforts.",
+                "dbAlias": "marine_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "protected_marine_area_sqkm", "total_territorial_waters_sqkm", "FROM", "TerritorialWaters_Registry", "AS", "pct_protected", "ORDER", "BY", "DESC", "LIMIT"],
+                    "mustContainColumns": ["country_name", "pct_protected"],
+                    "checkOrder": { "column": "pct_protected", "direction": "DESC" },
+                    "expectedRows": 10
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 206,
+                "title": "Mission 2.7: Oceans - Focus: South Pacific Ranking",
+                "description": "Return to the initial alert area. Provide the Federation with a ranked list of conservation efforts specifically within the 'South Pacific' region.\n\n<strong>Objective:</strong> Retrieve the name and 'pct_protected' for countries in the 'South Pacific' region, ordered by 'pct_protected' descending.",
+                "hint": "Combine filtering and ordering. Use <code>WHERE region = 'South Pacific'</code> and <code>ORDER BY pct_protected DESC</code>.",
+                "difficulty": 3,
+                "points": 100,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Ranked list for South Pacific region generated. Federation can now assess the initial alert context. Marine analysis complete.",
+                "dbAlias": "marine_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "country_name", "protected_marine_area_sqkm", "total_territorial_waters_sqkm", "FROM", "TerritorialWaters_Registry", "AS", "pct_protected", "WHERE", "region", "South Pacific", "ORDER", "BY", "DESC"],
+                    "mustContainColumns": ["country_name", "pct_protected"],
+                     "checkOrder": { "column": "pct_protected", "direction": "DESC" },
+                    "minRows": 3
+                },
+                 "mapDetails": {
+                    "showOnMap": true,
+                    "country": null,
+                    "location": [160, -20],
+                    "zoomLevel": 3,
+                    "description": "Analyzing South Pacific Region"
+                }
+            },
+            {
+                "id": 300,
+                "title": "Mission 3.1: Climate - Access Archive (Test Case)",
+                "description": "Investigator Zorp, initiate climate data retrieval requested by the Environmental Institute. Target: 'China', 2000-2010. Access 'GlobalEmissionArchive'.\n\n<strong>Main Objective:</strong> Calculate and rank China's total annual CO2 emissions for 2000-2010.\n\n<strong>First Step:</strong> Verify data access by retrieving all emission records for China specifically for the year 2005.",
+                "hint": "Use <code>SELECT * FROM GlobalEmissionArchive</code>. Filter with <code>WHERE country_name = 'China' AND year = 2005</code>. The <code>AND</code> operator combines conditions.",
+                "difficulty": 2,
+                "points": 50,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Connection to Emission Archive established. Data for China 2005 retrieved.",
+                "dbAlias": "climate_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "*", "FROM", "GlobalEmissionArchive", "WHERE", "country_name", "China", "AND", "year", "2005"],
+                    "minRows": 1
+                },
+                 "mapDetails": {
+                    "showOnMap": true,
+                    "country": "China",
+                    "location": [104.1954, 35.8617],
+                    "zoomLevel": 3,
+                    "description": "Accessing China Emissions Data"
+                }
+            },
+            {
+                "id": 301,
+                "title": "Mission 3.2: Climate - Isolate Target Decade",
+                "description": "Broaden the filter to encompass the entire critical decade identified by the Institute.\n\n<strong>Objective:</strong> Select all emission records where the country is China and the year falls between 2000 and 2010, inclusive.",
+                "hint": "Keep <code>WHERE country_name = 'China'</code> and use <code>AND year BETWEEN 2000 AND 2010</code> to specify the date range.",
+                "difficulty": 2,
+                "points": 60,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "All emission records for China within the 2000-2010 timeframe successfully isolated.",
+                "dbAlias": "climate_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "FROM", "GlobalEmissionArchive", "WHERE", "country_name", "China", "AND", "year", "BETWEEN", "2000", "2010"],
+                     "minRows": 10
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 302,
+                "title": "Mission 3.3: Climate - Sum Emissions (Single Year)",
+                "description": "The data includes various sources. Calculate the *total* CO2 emissions for China for a specific year, 2008, to test aggregation.\n\n<strong>Objective:</strong> Calculate the sum of all <code>metric_tons_co2</code> for China where the year is 2008. Alias the result 'total_2008_emissions'.",
+                "hint": "Use the aggregate function <code>SUM()</code>: <code>SELECT SUM(metric_tons_co2) AS total_2008_emissions</code>. Apply the filters <code>WHERE country_name = 'China' AND year = 2008</code>.",
+                "difficulty": 3,
+                "points": 70,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Summation logic verified. Total CO2 emissions for China in 2008 calculated.",
+                "dbAlias": "climate_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "SUM", "metric_tons_co2", "FROM", "GlobalEmissionArchive", "WHERE", "country_name", "China", "AND", "year", "2008", "AS"],
+                    "mustContainColumns": ["total_2008_emissions"],
+                    "expectedRows": 1
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+             {
+                "id": 303,
+                "title": "Mission 3.4: Climate - Calculate Annual Totals",
+                "description": "Now, apply the summation across the entire decade to get yearly totals.\n\n<strong>Objective:</strong> Calculate the total <code>metric_tons_co2</code> for China for *each year* from 2000 to 2010. Display the year and the calculated total (aliased 'total_annual_emissions').",
+                "hint": "Select the year and the sum: <code>SELECT year, SUM(metric_tons_co2) AS total_annual_emissions</code>. Apply the decade filter: <code>WHERE country_name = 'China' AND year BETWEEN 2000 AND 2010</code>. Use <code>GROUP BY year</code> to sum emissions for each distinct year.",
+                "difficulty": 3,
+                "points": 80,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Annual total CO2 emissions for China (2000-2010) calculated.",
+                "dbAlias": "climate_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "year", "SUM", "metric_tons_co2", "FROM", "GlobalEmissionArchive", "WHERE", "country_name", "China", "AND", "year", "BETWEEN", "2000", "2010", "GROUP", "BY", "AS"],
+                    "mustContainColumns": ["year", "total_annual_emissions"],
+                    "expectedRows": 11
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 304,
+                "title": "Mission 3.5: Climate - Order Annual Trend",
+                "description": "Present the annual totals chronologically to reveal the emission trend during the decade.\n\n<strong>Objective:</strong> List the year and total annual emissions for China (2000-2010), ordered by year ascending.",
+                "hint": "Add <code>ORDER BY year ASC</code> to the query from the previous step. <code>ASC</code> ensures chronological order (oldest to newest).",
+                "difficulty": 3,
+                "points": 80,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Emission trend over the decade visualized chronologically.",
+                "dbAlias": "climate_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "year", "SUM", "metric_tons_co2", "FROM", "GlobalEmissionArchive", "WHERE", "country_name", "China", "AND", "year", "BETWEEN", "2000", "2010", "GROUP", "BY", "AS", "ORDER", "ASC"],
+                    "mustContainColumns": ["year", "total_annual_emissions"],
+                     "checkOrder": { "column": "year", "direction": "ASC" },
+                    "expectedRows": 11
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 305,
+                "title": "Mission 3.6: Climate - Rank by Emission Amount",
+                "description": "Re-order the data to highlight the years with the highest environmental impact.\n\n<strong>Objective:</strong> List the year and total annual emissions for China (2000-2010), ordered by the emission amount descending (highest first).",
+                "hint": "Change the ordering clause to <code>ORDER BY total_annual_emissions DESC</code>.",
+                "difficulty": 4,
+                "points": 90,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Years ranked by emission volume. Peak impact years identified.",
+                "dbAlias": "climate_db",
+                "validationCriteria": {
+                     "keywords": ["SELECT", "year", "SUM", "metric_tons_co2", "FROM", "GlobalEmissionArchive", "WHERE", "country_name", "China", "AND", "year", "BETWEEN", "2000", "2010", "GROUP", "BY", "AS", "ORDER", "DESC"],
+                    "mustContainColumns": ["year", "total_annual_emissions"],
+                    "checkOrder": { "column": "total_annual_emissions", "direction": "DESC" },
+                    "expectedRows": 11
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+             {
+                "id": 306,
+                "title": "Mission 3.7: Climate - Identify Peak Year",
+                "description": "Isolate the single year with the absolute highest emissions within the 2000-2010 period for China.\n\n<strong>Objective:</strong> Display the year and total emissions for only the peak emission year.",
+                "hint": "Add <code>LIMIT 1</code> to the end of the query from the previous step (the one ordered by emissions descending).",
+                "difficulty": 4,
+                "points": 100,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Peak emission year identified and data extracted. Environmental Institute analysis complete. A critical data point secured.",
+                "dbAlias": "climate_db",
+                "validationCriteria": {
+                     "keywords": ["SELECT", "year", "SUM", "metric_tons_co2", "FROM", "GlobalEmissionArchive", "WHERE", "country_name", "China", "AND", "year", "BETWEEN", "2000", "2010", "GROUP", "BY", "AS", "ORDER", "DESC", "LIMIT"],
+                    "mustContainColumns": ["year", "total_annual_emissions"],
+                    "checkOrder": { "column": "total_annual_emissions", "direction": "DESC" },
+                    "expectedRows": 1
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+             {
+                "id": 400,
+                "title": "Mission 4.1: USA - Access Census (2010)",
+                "description": "Zorp, commence analysis of US urbanization. Access 'US_CensusData'.\n\n<strong>Main Objective:</strong> Track urban population percentage (2010-2020).\n\n<strong>First Step:</strong> Retrieve the raw urban and total population for the baseline year, 2010.",
+                "hint": "Select the columns <code>census_year, urban_population, total_population</code>. Filter for the specific year using <code>WHERE census_year = 2010</code>.",
+                "difficulty": 2,
+                "points": 50,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Baseline 2010 census data retrieved. Ready for analysis.",
+                "dbAlias": "census_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "census_year", "urban_population", "total_population", "FROM", "US_CensusData", "WHERE", "census_year", "2010"],
+                    "mustContainColumns": ["census_year", "urban_population", "total_population"],
+                    "expectedRows": 1
+                },
+                "mapDetails": {
+                     "showOnMap": true,
+                    "country": "United States",
+                    "location": [ -95.7129, 37.0902],
+                     "zoomLevel": 3,
+                    "description": "Accessing US Census Data"
+                }
+            },
+            {
+                "id": 401,
+                "title": "Mission 4.2: USA - Isolate Decade Data",
+                "description": "Expand the temporal scope to retrieve the raw population figures for the entire target decade.\n\n<strong>Objective:</strong> Select the year, urban population, and total population for all years between 2010 and 2020.",
+                "hint": "Keep the SELECT columns from the previous step. Change the filter to cover the range: <code>WHERE census_year BETWEEN 2010 AND 2020</code>.",
+                "difficulty": 2,
+                "points": 60,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Raw population data for the 2010-2020 decade isolated.",
+                "dbAlias": "census_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "census_year", "urban_population", "total_population", "FROM", "US_CensusData", "WHERE", "BETWEEN", "2010", "2020"],
+                     "mustContainColumns": ["census_year", "urban_population", "total_population"],
+                    "expectedRows": 11
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+             {
+                "id": 402,
+                "title": "Mission 4.3: USA - Calculate Decade Percentages",
+                "description": "Calculate the urbanization percentage for each year in the decade.\n\n<strong>Objective:</strong> Retrieve the year and the calculated urban percentage (aliased 'urban_percentage') for each year from 2010 to 2020.",
+                "hint": "Use <code>SELECT census_year, (urban_population * 100.0 / total_population) AS urban_percentage</code>. Apply the decade filter <code>WHERE census_year BETWEEN 2010 AND 2020</code>.",
+                "difficulty": 3,
+                "points": 70,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Urban percentages calculated for the entire 2010-2020 period.",
+                "dbAlias": "census_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "census_year", "urban_population", "total_population", "FROM", "US_CensusData", "WHERE", "BETWEEN", "2010", "2020", "AS", "urban_percentage"],
+                    "mustContainColumns": ["census_year", "urban_percentage"],
+                     "expectedRows": 11
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 403,
+                "title": "Mission 4.4: USA - Order Urban Trend",
+                "description": "Present the calculated percentages chronologically to clearly show the urbanization trend.\n\n<strong>Objective:</strong> List the year and calculated 'urban_percentage' from 2010 to 2020, ordered by year ascending.",
+                "hint": "Add <code>ORDER BY census_year ASC</code> to the query from the previous step.",
+                "difficulty": 3,
+                "points": 70,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Urbanization trend data ordered chronologically (2010-2020).",
+                "dbAlias": "census_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "census_year", "urban_population", "total_population", "FROM", "US_CensusData", "WHERE", "BETWEEN", "2010", "2020", "AS", "urban_percentage", "ORDER", "BY", "ASC"],
+                    "mustContainColumns": ["census_year", "urban_percentage"],
+                    "checkOrder": { "column": "census_year", "direction": "ASC" },
+                    "expectedRows": 11
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 404,
+                "title": "Mission 4.5: USA - Compile Full Report Data",
+                "description": "Assemble the complete data needed for the Council's report: year, raw populations, and the calculated percentage.\n\n<strong>Objective:</strong> Provide a report showing year, urban population, total population, and urban percentage (aliased) for 2010-2020, ordered chronologically.",
+                "hint": "Combine the selection of raw columns and the calculation: <code>SELECT census_year, urban_population, total_population, (formula...) AS urban_percentage</code>. Keep the <code>WHERE ... BETWEEN</code> and <code>ORDER BY census_year ASC</code> clauses.",
+                "difficulty": 4,
+                "points": 80,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Comprehensive US urbanization report data compiled (2010-2020). Ready for transmission.",
+                "dbAlias": "census_db",
+                "validationCriteria": {
+                     "keywords": ["SELECT", "census_year", "urban_population", "total_population", "FROM", "US_CensusData", "WHERE", "BETWEEN", "2010", "2020", "AS", "urban_percentage", "ORDER", "BY", "ASC"],
+                    "mustContainColumns": ["census_year", "urban_population", "total_population", "urban_percentage"],
+                     "checkOrder": { "column": "census_year", "direction": "ASC" },
+                    "expectedRows": 11
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+             {
+                "id": 405,
+                "title": "Mission 4.6: USA - Identify High Urban Population Years",
+                "description": "As a final check, identify years within the decade where the *raw* urban population exceeded a significant threshold, say 250 million.\n\n<strong>Objective:</strong> List the year and urban population for years between 2010-2020 where the urban population was greater than 250,000,000.",
+                "hint": "Use <code>SELECT census_year, urban_population</code>. Filter with <code>WHERE census_year BETWEEN 2010 AND 2020 AND urban_population > 250000000</code>. Order by year if desired.",
+                "difficulty": 4,
+                "points": 90,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Years exceeding major urban population threshold identified. US Urbanization analysis complete. Council acknowledges receipt.",
+                "dbAlias": "census_db",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "census_year", "urban_population", "FROM", "US_CensusData", "WHERE", "BETWEEN", "2010", "2020", "AND", ">"],
+                    "mustContainColumns": ["census_year", "urban_population"],
+                    "minRows": 1 
+                },
+                 "mapDetails": {
+                    "showOnMap": false
+                }
+            },
+            {
+                "id": 1001,
+                "title": "The Investigation Begins",
+                "description": "Welcome to the alien investigation team. Reports of strange activities have been coming in from around the world. Your first task is to analyze all incident reports that have been classified as 'unexplained'.\n\n<strong>Objective:</strong> Query the alien_incidents table to find all incidents with status='unexplained', ordered by date (most recent first).",
+                "hint": "Use SELECT with WHERE to filter results and ORDER BY to sort them in descending order.",
+                "difficulty": 2,
+                "points": 150,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Excellent work! These unexplained incidents could be signs of alien activity. We'll need to investigate them further.",
+                "dbAlias": "alien_data",
+                "validationCriteria": {
+                    "expectedRows": 5,
+                    "filters": [
+                        {"column": "status", "operator": "=", "value": "unexplained"}
+                    ],
+                    "ordered": true,
+                    "orderColumn": "incident_date",
+                    "orderDirection": "desc",
+                    "keywords": ["SELECT", "WHERE", "ORDER BY"]
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "United States",
+                    "location": [-119.4179, 36.7783],
+                    "description": "Investigation headquarters in California"
+                },
+                "nextMissionId": 1002
+            },
+            {
+                "id": 1002,
+                "title": "Signal Patterns",
+                "description": "Our team has intercepted unusual radio signals that don't match any known human communication patterns. We need to analyze the signal data to look for patterns.\n\n<strong>Objective:</strong> Find all signal intercepts with frequency_range above 10000 MHz and strength rating above 8.",
+                "hint": "Use the WHERE clause with AND to filter by both conditions.",
+                "difficulty": 2,
+                "points": 175,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "We've isolated the most unusual signals! These definitely don't match any known human broadcasting patterns and could be evidence of alien communication.",
+                "dbAlias": "alien_data",
+                "validationCriteria": {
+                    "filters": [
+                        {"column": "frequency_range", "operator": ">", "value": 10000},
+                        {"column": "strength", "operator": ">", "value": 8}
+                    ],
+                    "keywords": ["SELECT", "WHERE", "AND"]
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Australia",
+                    "location": [149.1300, -35.2809],
+                    "description": "Signal monitoring station in Canberra"
+                },
+                "nextMissionId": 1003
+            },
+            {
+                "id": 1003,
+                "title": "Contact Witnesses",
+                "description": "Several witnesses have reported close encounters with what they believe were alien craft. We need to prioritize which witnesses to interview based on the reliability of their reports.\n\n<strong>Objective:</strong> Find all witnesses with credibility_score greater than 7, show their name, location, and contact information.",
+                "hint": "SELECT only the specific columns you need and use a WHERE clause to filter by credibility_score.",
+                "difficulty": 3,
+                "points": 200,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Perfect! These witnesses have the highest credibility scores and should be our priority for interviews. We'll arrange the meetings immediately.",
+                "dbAlias": "alien_data",
+                "validationCriteria": {
+                    "filters": [
+                        {"column": "credibility_score", "operator": ">", "value": 7}
+                    ],
+                    "mustContainColumns": ["name", "location", "contact"],
+                    "keywords": ["SELECT", "WHERE"]
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Mexico",
+                    "location": [-99.1332, 19.4326],
+                    "description": "Witness coordination center in Mexico City"
+                },
+                "nextMissionId": 1004
+            },
+            {
+                "id": 1004,
+                "title": "Evidence Analysis",
+                "description": "Physical evidence has been collected from various incident sites. We need to identify the most unusual samples for further laboratory analysis.\n\n<strong>Objective:</strong> Query the evidence_samples table to find all items categorized as either 'unknown material' or 'energy residue', sorted by their anomaly_level in descending order.",
+                "hint": "Use the IN operator to match multiple possible values, and ORDER BY to sort the results.",
+                "difficulty": 3,
+                "points": 225,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Great work! These samples show the strongest anomalies and will be sent to our advanced research facility for detailed analysis.",
+                "dbAlias": "alien_data",
+                "validationCriteria": {
+                    "filters": [
+                        {"column": "category", "operator": "IN", "value": ["unknown material", "energy residue"]}
+                    ],
+                    "ordered": true,
+                    "orderColumn": "anomaly_level",
+                    "orderDirection": "desc",
+                    "keywords": ["SELECT", "WHERE", "IN", "ORDER BY"]
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Germany",
+                    "location": [13.4050, 52.5200],
+                    "description": "Evidence analysis lab in Berlin"
+                },
+                "nextMissionId": 1005
+            },
+            {
+                "id": 1005,
+                "title": "The Visitation Site",
+                "description": "A major event has been reported in a remote forest area. Multiple witnesses described an unusual craft landing and strange beings emerging. We need to analyze all data related to this site.\n\n<strong>Objective:</strong> Join the incidents and evidence_samples tables to find all evidence collected at incident 'VS-2023-07-15', showing incident details and evidence details together.",
+                "hint": "Use JOIN to connect the two tables based on the incident_id field.",
+                "difficulty": 4,
+                "points": 300,
+                "timeLimit": 420,
+                "timerEnabled": false,
+                "successMessage": "Incredible work! You've connected all the evidence from this significant visitation site. This comprehensive view will help us understand what really happened there.",
+                "dbAlias": "alien_data",
+                "validationCriteria": {
+                    "joinTables": ["incidents", "evidence_samples"],
+                    "joinType": "inner",
+                    "joinColumns": {"incidents": "id", "evidence_samples": "incident_id"},
+                    "filters": [
+                        {"column": "incidents.code", "operator": "=", "value": "VS-2023-07-15"}
+                    ],
+                    "keywords": ["SELECT", "JOIN", "ON", "WHERE"]
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Brazil",
+                    "location": [-47.9292, -15.7801],
+                    "description": "Visitation site near Brasília"
+                }
+            }
+        ]
+    },
+    "alien_incidents": {
+        "columns": {
+            "id": "INT PRIMARY KEY",
+            "code": "STRING",
+            "location": "STRING",
+            "incident_date": "DATE",
+            "description": "STRING",
+            "witnesses": "INT",
+            "status": "STRING"
+        },
+        "data": [
+            {
+                "id": 1,
+                "code": "VS-2023-07-15",
+                "location": "Forest near Brasília, Brazil",
+                "incident_date": "2023-07-15",
+                "description": "Multiple witnesses reported a large disc-shaped craft landing in a clearing, with humanoid figures emerging",
+                "witnesses": 7,
+                "status": "unexplained"
+            },
+            {
+                "id": 2,
+                "code": "LT-2023-06-22",
+                "location": "Desert outside Phoenix, Arizona",
+                "incident_date": "2023-06-22",
+                "description": "Strange lights hovering in formation, changing direction instantly",
+                "witnesses": 12,
+                "status": "unexplained"
+            },
+            {
+                "id": 3,
+                "code": "CR-2023-05-10",
+                "location": "Farm in Yorkshire, England",
+                "incident_date": "2023-05-10",
+                "description": "Complex geometric crop pattern appeared overnight, plants bent but not broken",
+                "witnesses": 2,
+                "status": "unexplained"
+            },
+            {
+                "id": 4,
+                "code": "BL-2023-08-03",
+                "location": "Lake Michigan shoreline",
+                "incident_date": "2023-08-03",
+                "description": "Large object emerged from water, hovered briefly, then accelerated vertically",
+                "witnesses": 5,
+                "status": "unexplained"
+            },
+            {
+                "id": 5,
+                "code": "MT-2023-04-18",
+                "location": "Mountains near Nagano, Japan",
+                "incident_date": "2023-04-18",
+                "description": "Hikers reported time distortion and missing two hours after seeing unusual object",
+                "witnesses": 3,
+                "status": "unexplained"
+            },
+            {
+                "id": 6,
+                "code": "WT-2023-03-05",
+                "location": "Coast of Portugal",
+                "incident_date": "2023-03-05",
+                "description": "Unusual weather patterns and electromagnetic disturbances",
+                "witnesses": 0,
+                "status": "explained"
+            }
+        ]
+    },
+    "signal_intercepts": {
+        "columns": {
+            "id": "INT PRIMARY KEY",
+            "intercept_date": "DATE",
+            "location": "STRING",
+            "frequency_range": "INT",
+            "duration_seconds": "INT",
+            "pattern_type": "STRING",
+            "strength": "INT"
+        },
+        "data": [
+            {
+                "id": 101,
+                "intercept_date": "2023-07-20",
+                "location": "Canberra Observatory, Australia",
+                "frequency_range": 12500,
+                "duration_seconds": 42,
+                "pattern_type": "pulsating",
+                "strength": 9
+            },
+            {
+                "id": 102,
+                "intercept_date": "2023-07-18",
+                "location": "Arecibo, Puerto Rico",
+                "frequency_range": 9800,
+                "duration_seconds": 15,
+                "pattern_type": "continuous",
+                "strength": 7
+            },
+            {
+                "id": 103,
+                "intercept_date": "2023-07-22",
+                "location": "SETI Array, California",
+                "frequency_range": 15200,
+                "duration_seconds": 28,
+                "pattern_type": "mathematical",
+                "strength": 10
+            },
+            {
+                "id": 104,
+                "intercept_date": "2023-07-15",
+                "location": "Green Bank, West Virginia",
+                "frequency_range": 11300,
+                "duration_seconds": 8,
+                "pattern_type": "pulsating",
+                "strength": 6
+            },
+            {
+                "id": 105,
+                "intercept_date": "2023-07-23",
+                "location": "European Southern Observatory, Chile",
+                "frequency_range": 14800,
+                "duration_seconds": 35,
+                "pattern_type": "mathematical",
+                "strength": 9
+            }
+        ]
+    },
+    "witnesses": {
+        "columns": {
+            "id": "INT PRIMARY KEY",
+            "name": "STRING",
+            "location": "STRING",
+            "occupation": "STRING",
+            "incident_id": "INT",
+            "contact": "STRING",
+            "credibility_score": "FLOAT"
+        },
+        "data": [
+            {
+                "id": 201,
+                "name": "Maria Rodriguez",
+                "location": "Brasília, Brazil",
+                "occupation": "Botanist",
+                "incident_id": 1,
+                "contact": "maria.r@research.br",
+                "credibility_score": 8.5
+            },
+            {
+                "id": 202,
+                "name": "John Reynolds",
+                "location": "Phoenix, Arizona",
+                "occupation": "Pilot",
+                "incident_id": 2,
+                "contact": "jreynolds@airmail.com",
+                "credibility_score": 9.2
+            },
+            {
+                "id": 203,
+                "name": "Edward Simmons",
+                "location": "Yorkshire, England",
+                "occupation": "Farmer",
+                "incident_id": 3,
+                "contact": "ed.farm@mail.uk",
+                "credibility_score": 7.8
+            },
+            {
+                "id": 204,
+                "name": "Dr. Sarah Chen",
+                "location": "Chicago, Illinois",
+                "occupation": "Physicist",
+                "incident_id": 4,
+                "contact": "schen@university.edu",
+                "credibility_score": 9.5
+            },
+            {
+                "id": 205,
+                "name": "Takashi Yamamoto",
+                "location": "Nagano, Japan",
+                "occupation": "Mountain Guide",
+                "incident_id": 5,
+                "contact": "yamamoto@tours.jp",
+                "credibility_score": 8.0
+            },
+            {
+                "id": 206,
+                "name": "Lisa Murphy",
+                "location": "Phoenix, Arizona",
+                "occupation": "Astronomer",
+                "incident_id": 2,
+                "contact": "lmurphy@observatory.org",
+                "credibility_score": 9.8
+            },
+            {
+                "id": 207,
+                "name": "Carlos Mendez",
+                "location": "Brasília, Brazil",
+                "occupation": "Forest Ranger",
+                "incident_id": 1,
+                "contact": "cmendez@parks.gov.br",
+                "credibility_score": 8.7
+            }
+        ]
+    },
+    "evidence_samples": {
+        "columns": {
+            "id": "INT PRIMARY KEY",
+            "incident_id": "INT",
+            "sample_code": "STRING",
+            "collection_date": "DATE",
+            "category": "STRING",
+            "description": "STRING",
+            "anomaly_level": "INT"
+        },
+        "data": [
+            {
+                "id": 301,
+                "incident_id": 1,
+                "sample_code": "VS-S01",
+                "collection_date": "2023-07-16",
+                "category": "unknown material",
+                "description": "Metallic fragment with unusual isotopic composition",
+                "anomaly_level": 9
+            },
+            {
+                "id": 302,
+                "incident_id": 1,
+                "sample_code": "VS-S02",
+                "collection_date": "2023-07-16",
+                "category": "soil sample",
+                "description": "Soil from landing site with trace elements not found in surrounding area",
+                "anomaly_level": 7
+            },
+            {
+                "id": 303,
+                "incident_id": 2,
+                "sample_code": "LT-S01",
+                "collection_date": "2023-06-23",
+                "category": "energy residue",
+                "description": "Sand partially vitrified in a pattern consistent with intense heat source",
+                "anomaly_level": 8
+            },
+            {
+                "id": 304,
+                "incident_id": 3,
+                "sample_code": "CR-S01",
+                "collection_date": "2023-05-11",
+                "category": "plant material",
+                "description": "Wheat stalks bent at nodes without breaking, showing cellular changes",
+                "anomaly_level": 6
+            },
+            {
+                "id": 305,
+                "incident_id": 4,
+                "sample_code": "BL-S01",
+                "collection_date": "2023-08-04",
+                "category": "unknown material",
+                "description": "Translucent crystalline substance recovered from shoreline",
+                "anomaly_level": 10
+            },
+            {
+                "id": 306,
+                "incident_id": 1,
+                "sample_code": "VS-S03",
+                "collection_date": "2023-07-17",
+                "category": "energy residue",
+                "description": "Radiation pattern unlike any known terrestrial source",
+                "anomaly_level": 9
+            }
+        ]
+    }
+}

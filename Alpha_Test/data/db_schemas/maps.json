@@ -1,0 +1,199 @@
+{
+    "maps": {
+        "columns": {
+            "id": "NUMBER",
+            "name": "STRING",
+            "type": "STRING",
+            "description": "STRING",
+            "habitable": "BOOLEAN",
+            "diameter_km": "NUMBER",
+            "distance_from_sun_au": "NUMBER"
+        },
+        "data": [
+            {
+                "id": 1,
+                "name": "Earth",
+                "type": "Planet",
+                "description": "Home planet of humans with diverse ecosystems",
+                "habitable": true,
+                "diameter_km": 12742,
+                "distance_from_sun_au": 1.0
+            },
+            {
+                "id": 2,
+                "name": "Mars",
+                "type": "Planet",
+                "description": "Red planet with potential for future colonization",
+                "habitable": false,
+                "diameter_km": 6779,
+                "distance_from_sun_au": 1.5
+            },
+            {
+                "id": 3,
+                "name": "Jupiter",
+                "type": "Gas Giant",
+                "description": "Largest planet in the solar system with a giant storm",
+                "habitable": false,
+                "diameter_km": 139820,
+                "distance_from_sun_au": 5.2
+            },
+            {
+                "id": 4,
+                "name": "Saturn",
+                "type": "Gas Giant",
+                "description": "Known for its impressive ring system",
+                "habitable": false,
+                "diameter_km": 116460,
+                "distance_from_sun_au": 9.5
+            },
+            {
+                "id": 5,
+                "name": "Venus",
+                "type": "Planet",
+                "description": "Hot planet with thick toxic atmosphere",
+                "habitable": false,
+                "diameter_km": 12104,
+                "distance_from_sun_au": 0.7
+            },
+            {
+                "id": 6,
+                "name": "Mercury",
+                "type": "Planet",
+                "description": "Smallest and closest planet to the sun",
+                "habitable": false,
+                "diameter_km": 4879,
+                "distance_from_sun_au": 0.4
+            },
+            {
+                "id": 7,
+                "name": "Neptune",
+                "type": "Ice Giant",
+                "description": "Blue gas giant with strong winds",
+                "habitable": false,
+                "diameter_km": 49244,
+                "distance_from_sun_au": 30.1
+            },
+            {
+                "id": 8,
+                "name": "Uranus",
+                "type": "Ice Giant",
+                "description": "Unique planet that rotates on its side",
+                "habitable": false,
+                "diameter_km": 50724,
+                "distance_from_sun_au": 19.8
+            },
+            {
+                "id": 9,
+                "name": "Pluto",
+                "type": "Dwarf Planet",
+                "description": "Former planet, now classified as a dwarf planet",
+                "habitable": false,
+                "diameter_km": 2377,
+                "distance_from_sun_au": 39.5
+            },
+            {
+                "id": 10,
+                "name": "Kepler-452b",
+                "type": "Exoplanet",
+                "description": "Earth-like exoplanet in the habitable zone of its star",
+                "habitable": true,
+                "diameter_km": 15000,
+                "distance_from_sun_au": null
+            },
+            {
+                "id": 11,
+                "name": "TRAPPIST-1e",
+                "type": "Exoplanet",
+                "description": "Rocky exoplanet that may have liquid water",
+                "habitable": true,
+                "diameter_km": 9200,
+                "distance_from_sun_au": null
+            },
+            {
+                "id": 12,
+                "name": "HD 209458 b",
+                "type": "Hot Jupiter",
+                "description": "Gas giant orbiting very close to its star",
+                "habitable": false,
+                "diameter_km": 154000,
+                "distance_from_sun_au": null
+            }
+        ]
+    },
+    "locationPoints": {
+        "columns": {
+            "id": "NUMBER",
+            "name": "STRING",
+            "latitude": "NUMBER",
+            "longitude": "NUMBER",
+            "description": "STRING",
+            "type": "STRING",
+            "missionId": "NUMBER"
+        },
+        "data": [
+            {
+                "id": 1,
+                "name": "Paris",
+                "latitude": 48.8566,
+                "longitude": 2.3522,
+                "description": "A rare Parisian artifact has been discovered containing information about ancient sustainability practices.",
+                "type": "mission",
+                "missionId": 7
+            },
+            {
+                "id": 2,
+                "name": "London",
+                "latitude": 51.5074,
+                "longitude": -0.1278,
+                "description": "Find valuable resources for interstellar commerce.",
+                "type": "mission",
+                "missionId": 5
+            },
+            {
+                "id": 3,
+                "name": "New York",
+                "latitude": 40.7128,
+                "longitude": -74.0060,
+                "description": "Retrieve planetary data for the Galactic Council.",
+                "type": "mission",
+                "missionId": 4
+            },
+            {
+                "id": 4,
+                "name": "Tokyo",
+                "latitude": 35.6895,
+                "longitude": 139.6917,
+                "description": "Identify alien species with the largest populations to prioritize medical aid.",
+                "type": "mission",
+                "missionId": 6
+            },
+            {
+                "id": 5,
+                "name": "Sydney",
+                "latitude": -33.8688,
+                "longitude": 151.2093,
+                "description": "Find all planets and their corresponding species for scientific analysis.",
+                "type": "mission",
+                "missionId": 8
+            },
+            {
+                "id": 6,
+                "name": "Rio de Janeiro",
+                "latitude": -22.9068,
+                "longitude": -43.1729,
+                "description": "Calculate the total market value of resources for each planet.",
+                "type": "mission",
+                "missionId": 9
+            },
+            {
+                "id": 7,
+                "name": "Paris Tutorial",
+                "latitude": 48.8566,
+                "longitude": 2.3522,
+                "description": "Welcome to your first field mission. Activate this mission to continue your tutorial.",
+                "type": "tutorial",
+                "missionId": 3
+            }
+        ]
+    }
+}
