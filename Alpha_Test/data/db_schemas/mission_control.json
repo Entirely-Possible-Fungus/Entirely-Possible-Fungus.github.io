@@ -1,0 +1,333 @@
+{
+    "missions": {
+        "columns": {
+            "id": "INT PRIMARY KEY",
+            "title": "STRING",
+            "description": "STRING",
+            "hint": "STRING",
+            "difficulty": "INT",
+            "points": "INT",
+            "timeLimit": "INT",
+            "timerEnabled": "BOOLEAN",
+            "successMessage": "STRING",
+            "dbAlias": "STRING",
+            "validationCriteria": "JSON",
+            "mapDetails": "JSON",
+            "nextMissionId": "INT",
+            "submissions": "JSON"
+        },
+        "data": [
+            {
+                "id": 0,
+                "title": "Tutorial: Mount Database",
+                "description": "Welcome to Pixel SQL Adventure!\n\n<strong>Let's start with the basics:</strong>\n\n1. Click the <strong>DB REGISTRY</strong> button at the top of the screen\n\n2. In the registry, find and click the <strong>MOUNT</strong> button next to the <strong>mission_control</strong> database\n\n3. Close the DB Registry panel by clicking the ✕\n\n<strong>This will mount the missions database so you can access it.</strong>\n\nOnce mounted, you'll be able to complete this mission!",
+                "hint": "Click the DB REGISTRY button, find mission_control, click MOUNT, then close the registry panel.",
+                "difficulty": 1,
+                "points": 25,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Excellent! You've mounted your first database. Now you can access the mission_control database and continue your adventure!",
+                "dbAlias": "mission_control",
+                "validationCriteria": {
+                    "databaseMounted": true,
+                    "requiredDatabase": "mission_control"
+                },
+                "mapDetails": {
+                    "showOnMap": false
+                },
+                "nextMissionId": 1,
+                "submissions": [
+                    {
+                        "title": "Step 1: Mount the Database",
+                        "description": "Welcome to Pixel SQL Adventure!\n\n<strong>Let's start with the basics:</strong>\n\n1. Click the <strong>DB REGISTRY</strong> button at the top of the screen\n\n2. In the registry, find and click the <strong>MOUNT</strong> button next to the <strong>mission_control</strong> database\n\n3. Close the DB Registry panel by clicking the ✕\n\n<strong>This will mount the missions database so you can access it.</strong>",
+                        "hint": "Click the DB REGISTRY button, find mission_control, click MOUNT, then close the registry panel.",
+                        "successMessage": "Great job! You've mounted your first database. Now let's learn how to query it.",
+                        "validationCriteria": { 
+                            "databaseMounted": true, 
+                            "requiredDatabase": "mission_control" 
+                        }
+                    },
+                    {
+                        "title": "Step 2: Run Your First Query",
+                        "description": "Now that you've mounted the database, let's run your first SQL query!\n\n<strong>SQL Console:</strong> This is the text area at the bottom of the screen where you'll write and execute SQL queries.\n\n<strong>Try running your first query:</strong>\n\n<code class='pixel-inline-code'>SELECT * FROM missions;</code>\n\nThis will show you all the available missions in the database. The results will appear in the Query Results area.",
+                        "hint": "Type <code>SELECT * FROM missions;</code> in the SQL console and click the Execute button to see all the missions.",
+                        "solution": "SELECT * FROM missions;",
+                        "successMessage": "Excellent! You've run your first SQL query and can now see all available missions in the database.",
+                        "validationCriteria": {
+                            "expectedRows": 11,
+                            "mustContainColumns": ["id", "title"],
+                            "keywords": ["SELECT", "missions"]
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 1,
+                "title": "Tutorial: First Query",
+                "description": "Now that you've mounted the mission_control database, let's run your first SQL query!\n\n<strong>SQL Console:</strong> This is where you'll write and execute SQL queries\n\n<strong>Try running your first query:</strong>\n\n<code class='pixel-inline-code'>SELECT * FROM missions;</code>\n\n<strong>SQL Explanation:</strong>\n<ul>\n<li><code>SELECT *</code> - Retrieves all columns from the table (the asterisk is a wildcard meaning \"select everything\")</li>\n<li><code>FROM missions</code> - Specifies which table to get data from</li>\n<li><code>;</code> - Marks the end of the SQL statement</li>\n</ul>\n\nThis will show you all the available missions in the database. The results will appear in the Results Area below.", 
+                "hint": "Type <code>SELECT * FROM missions;</code> in the SQL console and click Execute to see all the missions.",
+                "difficulty": 1,
+                "points": 25,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Great job! You've run your first SQL query and can now see all available missions in the database.",
+                "dbAlias": "mission_control",
+                "validationCriteria": {
+                    "expectedRows": 11,
+                    "mustContainColumns": ["id", "title"],
+                    "keywords": ["SELECT", "missions"]
+                },
+                "mapDetails": {
+                    "showOnMap": false
+                },
+                "nextMissionId": 2
+            },
+            {
+                "id": 2,
+                "title": "Tutorial: Explore Planets",
+                "description": "Now let's explore some planetary data. First, we need to mount another database.\n\n1. Click the <strong>DB REGISTRY</strong> button at the top\n\n2. Find the <strong>galaxy1</strong> database and click <strong>MOUNT</strong>\n\n3. Close the DB Registry panel\n\n4. Try running: <code class='pixel-inline-code'>SELECT * FROM planets;</code>\n\nThis will show information about all planets in our database.",
+                "hint": "First mount the galaxy1 database, then run <code>SELECT * FROM planets;</code> to see information about all planets.",
+                "difficulty": 1,
+                "points": 25,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Excellent! You've mounted the galaxy1 database and retrieved data from the planets table.",
+                "dbAlias": "galaxy1",
+                "validationCriteria": {
+                    "expectedRows": 5,
+                    "mustContainColumns": ["name", "type"],
+                    "keywords": ["SELECT", "planets"]
+                },
+                "mapDetails": {
+                    "showOnMap": false
+                },
+                "nextMissionId": 3,
+                "submissions": [
+                    {
+                        "title": "Step 1: Mount the Galaxy Database",
+                        "description": "Now let's explore some planetary data. First, we need to mount another database.\n\n1. Click the <strong>DB REGISTRY</strong> button at the top\n\n2. Find the <strong>galaxy1</strong> database and click <strong>MOUNT</strong>\n\n3. Close the DB Registry panel",
+                        "hint": "Click the DB REGISTRY button, find galaxy1, click MOUNT, then close the registry panel.",
+                        "successMessage": "Great job! You've mounted the galaxy database. Now let's query it.",
+                        "validationCriteria": { 
+                            "databaseMounted": true, 
+                            "requiredDatabase": "galaxy1" 
+                        }
+                    },
+                    {
+                        "title": "Step 2: Query Planet Information",
+                        "description": "Now that you've mounted the galaxy1 database, let's explore the planets table.\n\n<strong>Try running this query:</strong>\n\n<code class='pixel-inline-code'>SELECT * FROM planets;</code>\n\nThis will show information about all planets in our database.",
+                        "hint": "Type <code>SELECT * FROM planets;</code> in the SQL console and click the Execute button to see all planets.",
+                        "solution": "SELECT * FROM planets;",
+                        "successMessage": "Excellent! You've successfully queried the planets table and can see all the planetary data.",
+                        "validationCriteria": {
+                            "expectedRows": 5,
+                            "mustContainColumns": ["name", "type"],
+                            "keywords": ["SELECT", "planets"]
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 3,
+                "title": "Tutorial: Interactive Map",
+                "description": "Great job running your first query! Now let's explore the interactive map feature.\n\n<strong>Our database contains planetary data, but we need geographical information to use the map.</strong>\n\n1. First, click the <strong>DB REGISTRY</strong> button at the top\n\n2. Find the <strong>maps</strong> database and click <strong>MOUNT</strong>\n\n3. Close the DB Registry panel\n\n4. Try running: <code class='pixel-inline-code'>SELECT earth FROM maps;</code>\n\nThis will open our interactive map interface.",
+                "hint": "The command <code>SELECT earth FROM maps;</code> will open the map. Make sure the 'maps' database is mounted first.",
+                "difficulty": 1,
+                "points": 25,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "You've successfully opened the interactive map! This will be crucial for finding and activating missions.",
+                "dbAlias": "maps",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "earth", "maps"]
+                },
+                "mapDetails": {
+                    "showOnMap": false
+                },
+                "nextMissionId": 4
+            },
+            {
+                "id": 4,
+                "title": "Tutorial: Mission Database",
+                "description": "Now that you can access the map, let's load our <strong>mission database</strong> to see available missions.\n\n1. Click the <strong>DB REGISTRY</strong> button again\n\n2. Find and mount the <strong>mission_control</strong> database\n\n3. Close the DB Registry and run:\n\n<code class='pixel-inline-code'>SELECT * FROM missions;</code>\n\nThis will show all available missions. You can click on any mission row to load it.",
+                "hint": "First mount the 'mission_control' database, then run <code>SELECT * FROM missions;</code> to see all available missions.",
+                "difficulty": 1,
+                "points": 25,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Perfect! Now you can see and select from all available missions in the system.",
+                "dbAlias": "mission_control",
+                "validationCriteria": {
+                    "mustContainColumns": ["id", "title", "difficulty"],
+                    "keywords": ["SELECT", "missions"]
+                },
+                "mapDetails": {
+                    "showOnMap": false
+                },
+                "nextMissionId": 5
+            },
+            {
+                "id": 5,
+                "title": "Mission: First Contact",
+                "description": "The Galactic Council needs information about the planets in the Proxima system.\n\n<strong>Objective:</strong> Retrieve a list of all planets, ordered by their distance from the sun.",
+                "hint": "Use SELECT to retrieve data, and ORDER BY to arrange the results.<br>Example: SELECT * FROM table_name ORDER BY column_name;",
+                "difficulty": 1,
+                "points": 100,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Excellent work, SQL Knight! You've successfully retrieved the planetary data for the Galactic Council.",
+                "dbAlias": "galaxy1",
+                "validationCriteria": {
+                    "expectedRows": 5,
+                    "ordered": true,
+                    "orderColumn": "distance_from_sun",
+                    "orderDirection": "asc",
+                    "firstRowCheck": {"column": "name", "value": "Volcanus"},
+                    "lastRowCheck": {"column": "name", "value": "Novaria"}
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "United States",
+                    "location": [-74.0060, 40.7128],
+                    "description": "First Contact mission in New York"
+                },
+                "nextMissionId": 6
+            },
+            {
+                "id": 6,
+                "title": "Mission: Resource Discovery",
+                "description": "The Galactic Trading Federation needs to know which resources are most valuable for interstellar commerce.\n\n<strong>Objective:</strong> Find all resources with a market value greater than 5000, ordered by value (highest first).",
+                "hint": "Use WHERE to filter results and ORDER BY with DESC to sort in descending order.<br>Example: SELECT * FROM table_name WHERE column_name > value ORDER BY column_name DESC;",
+                "difficulty": 2,
+                "points": 150,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Outstanding work! The Galactic Trading Federation can now prioritize the most valuable resources for their commercial routes.",
+                "dbAlias": "galaxy1",
+                "validationCriteria": {
+                    "expectedRows": 4,
+                    "filters": [
+                        {"column": "market_value", "operator": ">", "value": 5000}
+                    ],
+                    "ordered": true,
+                    "orderColumn": "market_value",
+                    "orderDirection": "desc",
+                    "firstRowCheck": {"column": "name", "value": "Quantium"}
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "United Kingdom",
+                    "location": [-0.1278, 51.5074],
+                    "description": "Resource Discovery mission in London"
+                },
+                "nextMissionId": 7
+            },
+            {
+                "id": 7,
+                "title": "Mission: Population Census",
+                "description": "The Interstellar Health Organization needs to identify which alien species have the largest populations to prioritize medical aid.\n\n<strong>Objective:</strong> Find all species with a population greater than 3 million, ordered by intelligence level.",
+                "hint": "Combine WHERE and ORDER BY to filter and sort the results.<br>Example: SELECT * FROM table_name WHERE column_name > value ORDER BY other_column;",
+                "difficulty": 2,
+                "points": 200,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Well done! The Interstellar Health Organization can now allocate medical resources effectively based on population and intelligence levels.",
+                "dbAlias": "galaxy1",
+                "validationCriteria": {
+                    "expectedRows": 3,
+                    "filters": [
+                        {"column": "population", "operator": ">", "value": 3000000}
+                    ],
+                    "ordered": true,
+                    "orderColumn": "intelligence_level",
+                    "orderDirection": "asc"
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Japan",
+                    "location": [139.6917, 35.6895],
+                    "description": "Population Census mission in Tokyo"
+                },
+                "nextMissionId": 8
+            },
+            {
+                "id": 8,
+                "title": "Paris With Love",
+                "description": "A rare Parisian artifact has been discovered containing information about ancient sustainability practices.\n\n<strong>Objective:</strong> Query the artifact database to find sustainability techniques ordered by efficiency rating.",
+                "hint": "This is a basic query. Use SELECT and ORDER BY to get the sustainability techniques ordered properly.<br>Example: SELECT * FROM techniques ORDER BY efficiency_rating DESC;",
+                "difficulty": 3,
+                "points": 200,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Magnifique! You've unlocked ancient sustainability knowledge that will help modern Paris become more eco-friendly.",
+                "dbAlias": "galaxy1",
+                "validationCriteria": {
+                    "expectedRows": 4,
+                    "ordered": true,
+                    "orderColumn": "efficiency_rating",
+                    "orderDirection": "desc",
+                    "keywords": ["SELECT", "ORDER BY"]
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "France",
+                    "location": [2.3522, 48.8566],
+                    "description": "Active mission in Paris"
+                },
+                "nextMissionId": 9
+            },
+            {
+                "id": 9,
+                "title": "Mission: Planetary Relations",
+                "description": "Scientists need to understand the relationship between planets and their native species.\n\n<strong>Objective:</strong> Find all planets and their corresponding species, including planets without any species.",
+                "hint": "Use JOIN operations to combine data from multiple tables.<br>Example: SELECT * FROM table1 LEFT JOIN table2 ON table1.id = table2.foreign_id;",
+                "difficulty": 3,
+                "points": 250,
+                "timeLimit": 420,
+                "timerEnabled": false,
+                "successMessage": "Excellent analysis! The scientists now have a complete picture of planetary habitation patterns.",
+                "dbAlias": "galaxy1",
+                "validationCriteria": {
+                    "expectedRows": 5,
+                    "joinTables": ["planets", "species"],
+                    "joinType": "left",
+                    "joinColumns": {"planets": "id", "species": "home_planet_id"}
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Australia",
+                    "location": [151.2093, -33.8688],
+                    "description": "Planetary Relations mission in Sydney"
+                },
+                "nextMissionId": 10
+            },
+            {
+                "id": 10,
+                "title": "Mission: Resource Analysis",
+                "description": "The Galactic Trading Federation needs a summary of resource value by planet.\n\n<strong>Objective:</strong> Calculate the total market value of resources for each planet and order by total value (highest first).",
+                "hint": "Use GROUP BY with aggregate functions to summarize data.<br>Example: SELECT column1, SUM(column2) FROM table GROUP BY column1;",
+                "difficulty": 4,
+                "points": 300,
+                "timeLimit": 480,
+                "timerEnabled": false,
+                "successMessage": "Outstanding work! The Federation now has clear insight into the resource value distribution across planets.",
+                "dbAlias": "galaxy1",
+                "validationCriteria": {
+                    "aggregation": true,
+                    "groupBy": ["planet_id"],
+                    "aggregateFunction": "SUM",
+                    "aggregateColumn": "market_value",
+                    "ordered": true,
+                    "orderColumn": "total_market_value",
+                    "orderDirection": "desc"
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Brazil",
+                    "location": [-43.1729, -22.9068],
+                    "description": "Resource Analysis mission in Rio de Janeiro"
+                }
+            }
+        ]
+    }
+}

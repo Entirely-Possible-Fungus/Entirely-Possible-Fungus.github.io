@@ -7,873 +7,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Style sheet CSS -->
+    <link rel="stylesheet" href="css/crt.css">
+    <link rel="stylesheet" href="css/styles.css"> 
+    <link rel="stylesheet" href="css/db-browser.css">
+
+    <!-- OpenLayers Map Library -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <!-- Google Fonts - Share Tech Mono (for map styling) -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
 
+    <!-- Audio element for button click sound with absolute path -->
+    <audio id="click-sound" preload="auto"></audio>
+
+    <!-- Sound debug indicator style -->
     <style>
-        /* --- Base & Pixel Font --- */
-        body { background-color: #1a1a1a; color: #e0e0e0; font-family: 'Silkscreen', sans-serif; font-size: 15px; line-height: 1.6; margin: 0; padding: 0; font-smooth: never; -webkit-font-smoothing: none; image-rendering: pixelated; image-rendering: crisp-edges; overflow: hidden; }
-        /* --- General Pixel Styles --- */
-        .pixel-h1, .pixel-h2, .pixel-h3 { font-family: inherit; color: #00ffcc; margin-top: 0; margin-bottom: 10px; text-shadow: 2px 2px 0px #0d7377; } .pixel-h1 { font-size: 1.8em; } .pixel-h2 { font-size: 1.4em; } .pixel-h3 { font-size: 1.1em; color: #f0f0f0; text-shadow: 1px 1px 0px #333;} .pixel-border { border: 4px solid #555; box-shadow: 4px 4px 0px #333; } .pixel-btn { font-family: inherit; font-size: 10px; padding: 8px 12px; border: 2px solid #555; background-color: #00ffcc; color: #1a1a1a; cursor: pointer; text-transform: uppercase; box-shadow: 2px 2px 0px #0d7377; transition: background-color 0.1s, box-shadow 0.1s, transform 0.1s; user-select: none; } .pixel-btn:hover { background-color: #33ffee; } .pixel-btn:active { box-shadow: 0px 0px 0px #0d7377; transform: translate(2px, 2px); } .pixel-btn-secondary { background-color: #ff6b6b; box-shadow: 2px 2px 0px #a34242; } .pixel-btn-secondary:hover { background-color: #ff8f8f; } .pixel-btn-secondary:active { box-shadow: 0px 0px 0px #a34242; } .pixel-inline-code { background-color: #444; padding: 2px 4px; border: 1px solid #666; color: #99ff99; }
-        /* --- Layout: Main Container --- */
-        .game-container { display: flex; flex-direction: column; height: 100vh; margin: 10px; background-color: #2b2b2b; }
-        .game-header { padding: 5px 20px; border-bottom: 4px solid #555; text-align: center; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
-        .game-header .pixel-h1 { margin-bottom: 0; margin-top: 5px;}
-        .player-stats { display: flex; gap: 15px; align-items: center; }
-        .stat-item { color: #ffcc00; }
-        .stat-item span { color: #fff; margin-left: 5px; }
+        
 
-        /* --- Layout: Content Area (Results + Map) --- */
-        .content-area { display: flex; flex-grow: 1; overflow: hidden; border-top: 4px solid #555; }
-        .main-content { flex-grow: 1; padding: 15px; overflow-y: auto; border-right: 4px solid #555; background-color: #252525; display: flex; flex-direction: column; }
-        .mission-display { border: 2px solid #444; background-color: #303030; padding: 10px; margin-bottom: 15px; flex-shrink: 0; }
-        .mission-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
-        .mission-header .pixel-h2 { color: #ffcc00; margin-bottom: 0; text-shadow: 1px 1px 0px #806600;}
-        #mission-difficulty { color: #ffcc00; font-size: 1.2em; letter-spacing: 2px; }
-        #mission-description { margin-bottom: 10px; line-height: 1.8; } /* Increased line height for desc */
-        #mission-description strong { color: #00ffcc; }
-        .hint-section { margin-top: 10px; border-top: 1px dotted #555; padding-top: 8px; }
-        .hint-title { cursor: pointer; user-select: none; color: #99ff99; }
-        .hint-title span { display: inline-block; margin-right: 5px; }
-        #hint-content { display: none; margin-top: 5px; padding: 8px; background-color: #2a2a2a; border: 1px solid #444; color: #c0c0c0; line-height: 1.7; }
-        #hint-content code { color: #ff99ff; background: #3a3a3a; padding: 1px 3px;}
-        
-        /* Solution Section */
-        .solution-section { margin-top: 10px; }
-        .solution-title { cursor: pointer; user-select: none; color: #ff99cc; }
-        .solution-title span { display: inline-block; margin-right: 5px; }
-        #solution-content { display: none; margin-top: 5px; padding: 8px; background-color: #2a2a2a; border: 1px solid #444; color: #c0c0c0; line-height: 1.7; }
-        #solution-content code { color: #99ccff; background: #3a3a3a; padding: 1px 3px; display: block; white-space: pre-wrap; margin: 5px 0; }
-
-        .results-area { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-        #query-results { border: 2px solid #444; padding: 0; background-color: #222; min-height: 50px; overflow: auto; flex-grow: 1; }
-        #query-results table { border-collapse: collapse; width: 100%; font-size: 0.9em; table-layout: auto; border: 1px solid #555; } #query-results th, #query-results td { border: 1px solid #555; padding: 4px 6px; text-align: left; white-space: nowrap; } #query-results th { background-color: #444; color: #00ffcc; position: sticky; top: 0; z-index: 1; } #query-results td { color: #d0d0d0; } #query-results .null-value { font-style: italic; color: #888;}
-        .result-status { padding: 5px; margin-top: 5px; border: 1px solid; text-align: center; }
-        .status-success { background-color: #2a4a2a; border-color: #5a8a5a; color: #aaf0aa; }
-        .status-error { background-color: #4d2525; border-color: #a34242; color: #ff8f8f; }
-        #complete-mission-btn { margin-top: 10px; display: none; /* Hidden initially */ } /* Button shown on success */
-        .error { color: #ff6b6b; border: 2px solid #a34242; background-color: #4d2525; padding: 10px; margin-top: 15px; font-weight: bold; display: none; }
-        tr.mission-row { cursor: pointer; } /* Make mission rows look clickable */
-        tr.mission-row:hover td { background-color: #404040 !important; } /* Highlight on hover */
-        td.difficulty-stars { color: #ffcc00; letter-spacing: 1px; }
-
-        /* --- DB Map Visualizer Area (Right Side) - PIXEL STYLED --- */
-        #db-map-container { flex-shrink: 0; width: 40%; max-width: 450px; position: relative; background-color: #2b2b2b; border-left: 4px solid #555; overflow: hidden; font-family: inherit; font-size: 10px; color: #e0e0e0; padding: 10px; box-sizing: border-box; transition: width 0.3s ease, padding 0.3s ease; }
-        #db-map-container.collapsed { width: 30px; padding: 10px 0; cursor: pointer; } /* Collapsed state */
-        #db-map-container.collapsed #map-canvas { display: none; } /* Hide canvas when collapsed */
-        #map-canvas { width: 100%; height: 100%; position: relative; }
-        /* --- DB Map Table/Column Styles - PIXEL STYLED --- */
-        .db-table-vis { position: absolute; border: 2px solid #666; background-color: #3a3a3a; padding: 6px; border-radius: 0; font-size: inherit; min-width: 120px; transition: border-color 0.3s, box-shadow 0.3s; box-shadow: 3px 3px 0px #1a1a1a; z-index: 10; cursor: grab; color: #e0e0e0; } .db-table-vis:active { cursor: grabbing; } .table-header-vis { font-weight: normal; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #555; display: flex; justify-content: space-between; align-items: center; user-select: none; color: #ffcc00; font-size: inherit; text-shadow: 1px 1px 0px #806600; } .table-sequence-number { display: inline-block; background-color: #00ffcc; color: #1a1a1a; border-radius: 0; width: 14px; height: 14px; font-size: 0.8em; text-align: center; line-height: 14px; margin-left: 4px; opacity: 0; transition: opacity 0.3s; user-select: none; border: 1px solid #0d7377; } .column-list-vis { list-style: none; padding: 0; margin: 0; user-select: none; } .column-item-vis { padding: 1px 3px; border-bottom: 1px dotted #555; transition: background-color 0.3s, font-weight 0.3s; white-space: nowrap; user-select: none; position: relative; margin: 1px 0; color: #c0c0c0; } .column-item-vis:last-child { border-bottom: none; } .highlight-table { border-color: #00ffcc; box-shadow: 0 0 8px rgba(0, 255, 204, 0.4), 3px 3px 0px #0d7377; } .highlight-table .table-sequence-number { opacity: 1; } .highlight-column { background-color: rgba(0, 255, 204, 0.15); font-weight: normal; color: #ffffff; }
-        /* --- DB Map SVG Line/Arrow Styles --- */
-        #line-svg-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; } .join-line-vis { stroke: #888; stroke-width: 1.5; opacity: 0; transition: opacity 0.5s, stroke 0.3s, stroke-width 0.3s; marker-end: url(#arrowhead-inactive); stroke-dasharray: none; } .join-line-vis.active { opacity: 1; stroke: #00ffcc; stroke-width: 2; marker-end: url(#arrowhead-active-cyan); stroke-dasharray: 3, 3; } #arrowhead-active-cyan path { stroke: none; fill: #00ffcc; } #arrowhead-inactive path { stroke: none; fill: #888; }
-        /* --- Hovering SQL Console Window (Simplified) --- */
-        .sql-console-window { position: fixed; bottom: 15px; left: 15px; width: 370px; background-color: #3a3a3a; border: 4px solid #555; box-shadow: 6px 6px 0px #1a1a1a; padding: 0; display: flex; flex-direction: column; z-index: 100; font-family: inherit; font-size: 10px; color: #e0e0e0; } .console-header { padding: 6px 10px; background-color: #4a4a4a; border-bottom: 2px solid #555; cursor: grab; user-select: none; flex-shrink: 0; } .console-header .pixel-h2 { font-size: 1.1em; margin: 0; color: #ffcc00; text-shadow: 1px 1px 0px #806600;} .sql-console-window:active .console-header { cursor: grabbing; } .sql-controls { padding: 10px; flex-shrink: 0; } textarea#sql-input { width: calc(100% - 10px); background-color: #1e1e1e; border: 2px solid #555; color: #f0f0f0; font-family: inherit; font-size: 10px; padding: 5px; margin-bottom: 10px; resize: none; box-shadow: inset 2px 2px 0px #000; height: 80px; line-height: 1.5; } .button-group { display: flex; gap: 10px; }
-
-        /* --- Mission Completion Popup --- */
-        #mission-complete {
-            display: none; /* Hidden by default */
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 400px; background-color: #3a3a3a; border: 4px solid #555;
-            box-shadow: 8px 8px 0px #1a1a1a; z-index: 200; padding: 20px;
-            text-align: center;
-        }
-        #mission-complete .pixel-h2 { color: #ffcc00; }
-        .mission-complete-description { margin: 15px 0; line-height: 1.8; }
-
-         /* Panel Toggle Button */
-         #toggle-map-btn {
-             position: absolute; top: 5px; right: 5px; /* Position inside map container */
-             z-index: 15; /* Above map content */
-             padding: 3px 6px; font-size: 0.9em; min-width: auto; /* Smaller button */
-         }
-         #db-map-container.collapsed #toggle-map-btn {
-             /* Adjust position or style when collapsed if needed */
-             writing-mode: vertical-rl; /* Vertical text when collapsed */
-              top: 10px; left: 5px; right: auto;
-         }
-
-        /* --- CRT Monitor Effect --- */
-        .crt-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* Allow clicking through the overlay */
-            z-index: 9999;
-            mix-blend-mode: overlay;
-            background: radial-gradient(ellipse at center, rgba(244, 239, 239, 0) 0%, rgba(183, 198, 231, 0.645) 80%, rgb(75, 101, 108) 100%);
-            overflow: hidden;
-        }
-        
-        /* Scanline effect */
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9998;
-            background: linear-gradient(
-                to bottom,
-                rgba(0,0,0,0) 50%,
-                rgba(0,0,0,0.3) 50%
-            );
-            background-size: 100% 4px;
-            opacity: 0.3;
-        }
-        
-        /* Monitor frame */
-        .monitor-frame {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9997;
-            box-shadow: 
-                inset 0 0 100px rgba(0,180,180,0.2),
-                inset 0 0 40px rgba(0,120,120,0.4),
-                0 0 8px rgba(0,255,235,0.5);
-            border: 9px solid #979797;
-            border-radius: 30px;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-        
-        /* Color distortion */
-        .color-distortion {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9996;
-            opacity: 0.08;
-            background: linear-gradient(90deg, 
-                rgba(255,0,0,1) 0%, 
-                rgba(0,255,0,1) 33%, 
-                rgba(0,0,255,1) 66%
-            );
-            mix-blend-mode: color;
-        }
-        
-        /* Glitch effect animation */
-        @keyframes glitch {
-            0% {
-                transform: translate(0);
-                opacity: 0;
-            }
-            1% {
-                transform: translate(-3px, 2px);
-                opacity: 0.3;
-            }
-            2% {
-                transform: translate(3px, -2px);
-                opacity: 0.3;
-            }
-            3% {
-                transform: translate(0);
-                opacity: 0;
-            }
-            100% {
-                transform: translate(0);
-                opacity: 0;
-            }
-        }
-        
-        .glitch {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9995;
-            background: rgba(0,255,255,0.2);
-            mix-blend-mode: overlay;
-            animation: glitch 8s infinite;
-        }
-        
-        /* Vignette effect */
-        .vignette {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9994;
-            box-shadow: inset 0 0 150px rgba(0,0,0,0.7);
-            mix-blend-mode: multiply;
-        }
-        
-        /* Slight screen flicker animation */
-        @keyframes flicker {
-            0% { opacity: 1.0; }
-            3% { opacity: 0.8; }
-            6% { opacity: 1.0; }
-            7% { opacity: 0.9; }
-            9% { opacity: 1.0; }
-            30% { opacity: 1.0; }
-            33% { opacity: 0.9; }
-            35% { opacity: 1.0; }
-            70% { opacity: 1.0; }
-            72% { opacity: 0.95; }
-            74% { opacity: 1.0; }
-            100% { opacity: 1.0; }
-        }
-        
-        .flicker {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9993;
-            animation: flicker 10s infinite;
-            background: transparent;
-        }
-        
-        /* Pixelated noise animation */
-        @keyframes noise {
-            0% { background-position: 0 0; }
-            100% { background-position: 100% 100%; }
-        }
-        
-        .noise {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9992;
-            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAF7klEQVR4nO2dW29cRRCFz57EjmMnEAgKiiAIQbyheIKH8P//B0RC4iIhgQSJC3EgJiFx7L3DrF1dXV0zZ9buck6VRqv17B5P1+nuqq6uLrsAJpPJYh/ioKqqINjrj4qeh8GruvfRsGp6MQSP6t5H1r9Z/gadPACP6HELfAM/88Jt0HWhj8P2nq5not8K87RgU3W5jjZU8OpC9d/DVBoXnWmQnYCb+IG+B+5CPNLj++AE3ATPwR3wLrgFtsEtibkBroMNsAY2JWZd/9ZBk8QNiVmXuDWwJjHruk8fa9JWraMfNeZxsUMSblkonoN9sAt2wDNwAP4CT8FT8AT8AfZg7/sV9v4/Se/71NqnrZ9dafMpbPvU9gn6+UzanqGf9PRcQz8toa8a+joTnYMp7HOkn3Pg+AfKwcpF9GvB12D3vYvWuNaaxrbWnGpbco6srYK8kYs5ImantWl6PlsvgvQ4Tn09E5j0rqAvIRrT4zqE+NIjBprxNcPXpmcNc+9j8KfHywcxZsA3OIcQCookSE+i+8N4RAc3MP89XNao1ppfQ6+3GruE5DAPcogkeFjlZl0UsT2PU0aKGLW+H8a9Ed4eL4pPGiLXSGDOYXwSxCKSUFpXJGLk+rpe41rzBO9hYS6WIR4JhRAZezxBMib1GukRQ5oPdMghTAuLXCzUdUVkVCTislzPJCLDfO9J8JIwQrlYZv/GQiRZkiDvMhliXENGza1q9za5WDh3zV24xXwLFN0dlwWHSEKDeRJSuwbX5Gal+UJqXVGDvMrFImbUWE+fK/tcLDqGGZl72hAI/SQkiotmb1xDRu0xSRiVi7U9nN14LpZYzA+eQ5rdzpIkJEYJ866CXKtuPSTUsrbeObRzkynW3Mxde9SYIPePfZKQwgJxi3urTdX7isl3WeYuHK5DzpmmWHxu1hd79+Aq5WLM60qAuVgk9UeYc3mokGMWpKgYNOHDyyAXC+HnlqflYoybW1TvMkXhlctDYiNJCLGJZXgbmf2tmouVlBGF3Ky7rEhZu1guFrLr91UNk9C4NhGLBeViK+m6LIksJrmsZd0gHsXUemmRmo9IEkJsYhk+xs+NfZNhfHdHX0TFsC+2OBdLwl0WiQOKWDKKG/IK95BhZKFhyhbv2VoXoFxMuCzENpvfGe0PGCZXjeNbsyS8TS4WwrOGWWS2tW9DZCLzZ8Ob1jwFCW9KLubeqZAESUKMXrSNPK+Jmaw/FyPJvWsuFib3g9rqelvRxchHfGTO0UFd1xDmYuTLhjEXe9XA+xaTGAsAr0nCUHKxGWJk5J0sJmGNEnLh5eZiJdUXDeNmqe9lfQ365tLcMGVLwloXdF0WJSGCXEauy2q3SfKwnHWB8rIwf5OSizHrkmUDfJEKSo9UIS2pbCEJJqZsaV1guZi0Lr+sodvxVl9xrLyB3dLbby+QO7lYDZYONSgl4TI9huVlPkoDOliXBM/EepxWUV0SLDql7JB9ymrcOmlRPMVjH7d8vH2OGFN2a1u3hIEXSYglIZmjHRklBtbKrCuAECTrcu9UmITBtfxGOU2SLUmMNwEMS8AhNw7vwn4OFXpZQ8vFGJfVaYqBNUnwcjFvTV6OhIHnYuf+dB3ufas+uRiTimVJgM2DekmIrTPTunzt8m61n1e4xyydVnXLvigyasquEjCZP1iXNYwIkYMZDKzcgrAvoZdu1isbXl4Ga9QrggC99Ug5EnoozMVcv5WEKAhmXdnCMInVXlcpFmLlJKyqGw0uFQJYhRukxTX8M7WLgSRhBH1J6IdwN1opCQXt+EloxuBOHVCIvGaYIauShCFs0V0MxTbe3eRpyMWm6Gfe3vtmzRSScA9jEkYjIRcXUdlcuXDRrLoOQUKAKVwSLoaE5rXBj+Z1yCThMkjwxixRpr70yJEw7F0eWBg8CUuSkGDhoo/mdfkXqC4QCTW6v2qJvyRcjN3/LoSSwCCmUriGnB4luVht3CGrB0fCRIsVS0IkxmVqwhQk1C/2ysU63z7HElwmCS4JcULW5QKS0P5glXiSUERCsNRIQlOVrVjmzUk1T8JQpSnRRz6n4Zr4n6f54G/S9ccAHqRvgQAAAABJRU5ErkJggg==');
-            background-size: 100px 100px;
-            animation: noise 0.2s infinite;
-            opacity: 0.03;
-        }
-
-        /* Adjust some base colors for better CRT effect */
-        body {
-            background-color: #0a0a0a; 
-        }
-        .game-container {
-            background-color: #1c1c1c;
-            box-shadow: 0 0 20px rgba(0, 255, 235, 0.2);
-        }
-        .pixel-h1, .pixel-h2 {
-            color: #00ffee;
-            text-shadow: 0 0 5px rgba(0, 255, 235, 0.7);
-        }
-        .pixel-btn {
-            background-color: #00dfcc;
-            text-shadow: 0 0 5px rgba(0, 255, 235, 0.5);
-        }
-
-        /* Database Browser Overlay */
-        #db-browser-overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 800px;
-            height: 80%;
-            max-height: 600px;
-            background-color: #2b2b2b;
-            border: 4px solid #555;
-            box-shadow: 10px 10px 0px #1a1a1a;
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            font-family: inherit;
-            color: #e0e0e0;
-        }
-        
-        .db-browser-header {
-            background-color: #3a3a3a;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #555;
-        }
-        
-        .db-browser-header h2 {
-            margin: 0;
-            font-size: 1.4em;
-            color: #ffcc00;
-            text-shadow: 2px 2px 0px #806600;
-        }
-        
-        .db-browser-close {
-            cursor: pointer;
-            font-size: 1.5em;
-            color: #ff6b6b;
-            padding: 0 5px;
-        }
-        
-        .db-browser-content {
-            padding: 15px;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-        
-        .db-browser-filter {
-            padding: 10px 0;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .db-status-indicator {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            background-color: #3a3a3a;
-            padding: 8px 12px;
-            border: 1px solid #555;
-        }
-        
-        .db-status-text {
-            font-size: 0.9em;
-        }
-        
-        .db-browser-items {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 15px;
-        }
-        
-        .db-item {
-            background-color: #3a3a3a;
-            border: 2px solid #555;
-            border-radius: 0;
-            padding: 10px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .db-item-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #555;
-            padding-bottom: 6px;
-        }
-        
-        .db-item-name {
-            color: #00ffcc;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        
-        .db-item-size {
-            color: #999;
-            font-size: 0.8em;
-        }
-        
-        .db-item-description {
-            color: #bbb;
-            font-size: 0.8em;
-            margin-bottom: 10px;
-            flex-grow: 1;
-        }
-        
-        .db-item-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto;
-        }
-        
-        .db-access-level {
-            font-size: 0.7em;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-        
-        .access-level-1 {
-            background-color: #2a4a2a;
-            color: #aaf0aa;
-        }
-        
-        .access-level-2 {
-            background-color: #4a4a2a;
-            color: #f0f0aa;
-        }
-        
-        .access-level-3 {
-            background-color: #4a2a2a;
-            color: #f0aaaa;
-        }
-        
-        .db-item-button {
-            font-family: inherit;
-            font-size: 0.8em;
-            padding: 3px 8px;
-            background-color: #00dfcc;
-            border: 2px solid #555;
-            color: #1a1a1a;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        
-        .db-item-button:hover {
-            background-color: #33ffee;
-        }
-        
-        .db-item-button:active {
-            transform: translate(1px, 1px);
-        }
-        
-        .db-download-button {
-            background-color: #00dfcc;
-        }
-        
-        .db-mount-button {
-            background-color: #ffcc00;
-        }
-        
-        .db-unmount-button {
-            background-color: #ff6b6b;
-        }
-
-        /* Overlay backdrop */
-        .db-browser-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-            z-index: 999;
-            display: none;
-        }
-
-        /* Adjust some base colors for better CRT effect */
-        body {
-            background-color: #0a0a0a; 
-        }
-
-        /* Database Browser Overlay - Sci-Fi Retro Theme */
-        #db-browser-overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 85%;
-            max-width: 900px;
-            height: 85%;
-            max-height: 650px;
-            background-color: #061019;
-            border: 2px solid #27d7fb;
-            box-shadow: 0 0 30px rgba(39, 215, 251, 0.5), inset 0 0 20px rgba(39, 215, 251, 0.2);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            font-family: 'Share Tech Mono', monospace;
-            color: #27d7fb;
-            overflow: hidden;
-        }
-        
-        .db-browser-header {
-            background-color: #0c1720;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #27d7fb;
-            position: relative;
-        }
-        
-        .db-browser-header::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            height: 1px;
-            width: 100%;
-            background: linear-gradient(to right, transparent, #27d7fb 20%, #27d7fb 80%, transparent);
-        }
-        
-        .db-browser-header h2 {
-            margin: 0;
-            font-size: 1.6em;
-            color: #27d7fb;
-            text-shadow: 0 0 10px rgba(39, 215, 251, 0.7);
-            font-weight: normal;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        .db-browser-close {
-            cursor: pointer;
-            font-size: 1.5em;
-            color: #ff3c5a;
-            padding: 0 10px;
-            text-shadow: 0 0 10px rgba(255, 60, 90, 0.7);
-        }
-        
-        .db-browser-content {
-            padding: 20px;
-            overflow-y: auto;
-            flex-grow: 1;
-            background: 
-                linear-gradient(0deg, rgba(6, 16, 25, 0.9), rgba(6, 16, 25, 0.9)),
-                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(39, 215, 251, 0.05) 2px, rgba(39, 215, 251, 0.05) 4px);
-        }
-        
-        .db-browser-search {
-            padding: 15px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid rgba(39, 215, 251, 0.3);
-        }
-        
-        .db-browser-search input {
-            flex-grow: 1;
-            background-color: rgba(39, 215, 251, 0.1);
-            border: 1px solid #27d7fb;
-            padding: 8px 12px;
-            color: #27d7fb;
-            font-family: inherit;
-            font-size: 0.9em;
-            margin-right: 10px;
-        }
-        
-        .db-browser-search input::placeholder {
-            color: rgba(39, 215, 251, 0.5);
-        }
-        
-        .db-browser-search button {
-            background-color: rgba(39, 215, 251, 0.2);
-            color: #27d7fb;
-            border: 1px solid #27d7fb;
-            padding: 8px 15px;
-            font-family: inherit;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .db-browser-search button:hover {
-            background-color: rgba(39, 215, 251, 0.3);
-            box-shadow: 0 0 10px rgba(39, 215, 251, 0.5);
-        }
-        
-        .db-status-indicator {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            background-color: rgba(6, 16, 25, 0.7);
-            padding: 10px 15px;
-            border: 1px solid rgba(39, 215, 251, 0.5);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .db-status-indicator::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                linear-gradient(90deg, 
-                    rgba(39, 215, 251, 0) 0%, 
-                    rgba(39, 215, 251, 0.1) 50%, 
-                    rgba(39, 215, 251, 0) 100%);
-            animation: scanLine 2s linear infinite;
-        }
-        
-        @keyframes scanLine {
-            0% {
-                transform: translateX(-100%);
-            }
-            100% {
-                transform: translateX(100%);
-            }
-        }
-        
-        .db-status-text {
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .db-browser-items {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 20px;
-        }
-        
-        .db-item {
-            background-color: rgba(6, 16, 25, 0.8);
-            border: 1px solid rgba(39, 215, 251, 0.5);
-            padding: 15px;
-            transition: all 0.3s;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .db-item::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #27d7fb, transparent);
-            animation: borderFlow 3s ease-in-out infinite;
-            animation-delay: var(--delay, 0s);
-        }
-        
-        .db-item:nth-child(odd)::after {
-            animation-delay: 1.5s;
-        }
-        
-        @keyframes borderFlow {
-            0% { left: -100%; }
-            50% { left: 100%; }
-            100% { left: 100%; }
-        }
-        
-        .db-item:hover {
-            box-shadow: 0 0 15px rgba(39, 215, 251, 0.3);
-            transform: translateY(-2px);
-        }
-        
-        .db-item-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(39, 215, 251, 0.3);
-        }
-        
-        .db-item-name {
-            color: #27d7fb;
-            font-weight: bold;
-            font-size: 1em;
-            letter-spacing: 1px;
-        }
-        
-        .db-item-size {
-            color: rgba(39, 215, 251, 0.7);
-            font-size: 0.8em;
-        }
-        
-        .db-item-description {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.85em;
-            margin-bottom: 15px;
-            flex-grow: 1;
-            line-height: 1.4;
-        }
-        
-        .db-item-stats {
-            color: rgba(39, 215, 251, 0.7);
-            font-size: 0.75em;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .db-item-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto;
-        }
-        
-        .db-access-level {
-            font-size: 0.75em;
-            padding: 3px 8px;
-            border-radius: 2px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .access-level-1 {
-            background-color: rgba(39, 215, 251, 0.2);
-            color: #27d7fb;
-            border: 1px solid rgba(39, 215, 251, 0.5);
-        }
-        
-        .access-level-2 {
-            background-color: rgba(255, 204, 0, 0.2);
-            color: #ffcc00;
-            border: 1px solid rgba(255, 204, 0, 0.5);
-        }
-        
-        .access-level-3 {
-            background-color: rgba(255, 60, 90, 0.2);
-            color: #ff3c5a;
-            border: 1px solid rgba(255, 60, 90, 0.5);
-        }
-        
-        .db-item-button {
-            font-family: inherit;
-            font-size: 0.8em;
-            padding: 5px 10px;
-            background-color: rgba(39, 215, 251, 0.2);
-            color: #27d7fb;
-            border: 1px solid #27d7fb;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .db-item-button:hover {
-            background-color: rgba(39, 215, 251, 0.3);
-            box-shadow: 0 0 10px rgba(39, 215, 251, 0.5);
-        }
-        
-        .db-item-button:active {
-            transform: translateY(1px);
-        }
-        
-        .db-mount-button {
-            background-color: rgba(39, 215, 251, 0.2);
-            color: #27d7fb;
-            border: 1px solid #27d7fb;
-        }
-        
-        .db-unmount-button {
-            background-color: rgba(255, 60, 90, 0.2);
-            color: #ff3c5a;
-            border: 1px solid #ff3c5a;
-        }
-        
-        .db-restricted-button {
-            background-color: rgba(255, 204, 0, 0.2);
-            color: #ffcc00;
-            border: 1px solid #ffcc00;
-        }
-        
-        /* Overlay backdrop */
-        .db-browser-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(3px);
-            z-index: 999;
-            display: none;
-        }
-        
-        /* Schema Display in Sidebar */
-        .schema-display {
-            padding: 10px;
-            margin-top: 15px;
-            border-top: 1px dashed #27d7fb;
-            font-family: 'Share Tech Mono', monospace;
-        }
-        
-        .schema-title {
-            color: #27d7fb;
-            font-size: 0.9em;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-shadow: 0 0 5px rgba(39, 215, 251, 0.5);
-        }
-        
-        .schema-table {
-            margin-bottom: 15px;
-            padding: 8px;
-            background-color: rgba(39, 215, 251, 0.1);
-            border: 1px solid rgba(39, 215, 251, 0.3);
-        }
-        
-        .schema-table-name {
-            color: #ffcc00;
-            font-size: 0.85em;
-            margin-bottom: 5px;
-            letter-spacing: 1px;
-        }
-        
-        .schema-columns {
-            list-style: none;
-            padding-left: 15px;
-            margin: 5px 0;
-            font-size: 0.8em;
-            color: #e0e0e0;
-        }
-        
-        .schema-column {
-            margin: 3px 0;
-            border-bottom: 1px dotted rgba(39, 215, 251, 0.2);
-            padding-bottom: 2px;
-        }
-        
-        .schema-column-type {
-            color: #ff3c5a;
-            font-size: 0.9em;
-        }
-        
-        .schema-relation {
-            margin-top: 8px;
-            padding-top: 5px;
-            border-top: 1px dotted rgba(39, 215, 251, 0.3);
-            font-size: 0.75em;
-            color: rgba(255, 204, 0, 0.8);
-        }
-        
-        /* Database Header Button */
-        .db-header-button {
-            font-family: 'Share Tech Mono', monospace;
-            background-color: rgba(39, 215, 251, 0.2);
-            color: #27d7fb;
-            border: 1px solid #27d7fb;
-            padding: 8px 12px;
-            font-size: 0.85em;
-            cursor: pointer;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s;
-        }
-        
-        .db-header-button::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                rgba(39, 215, 251, 0) 0%, 
-                rgba(39, 215, 251, 0.3) 50%, 
-                rgba(39, 215, 251, 0) 100%);
-            transition: all 0.6s;
-        }
-        
-        .db-header-button:hover::before {
-            left: 100%;
-        }
-        
-        .db-header-button:hover {
-            box-shadow: 0 0 10px rgba(39, 215, 251, 0.5);
-        }
     </style>
 </head>
 <body>
+
     <!-- CRT Monitor Effects Overlay -->
     <div class="crt-overlay"></div>
     <div class="scanlines"></div>
@@ -884,12 +41,47 @@
     <div class="noise"></div>
     <div class="monitor-frame"></div>
 
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="particle-portrait-container">
+                <img src="./images/particle_portrait_20250503-1538.png" alt="Particle Portrait" class="particle-portrait">
+                <div class="scan-line"></div>
+            </div>
+            <!-- <div class="company-logo">ALIEN CORP©</div> -->
+            <div class="title-container">
+                <div class="tagline">
+                    <span class="letter glitch-effect">E</span>XTRA 
+                    <span class="letter glitch-effect">T</span>ERRESTRIAL 
+                    <span class="letter glitch-effect">L</span>OADER
+                </div>
+                <!-- <div class="version-tag">v2.5.0</div> -->
+            </div>
+            <div class="system-controls">
+                <div class="system-status"><span class="status-dot"></span>SYSTEM STANDBY</div>
+                <div class="boot-message">CLICK TO INITIALIZE SYSTEM</div>
+            </div>
+            <div class="loading-container">
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+                <div class="loading-text">READY</div>
+            </div>
+        </div>
+    </div>
+
     <div class="game-container pixel-border">
         <header class="game-header">
-            <h1 class="pixel-h1">SQL: SDG</h1>
+            <h1 class="pixel-h1">ETL</h1>
+            <!-- Sound Settings Button -->
+            <button id="open-settings-btn" class="db-header-button">SETTINGS</button>
+            <!-- Red Review Button -->
+            <button id="open-review-btn" class="db-header-button" style="background-color: #ff3333; color: white; margin-right: 15px;">REVIEW</button>
+            <!-- <<< ADDED Map Button >>> -->
+            <button id="open-map-header-btn" class="db-header-button" style="margin-left: auto; margin-right: 15px;">INTERACTIVE MAP</button>
+            <button id="open-db-browser-header-btn" class="db-header-button">DB REGISTRY</button> <!-- Keep existing DB button -->
             <div class="player-stats">
                 <div class="stat-item">Score: <span id="score">0</span></div>
-                <!-- <div class="stat-item">Rank: <span id="rank">Cadet</span></div> -->
             </div>
         </header>
 
@@ -901,15 +93,20 @@
                        <h2 id="mission-title" class="pixel-h2">No Mission Loaded</h2>
                        <div id="mission-difficulty">☆☆☆☆☆</div>
                     </div>
-                    <!-- <<< CHANGED: Updated initial instruction >>> -->
                     <p id="mission-description">Mount the <code class="pixel-inline-code">mission_control</code> database from the <strong>DB Registry</strong>. Then query <code class="pixel-inline-code">SELECT * FROM missions;</code> and click a mission row to load it.</p>
-                    <div class="hint-section" style="display: none;"> <!-- Hide initially -->
-                        <div class="hint-title" id="hint-toggler"><span id="hint-toggle">+</span> Hint</div>
-                        <div id="hint-content">No hint available.</div>
-                    </div>
-                     <div class="solution-section" style="display: none;"> <!-- Hide initially -->
-                        <div class="solution-title" id="solution-toggler"><span id="solution-toggle">+</span> Solution</div>
-                        <div id="solution-content">No solution available.</div>
+                    
+                    <div class="mission-controls-row">
+                        <div class="mission-help-sections">
+                            <div class="hint-section" style="display: none;"> <!-- Hide initially -->
+                                <div class="hint-title" id="hint-toggler"><span id="hint-toggle">+</span> Hint</div>
+                                <div id="hint-content">No hint available.</div>
+                            </div>
+                            <div class="solution-section" style="display: none;"> <!-- Hide initially -->
+                                <div class="solution-title" id="solution-toggler"><span id="solution-toggle">+</span> Solution</div>
+                                <div id="solution-content">No solution available.</div>
+                            </div>
+                        </div>
+                        <button id="complete-mission-btn" class="pixel-btn">Complete Mission</button>
                     </div>
                 </div>
 
@@ -918,9 +115,10 @@
                      <h3 class="pixel-h3">Query Results</h3>
                      <div id="query-results"></div>
                      <div id="result-status-container"></div> <!-- Container for status messages -->
-                     <button id="complete-mission-btn" class="pixel-btn">Complete Mission</button>
                 </div>
                 <div id="error-message" class="error"></div> <!-- General JS errors -->
+
+                 <!-- <<< Map Area Removed From Here >>> -->
 
              </main>
 
@@ -928,7 +126,7 @@
                  <button id="toggle-map-btn" class="pixel-btn pixel-btn-secondary"><</button> <!-- Panel Toggle -->
                 <div id="map-canvas">
                      <svg id="line-svg-container"> <defs> <marker id="arrowhead-active-cyan" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z"></path></marker> <marker id="arrowhead-inactive" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z"></path></marker> </defs> </svg>
-                    <!-- DB Tables -->
+                    <!-- DB Schema Tables Rendered Here by JS -->
                 </div>
             </aside>
         </div>
@@ -956,6 +154,56 @@
 
     </div><!-- End Game Container -->
 
+    <!-- <<< ADDED Map Backdrop >>> -->
+    <div class="map-overlay-backdrop"></div>
+
+    <!-- <<< MOVED Map Area Here (Outside Game Container Flow) >>> -->
+    <div id="interactive-map-area">
+        <!-- Map Controls Top Bar -->
+        <div class="map-top-controls">
+            <div class="view-controls">
+                <h3>VIEW MODE</h3>
+                <div class="btn-group">
+                    <button id="countries-view" class="pixel-btn active">Countries</button>
+                    <button id="regions-view" class="pixel-btn">Regions</button>
+                    <button id="continents-view" class="pixel-btn">Continents</button>
+                </div>
+            </div>
+
+            <!-- Info Box moved to top -->
+            <div id="info-box" class="top-info-box">
+                <h2 id="info-title">Country Information</h2>
+                <div id="info-content">
+                    <p><strong>Name:</strong> <span id="info-name">N/A</span></p>
+                    <p><strong>Code:</strong> <span id="info-code">N/A</span></p>
+                    <p><strong>Region:</strong> <span id="info-region">N/A</span></p>
+                    <p><strong>Continent:</strong> <span id="info-continent">N/A</span></p>
+                    <p><strong>Population:</strong> <span id="info-population">N/A</span></p>
+                </div>
+            </div>
+
+            <!-- Close Button moved to top bar -->
+            <button id="close-map-btn" class="pixel-btn">Close Map</button>
+        </div>
+
+        <!-- Map Element -->
+        <div id="map"></div>
+
+        <!-- Mission Info Box - Will appear when clicking on mission points -->
+        <div id="mission-info-box" class="mission-info-box">
+            <!-- Content will be dynamically populated by JavaScript -->
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <h3>Legend</h3>
+            <div id="legend-content"></div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading">Loading map data...</div>
+    </div>
+
     <!-- Database Browser Overlay -->
     <div class="db-browser-backdrop"></div>
     <div id="db-browser-overlay">
@@ -969,1274 +217,140 @@
                 <button id="db-search-button">Search</button>
             </div>
             <div class="db-status-indicator">
-                <div class="db-status-text">ACTIVE DATABASES: <span id="active-db-count">2/5</span></div>
-                <button id="open-db-browser" class="db-item-button">BROWSE DATABASES</button>
+                <div class="db-status-text">ACTIVE DATABASES: <span id="active-db-count">0/5</span></div>
+                <!-- Remove browse button here if not needed -->
             </div>
             <div class="db-browser-items">
-                <!-- Education Datasets -->
-                <div class="db-item">
-                    <div class="db-item-header">
-                        <div class="db-item-name">sdg_education.db</div>
-                        <div class="db-item-size">275MB</div>
-                    </div>
-                    <div class="db-item-description">Global education metrics including enrollment rates, gender disparity data, and funding metrics.</div>
-                    <div class="db-item-footer">
-                        <div class="db-access-level access-level-1">Level 1</div>
-                        <button class="db-item-button db-mount-button">MOUNT</button>
-                    </div>
-                </div>
-                
-                <div class="db-item">
-                    <div class="db-item-header">
-                        <div class="db-item-name">education_outcomes.db</div>
-                        <div class="db-item-size">180MB</div>
-                    </div>
-                    <div class="db-item-description">Educational outcome metrics including test scores, literacy rates, and completion rates by country.</div>
-                    <div class="db-item-footer">
-                        <div class="db-access-level access-level-1">Level 1</div>
-                        <button class="db-item-button db-mount-button">MOUNT</button>
-                    </div>
-                </div>
-                
-                <!-- Health Datasets -->
-                <div class="db-item">
-                    <div class="db-item-header">
-                        <div class="db-item-name">health_metrics.db</div>
-                        <div class="db-item-size">450MB</div>
-                    </div>
-                    <div class="db-item-description">Global health indicators including life expectancy, infant mortality, and disease prevalence statistics.</div>
-                    <div class="db-item-footer">
-                        <div class="db-access-level access-level-2">Level 2</div>
-                        <button class="db-item-button db-mount-button">MOUNT</button>
-                    </div>
-                </div>
-                
-                <!-- Climate Datasets -->
-                <div class="db-item">
-                    <div class="db-item-header">
-                        <div class="db-item-name">climate_data.db</div>
-                        <div class="db-item-size">1.2GB</div>
-                    </div>
-                    <div class="db-item-description">Climate change metrics including temperature records, rainfall patterns, and carbon emissions by country.</div>
-                    <div class="db-item-footer">
-                        <div class="db-access-level access-level-2">Level 2</div>
-                        <button class="db-item-button db-mount-button">MOUNT</button>
-                    </div>
-                </div>
-                
-                <!-- Economic Datasets -->
-                <div class="db-item">
-                    <div class="db-item-header">
-                        <div class="db-item-name">economic_indicators.db</div>
-                        <div class="db-item-size">890MB</div>
-                    </div>
-                    <div class="db-item-description">Economic data including GDP, inequality metrics, poverty rates, and employment statistics.</div>
-                    <div class="db-item-footer">
-                        <div class="db-access-level access-level-2">Level 2</div>
-                        <button class="db-item-button db-mount-button">MOUNT</button>
-                    </div>
-                </div>
-                
-                <!-- Infrastructure Datasets -->
-                <div class="db-item">
-                    <div class="db-item-header">
-                        <div class="db-item-name">infrastructure.db</div>
-                        <div class="db-item-size">620MB</div>
-                    </div>
-                    <div class="db-item-description">Global infrastructure data including access to clean water, electricity, and transportation networks.</div>
-                    <div class="db-item-footer">
-                        <div class="db-access-level access-level-2">Level 2</div>
-                        <button class="db-item-button db-mount-button">MOUNT</button>
-                    </div>
-                </div>
-                
-                <!-- Restricted Datasets -->
-                <div class="db-item">
-                    <div class="db-item-header">
-                        <div class="db-item-name">biodiversity_critical.db</div>
-                        <div class="db-item-size">2.3GB</div>
-                    </div>
-                    <div class="db-item-description">Endangered species locations and population data. Access restricted by International Conservation Council.</div>
-                    <div class="db-item-footer">
-                        <div class="db-access-level access-level-3">Level 3</div>
-                        <button class="db-item-button db-mount-button">REQUEST</button>
-                    </div>
-                </div>
-                
-                <div class="db-item">
-                    <div class="db-item-header">
-                        <div class="db-item-name">conflict_zones.db</div>
-                        <div class="db-item-size">780MB</div>
-                    </div>
-                    <div class="db-item-description">Conflict zone data including resource disputes, active conflicts, and humanitarian crisis information.</div>
-                    <div class="db-item-footer">
-                        <div class="db-access-level access-level-3">Level 3</div>
-                        <button class="db-item-button db-mount-button">REQUEST</button>
-                    </div>
-                </div>
+                <!-- Items dynamically generated by JS -->
             </div>
         </div>
     </div>
 
-    <script>
-        // Add randomized CRT flicker intensity
-        document.addEventListener('DOMContentLoaded', () => {
-            // Create more intense random flicker occasionally
-            setInterval(() => {
-                const flickerElement = document.querySelector('.flicker');
-                if (Math.random() > 0.97) {
-                    flickerElement.style.background = 'rgba(0,0,0,0.1)';
-                    setTimeout(() => {
-                        flickerElement.style.background = 'transparent';
-                    }, 100);
-                }
-            }, 500);
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("Pixel SQL Adventure - Missions Initializing...");
-
-            // --- Game State ---
-            let currentMissionId = null;
-            let currentMissionData = null;
-            let score = 0;
-            let lastResults = null;
-            let isMissionSolved = false;
-            let alasqlInitialized = false; // Track if base DB is ready
-            let mountedDbAliases = new Set(); // <<< Keep track of mounted DBs
-            let completedMissionIds = new Set(); // <<< ADD THIS LINE: Track completed missions
-
-             // --- Game Data (Missions & Databases) ---
-             // Define databases first, then missions referencing dbAlias
-             const gameData = {
-                databases: {
-                    mission_control: { // <<< NEW: Database for missions
-                        missions: {
-                            columns: { id: 'INT PRIMARY KEY', title: 'STRING', difficulty: 'INT', points: 'INT', dbAlias: 'STRING' },
-                            // Data will be populated dynamically or loaded from a source if needed,
-                            // but for this example, we'll define it here for AlaSQL to use.
-                            // Note: We'll extract the mission details from the original missions array later.
-                            // Data will be populated dynamically or loaded from a source if needed,
-                            // but for this example, we'll define it here for AlaSQL to use.
-                            // Note: We'll extract the mission details from the original missions array later.
-                            data: [
-                                { id: 1, title: "Find Planets", difficulty: 1, points: 50, dbAlias: "galaxy1" },
-                                { id: 2, title: "Valuable Resources", difficulty: 2, points: 75, dbAlias: "galaxy1" },
-                                { id: 3, title: "Sort by Power", difficulty: 2, points: 75, dbAlias: "galaxy1" },
-                                { id: 4, title: "Planet & Species Report", difficulty: 3, points: 100, dbAlias: "galaxy1" },
-                                { id: 101, title: "SDG Tutorial: Education Access Data", difficulty: 1, points: 40, dbAlias: "sdg_education" },
-                                { id: 102, title: "SDG Tutorial: Education Access Filtering", difficulty: 2, points: 60, dbAlias: "sdg_education" },
-                                // Add other mission definitions here if they were previously in the array
-                            ]
-                        },
-                        // Add other system tables here if needed later (e.g., player_progress)
-                    },
-                    galaxy1: { // Existing database definitions remain
-                        planets: {
-                            columns: { id: 'INT PRIMARY KEY', name: 'STRING', type: 'STRING', atmosphere: 'STRING', distance_from_sun: 'INT' },
-                            data: [ { id: 1, name: 'Terra Prime', type: 'Terrestrial', atmosphere: 'Nitrogen', distance_from_sun: 100 }, { id: 2, name: 'Xylos', type: 'Jungle', atmosphere: 'Oxygen Rich', distance_from_sun: 150 }, { id: 3, name: 'Cryonia', type: 'Ice Giant', atmosphere: 'Methane', distance_from_sun: 400 }, { id: 4, name: 'Vulcanis', type: 'Volcanic', atmosphere: 'Sulfur', distance_from_sun: 80 }, { id: 5, name: 'Aetheria', type: 'Gas Giant', atmosphere: 'Hydrogen', distance_from_sun: 600 } ]
-                        },
-                        species: {
-                            columns: { id: 'INT PRIMARY KEY', name: 'STRING', home_planet_id: 'INT', intelligence_level: 'INT', temperament: 'STRING' },
-                            data: [ { id: 101, name: 'Humans', home_planet_id: 1, intelligence_level: 7, temperament: 'Neutral' }, { id: 102, name: 'Grox', home_planet_id: 4, intelligence_level: 8, temperament: 'Aggressive' }, { id: 103, name: 'Florans', home_planet_id: 2, intelligence_level: 5, temperament: 'Peaceful' }, { id: 104, name: 'Cryonians', home_planet_id: 3, intelligence_level: 9, temperament: 'Neutral' }, { id: 105, name: 'Void Spawn', home_planet_id: null, intelligence_level: 10, temperament: 'Aggressive'} ]
-                        },
-                        ships: {
-                            columns: { id: 'INT PRIMARY KEY', name: 'STRING', '`class`': 'STRING', captain_species_id: 'INT', cargo_capacity: 'INT' },
-                            data: [ { id: 501, name: 'Stardust', '`class`': 'Freighter', captain_species_id: 101, cargo_capacity: 5000 }, { id: 502, name: 'Void Ripper', '`class`': 'Fighter', captain_species_id: 102, cargo_capacity: 50 }, { id: 503, name: 'Leaf on the Wind', '`class`': 'Frigate', captain_species_id: 103, cargo_capacity: 1000 }, { id: 504, name: 'Nebula Voyager', '`class`': 'Freighter', captain_species_id: 101, cargo_capacity: 7500 }, { id: 505, name: 'Icebreaker', '`class`': 'Frigate', captain_species_id: 104, cargo_capacity: 1200 } ]
-                        },
-                        resources: {
-                            columns: { id: 'INT PRIMARY KEY', name: 'STRING', planet_id: 'INT', rarity: 'STRING', market_value: 'INT' },
-                            data: [ { id: 801, name: 'Iron Ore', planet_id: 1, rarity: 'Common', market_value: 10 }, { id: 802, name: 'Bio-Lumber', planet_id: 2, rarity: 'Common', market_value: 15 }, { id: 803, name: 'Helium-3', planet_id: 5, rarity: 'Uncommon', market_value: 50 }, { id: 804, name: 'Magma Crystals', planet_id: 4, rarity: 'Rare', market_value: 250 }, { id: 805, name: 'Zero-Point Ice', planet_id: 3, rarity: 'Exotic', market_value: 1000 }, { id: 806, name: 'Adamantium', planet_id: 4, rarity: 'Rare', market_value: 500 }, ]
-                        }
-                    },
-                    sdg_education: { // SDG data remains
-                       education_metrics: {
-                           columns: { country_name: 'STRING', region: 'STRING', primary_enrollment_rate: 'FLOAT', secondary_enrollment_rate: 'FLOAT' },
-                           data: [ { country_name: 'South Sudan', region: 'Sub-Saharan Africa', primary_enrollment_rate: 32.1, secondary_enrollment_rate: 10.3 }, { country_name: 'Niger', region: 'Sub-Saharan Africa', primary_enrollment_rate: 38.4, secondary_enrollment_rate: 12.8 }, { country_name: 'Chad', region: 'Sub-Saharan Africa', primary_enrollment_rate: 43.8, secondary_enrollment_rate: 22.6 }, { country_name: 'Mali', region: 'Sub-Saharan Africa', primary_enrollment_rate: 58.7, secondary_enrollment_rate: 33.9 }, { country_name: 'Burkina Faso', region: 'Sub-Saharan Africa', primary_enrollment_rate: 62.3, secondary_enrollment_rate: 29.5 }, { country_name: 'Guinea', region: 'Sub-Saharan Africa', primary_enrollment_rate: 65.1, secondary_enrollment_rate: 38.9 }, { country_name: 'Senegal', region: 'Sub-Saharan Africa', primary_enrollment_rate: 68.7, secondary_enrollment_rate: 41.2 } ]
-                       }
-                   },
-                    // Add other database structures here...
-                },
-                // We need the mission details (description, hint, solution, validation) somewhere.
-                // Let's keep a separate lookup for these, indexed by mission ID.
-                missionDetails: {
-                     1: { description: "Welcome, Cadet! Your first task is simple reconnaissance. We need a list of all known planets in the <strong>galaxy1</strong> system.", hint: "Use <code>SELECT *</code> to get all columns from a table. The table you need is likely named after what you're looking for!", solution: "SELECT * FROM planets;", successMessage: "Basic scan complete. You've identified the planets.", validationCriteria: { expectedRows: 5, mustContainColumns: ['id', 'name', 'type'] } },
-                     2: { description: "Traders are interested in high-value goods. Find all resources with a <strong>market_value</strong> greater than <strong>200</strong> credits.", hint: "The <code>WHERE</code> clause filters rows. Use the greater than operator <code>></code>.", solution: "SELECT name, market_value FROM resources WHERE market_value > 200;", successMessage: "Good find! These resources look profitable.", validationCriteria: { filters: [ { column: "market_value", operator: ">", value: 200 } ], mustContainColumns: ['name', 'market_value'] } },
-                     3: { description: "Rank the known alien <strong>species</strong> by their <strong>intelligence_level</strong>, from highest to lowest.", hint: "Use <code>ORDER BY</code> to sort results. Add <code>DESC</code> for descending order.", solution: "SELECT name, intelligence_level FROM species ORDER BY intelligence_level DESC;", successMessage: "Intelligence ranking received. Interesting hierarchy.", validationCriteria: { expectedRows: 5, mustContainColumns: ['name', 'intelligence_level'], ordered: { column: 'intelligence_level', direction: 'desc' } } },
-                     4: { description: "Generate a report showing each <strong>planet's name</strong> and the <strong>name of the species</strong> that considers it home. Include planets even if they have no native species listed.", hint: "You'll need to combine (`JOIN`) the `planets` and `species` tables. A `LEFT JOIN` ensures all planets are included.", solution: "SELECT p.name AS planet_name, s.name AS species_name FROM planets p LEFT JOIN species s ON p.id = s.home_planet_id;", successMessage: "Planetary habitation report compiled.", validationCriteria: { expectedRows: 5, mustContainColumns: ['planet_name', 'species_name'], keywords: ['left join'] } },
-                     101: { description: `The UN Education Division is analyzing school enrollment data across different regions. Your task is to query the global education database and provide the requested information.<br><br><strong>Try this:</strong><br><code class='pixel-inline-code'>SELECT * FROM education_metrics;</code>`, hint: "Use <code>SELECT *</code> to get all columns from <code>education_metrics</code>.", solution: "SELECT * FROM education_metrics;", successMessage: "Great! You've identified countries with the lowest primary school enrollment rates.", validationCriteria: { expectedRows: 7, mustContainColumns: ['country_name', 'region', 'primary_enrollment_rate', 'secondary_enrollment_rate'] } },
-                     102: { description: "The UN Education Division needs to focus their resources on the most critical areas. Find countries with <strong>primary enrollment rates below 50%</strong>, ordered from lowest to highest.", hint: "Use WHERE to filter results and ORDER BY to sort them.", solution: `SELECT country_name, region, primary_enrollment_rate FROM education_metrics WHERE primary_enrollment_rate < 50 ORDER BY primary_enrollment_rate ASC;`, successMessage: "Excellent work! These countries need immediate attention to improve education access.", validationCriteria: { filters: [{"column": "primary_enrollment_rate", "operator": "<", "value": 50}], ordered: { "column": "primary_enrollment_rate", "direction": "asc"}, mustContainColumns: ["country_name", "primary_enrollment_rate"]} },
-                     // Add details for other missions here
-                }
-            };
-
-            // Add SDG education database and missions
-            gameData.databases.sdg_education = {
-                education_metrics: {
-                    columns: { country_name: 'STRING', region: 'STRING', primary_enrollment_rate: 'FLOAT', secondary_enrollment_rate: 'FLOAT' },
-                    data: [
-                        { country_name: 'South Sudan', region: 'Sub-Saharan Africa', primary_enrollment_rate: 32.1, secondary_enrollment_rate: 10.3 },
-                        { country_name: 'Niger', region: 'Sub-Saharan Africa', primary_enrollment_rate: 38.4, secondary_enrollment_rate: 12.8 },
-                        { country_name: 'Chad', region: 'Sub-Saharan Africa', primary_enrollment_rate: 43.8, secondary_enrollment_rate: 22.6 },
-                        { country_name: 'Mali', region: 'Sub-Saharan Africa', primary_enrollment_rate: 58.7, secondary_enrollment_rate: 33.9 },
-                        { country_name: 'Burkina Faso', region: 'Sub-Saharan Africa', primary_enrollment_rate: 62.3, secondary_enrollment_rate: 29.5 },
-                        { country_name: 'Guinea', region: 'Sub-Saharan Africa', primary_enrollment_rate: 65.1, secondary_enrollment_rate: 38.9 },
-                        { country_name: 'Senegal', region: 'Sub-Saharan Africa', primary_enrollment_rate: 68.7, secondary_enrollment_rate: 41.2 }
-                    ]
-                }
-            };
+    <!-- Sound Settings Overlay -->
+    <div class="settings-backdrop"></div>
+    <div id="settings-overlay">
+        <div class="settings-header">
+            <h2>Sound Settings</h2>
+            <div class="settings-close">✕</div>
+        </div>
+        <div class="settings-content">
+            <!-- Master Volume -->
+            <div class="settings-section">
+                <h3>Master Volume</h3>
+                <div class="slider-container">
+                    <input type="range" id="master-volume" min="0" max="1" step="0.1" value="0.5">
+                    <span class="volume-value">50%</span>
+                </div>
+            </div>
             
-
-            // --- DOM Elements ---
-            const sqlInput = document.getElementById('sql-input'); const submitBtn = document.getElementById('submit-query'); const clearBtn = document.getElementById('clear-query'); const resultsDiv = document.getElementById('query-results'); const errorDiv = document.getElementById('error-message'); const mapCanvas = document.getElementById('map-canvas'); const svgContainer = document.getElementById('line-svg-container'); const sqlConsoleWindow = document.getElementById('sql-console'); const consoleDragHandle = document.getElementById('console-drag-handle'); const scoreDisplay = document.getElementById('score'); const missionTitle = document.getElementById('mission-title'); const missionDesc = document.getElementById('mission-description'); const missionDifficulty = document.getElementById('mission-difficulty'); const hintToggler = document.getElementById('hint-toggler'); const hintContent = document.getElementById('hint-content'); const hintToggleIcon = document.getElementById('hint-toggle'); const completeMissionBtn = document.getElementById('complete-mission-btn'); const missionCompletePopup = document.getElementById('mission-complete'); const nextMissionBtn = document.getElementById('next-mission-btn'); const mapContainer = document.getElementById('db-map-container'); const toggleMapBtn = document.getElementById('toggle-map-btn'); const resultStatusContainer = document.getElementById('result-status-container');
-
-            // --- Visualizer Globals ---
-            let dbMetadataVis = {}; let debounceTimerVis; let lastParsedInfoVis = null; const ARROWHEAD_ADJUSTMENT = 5;
-
-            // --- Initialization ---
-                        
-            function initializeGame() {
-                updateScore(0); // Set initial score display
-
-                // Set initial state variables
-                currentMissionId = null;
-                currentMissionData = null;
-                alasqlInitialized = false; // Start as false
-                isMissionSolved = false;
-                lastResults = null;
-                dbMetadataVis = {}; // Ensure map metadata is empty
-                mountedDbAliases = new Set(); // Reset mounted set
-                completedMissionIds = new Set(); // Reset on init
-
-                // Setup the map placeholder initially
-                showMapPlaceholder("No database mounted. Use DB REGISTRY.");
-
-                // Create the base in-memory DB environment
-                try {
-                    if (typeof alasql !== 'undefined') {
-                         // Start fresh each time for cleaner testing
-                         alasql('DROP DATABASE IF EXISTS gameDB;');
-                         alasql('CREATE DATABASE gameDB;');
-                         alasql('USE gameDB;');
-                         console.log("Clean AlaSQL DB environment created.");
-                         alasqlInitialized = true; // Set flag AFTER successful setup
-                    } else { throw new Error("AlaSQL library not loaded.")}
-                } catch(e) {
-                     console.error("Critical AlaSQL Initialization Error:", e);
-                     showError("Failed to initialize core database system. Please refresh.");
-                     return; // Stop if base setup fails
-                }
-
-                // <<< REMOVED: Automatic creation of 'missions' table >>>
-
-                // Display prompt to use registry
+            <!-- Music Settings -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <h3>Background Music</h3>
+                    <label class="switch">
+                        <input type="checkbox" id="music-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="music-volume" min="0" max="1" step="0.1" value="0.3">
+                    <span class="volume-value">30%</span>
+                </div>
+                <div class="music-info">
+                    <p>Now Playing: Observation.ogg</p>
+                </div>
+            </div>
+            
+            <!-- Sound Effects Settings -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <h3>Sound Effects</h3>
+                    <label class="switch">
+                        <input type="checkbox" id="effects-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="effects-volume" min="0" max="1" step="0.1" value="0.5">
+                    <span class="volume-value">50%</span>
+                </div>
+            </div>
+            
+            <!-- Typing Sound Settings -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <h3>Keyboard Typing Sound</h3>
+                    <label class="switch">
+                        <input type="checkbox" id="typing-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="typing-volume" min="0" max="1" step="0.1" value="0.5">
+                    <span class="volume-value">100%</span>
+                </div>
+            </div>
+            
+            <div class="settings-buttons">
+                <button id="save-settings" class="pixel-btn">Save Settings</button>
+                <button id="reset-settings" class="pixel-btn pixel-btn-secondary">Reset to Default</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Review Overlay -->
+    <div class="review-backdrop"></div>
+    <div id="review-overlay">
+        <div class="review-header">
+            <h2>Leave a Review</h2>
+            <div class="review-close">✕</div>
+        </div>
+        <div class="review-content">
+            <form id="review-form" action="https://formsubmit.co/de9873b32027ad076d86e8eacbd4d72c" method="POST">
+                <!-- FormSubmit configuration -->
+                <input type="hidden" name="_subject" id="review-email-subject" value="ETL-Review">
+                <input type="hidden" name="_template" value="table">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_next" value="javascript:void(0)" class="hidden-field">
                 
-                displayMessage("Mount the `mission_control` database from the DB REGISTRY, then query `SELECT * FROM missions;`", "status-success");
-                makeConsoleDraggable(sqlConsoleWindow, consoleDragHandle);
-                setupEventListeners();
-                renderDatabaseBrowserItems(); // Populate registry view initially
-                console.log("Game Initialized (No DB Mounted).");
-            }
-
-            // New helper function to show/hide map placeholder
-            function showMapPlaceholder(message) {
-                let placeholder = mapCanvas.querySelector('#map-placeholder');
-                if (!placeholder) {
-                    placeholder = document.createElement('div');
-                    placeholder.id = 'map-placeholder';
-                    placeholder.style.position = 'absolute';
-                    placeholder.style.top = '50%';
-                    placeholder.style.left = '50%';
-                    placeholder.style.transform = 'translate(-50%, -50%)';
-                    placeholder.style.textAlign = 'center';
-                    placeholder.style.color = '#888'; // Dim color
-                    placeholder.style.fontSize = '1.1em'; // Slightly larger
-                    mapCanvas.appendChild(placeholder);
-                }
-                placeholder.textContent = message;
-                placeholder.style.display = 'block';
-                 // Hide actual map elements if placeholder is shown
-                 mapCanvas.querySelectorAll('.db-table-vis').forEach(el => el.style.display = 'none');
-                 if (svgContainer) svgContainer.style.display = 'none';
-            }
-
-            function hideMapPlaceholder() {
-                const placeholder = mapCanvas.querySelector('#map-placeholder');
-                if (placeholder) {
-                    placeholder.style.display = 'none';
-                }
-                 // Show map elements when placeholder is hidden
-                 mapCanvas.querySelectorAll('.db-table-vis').forEach(el => el.style.display = ''); // Reset display
-                  if (svgContainer) svgContainer.style.display = ''; // Reset display
-            }
-
-            // --- AlaSQL Setup & Execution ---
-            // Mounts tables for a specific DB alias WITHOUT dropping others
-            function mountDatabase(dbAlias) {
-                const dbData = gameData.databases[dbAlias];
-                if (!dbData) { showError(`Database definition "${dbAlias}" not found.`); return false; }
-                // *** Robust Check ***
-                if (typeof alasql === 'undefined' || !alasqlInitialized) {
-                     showError(`Base AlaSQL system not ready.`);
-                     console.error("Mount attempt failed: AlaSQL not initialized.");
-                     return false;
-                }
-
-                try {
-                    console.log(`Attempting to mount database: ${dbAlias}`);
-                    for (const tableName in dbData) {
-                        // Drop IF EXISTS before creating - handles potential partial failures/retries
-                        alasql(`DROP TABLE IF EXISTS ${tableName};`);
-                        const schema = dbData[tableName];
-                        let columnsSql = Object.entries(schema.columns).map(([colName, colType]) => `${colName} ${colType}`).join(', ');
-                        let createTableSql = `CREATE TABLE ${tableName} (${columnsSql});`;
-                        // console.log("Executing:", createTableSql); // Uncomment for deep debug
-                        alasql(createTableSql);
-                        if (schema.data && schema.data.length > 0) {
-                            // console.log(`Inserting data into ${tableName}`); // Uncomment for deep debug
-                            alasql(`INSERT INTO ${tableName} SELECT * FROM ?;`, [schema.data]);
-                        }
-                        console.log(`Table ${tableName} created for DB ${dbAlias}.`);
-                    }
-                    mountedDbAliases.add(dbAlias);
-                    console.log(`Successfully mounted ${dbAlias}. Mounted Set:`, mountedDbAliases);
-                    return true;
-                } catch (e) {
-                    console.error(`Database Mount Error for ${dbAlias}:`, e);
-                    unmountDatabase(dbAlias, false); // Attempt cleanup
-                    showError(`Failed to mount database ${dbAlias}. Error: ${e.message}.`);
-                    mountedDbAliases.delete(dbAlias);
-                    return false;
-                }
-            }
-
-            // Unmounts tables for a specific DB alias
-            function unmountDatabase(dbAlias, showMessages = true) {
-                const dbData = gameData.databases[dbAlias];
-                if (!dbData) { if(showMessages) showError(`Database definition "${dbAlias}" not found for unmount.`); return false; }
-                if (typeof alasql === 'undefined') { /* No need to check alasqlInitialized here */ if(showMessages) showError(`AlaSQL library not loaded.`); return false; }
-
-                try {
-                    console.log(`Unmounting database: ${dbAlias}`);
-                    for (const tableName in dbData) {
-                        // *** FIX: Use simple DROP TABLE IF EXISTS ***
-                        alasql(`DROP TABLE IF EXISTS ${tableName};`);
-                        console.log(`Table ${tableName} dropped (if existed) for DB ${dbAlias}.`);
-                    }
-                    mountedDbAliases.delete(dbAlias); // Remove from tracked set
-                    console.log(`Successfully processed unmount for ${dbAlias}. Mounted Set:`, mountedDbAliases);
-                    return true;
-                } catch(e) {
-                    console.error(`Database Unmount Error for ${dbAlias}:`, e);
-                    if(showMessages) showError(`Error during unmount of ${dbAlias}. Error: ${e.message}.`);
-                    mountedDbAliases.delete(dbAlias); // Ensure removed even on error
-                    return false;
-                }
-            }
-
-            function executeQueryAndVisualize() {
-                const query = sqlInput.value.trim();
-                clearResults(); // Clear previous results/errors/status
-                if (!query) return;
-                if (!alasqlInitialized || mountedDbAliases.size === 0) { // Check if ANY DB is mounted
-                    showError("No database mounted. Please mount a database from the DB Registry.");
-                    return;
-                }
-            
-                console.log("Executing Query:", query);
-                let results;
-                try {
-                    results = alasql(query);
-                    console.log("AlaSQL Result:", results);
-                    lastResults = results; // Store results
-            
-                    displayResults(results, resultsDiv); // Display results/missions
-            
-                    // --- Mission Validation ---
-                    if (currentMissionId !== null && currentMissionData && Array.isArray(results)) {
-                         isMissionSolved = false;
-                        completeMissionBtn.style.display = 'none';
-                         if (validateMissionQuery(query, results, currentMissionData.validationCriteria)) {
-                            isMissionSolved = true;
-                            completeMissionBtn.style.display = 'block';
-                             displayMessage("Validation successful! Ready to complete mission.", "status-success");
-                        }
-                    }
-            
-                    // --- Map Visualization ---
-                     const parsedInfo = parseQueryForVis(query);
-                     updateVisualization(parsedInfo); // Update map based on query
-            
-                } catch (e) {
-                    console.error("SQL Error:", e);
-                    // Check for "table not found" error - common if wrong DB is mounted
-                    if (e.message.toLowerCase().includes("table does not exist")) {
-                         showError(`SQL Error: ${e.message}. Is the correct database mounted?`);
-                    } else {
-                         showError(`SQL Error: ${e.message}`);
-                    }
-                    updateVisualization(null); // Reset map on error
-                    isMissionSolved = false;
-                     completeMissionBtn.style.display = 'none';
-                }
-            }
-
-            // --- Mission Handling ---
-            function loadMission(missionIdToLoad) {
-                console.log(`Attempting to load mission ${missionIdToLoad}`);
-                // Find basic mission data (title, points etc.) from the MOUNTED missions table results
-                // We assume the click came from a valid row, so the mission ID is correct.
-                // We need the DETAILED info (description, hint, solution, validation etc.) from our separate lookup.
-                const missionDetails = gameData.missionDetails[missionIdToLoad];
-
-                // <<< CHANGED: Find basic data from the mission_control structure if needed, >>>
-                // <<< but primarily rely on missionDetails for description, hint, validation etc. >>>
-                const missionBaseData = gameData.databases.mission_control?.missions?.data.find(m => m.id === missionIdToLoad);
-
-
-                if (!missionDetails || !missionBaseData) {
-                    showError(`Mission data or details for ID ${missionIdToLoad} not found!`);
-                    // Attempt to find the title even if details are missing for a partial display
-                    const partialData = gameData.databases.mission_control?.missions?.data.find(m => m.id === missionIdToLoad);
-                    if(partialData) {
-                       missionTitle.textContent = partialData.title + " (Details Missing)";
-                       missionDesc.innerHTML = "Error: Could not load full mission details.";
-                       missionDifficulty.textContent = '★'.repeat(partialData.difficulty || 0) + '☆'.repeat(5 - (partialData.difficulty || 0));
-                    } else {
-                        resetMissionDisplay(); // Reset completely if even base data is gone
-                    }
-                    return;
-                 }
-
-                // <<< Ensure required DB for the mission *task* is mounted >>>
-                const requiredDbAlias = missionBaseData.dbAlias;
-                if (!mountedDbAliases.has(requiredDbAlias)) {
-                    console.log(`DB ${requiredDbAlias} not mounted for mission task. Attempting mount...`);
-                    if (!mountDatabase(requiredDbAlias)) {
-                        showError(`Mission ${missionIdToLoad} requires database "${requiredDbAlias}" for its task. Mount failed. Try mounting manually.`);
-                        // Still load the mission text, but tasks might fail.
-                        // Alternatively, uncomment the next line to prevent loading if DB mount fails:
-                        // return;
-                    } else {
-                        // If mount was successful, update map now
-                        generateVisualizerMetadata();
-                        setupMap();
-                        hideMapPlaceholder();
-                        renderDatabaseBrowserItems(); // Update registry buttons
-                    }
-                } else {
-                    console.log(`Required task DB ${requiredDbAlias} is already mounted.`);
-                    // Regenerate map just in case something is out of sync
-                    generateVisualizerMetadata();
-                    setupMap();
-                    hideMapPlaceholder();
-                }
-
-                // --- Proceed with loading mission display ---
-                currentMissionId = missionIdToLoad;
-                // <<< Combine base data and details for currentMissionData >>>
-                currentMissionData = { ...missionBaseData, ...missionDetails }; // Store combined data
-                isMissionSolved = false;
-
-                missionTitle.textContent = currentMissionData.title;
-                missionDesc.innerHTML = currentMissionData.description;
-                missionDifficulty.textContent = '★'.repeat(currentMissionData.difficulty) + '☆'.repeat(5 - currentMissionData.difficulty);
-
-                // Show and populate hint/solution sections
-                hintToggler.closest('.hint-section').style.display = 'block';
-                hintContent.innerHTML = currentMissionData.hint || "No hint provided.";
-                hintContent.style.display = 'none';
-                hintToggleIcon.textContent = '+';
-
-                const solutionSection = document.querySelector('.solution-section');
-                const solutionContent = document.getElementById('solution-content');
-                const solutionToggler = document.getElementById('solution-toggler');
-                const solutionToggleIcon = document.getElementById('solution-toggle');
-                if (solutionSection) solutionSection.style.display = 'block';
-                solutionContent.innerHTML = currentMissionData.solution ? `<code>${currentMissionData.solution.replace(/</g, '<').replace(/>/g, '>')}</code>` : "No solution available."; // Basic escaping for code block
-                solutionContent.style.display = 'none';
-                solutionToggleIcon.textContent = '+';
-
-
-                completeMissionBtn.style.display = 'none';
-                clearResults();
-
-                displayMessage(`Mission ${currentMissionData.id} loaded. Task requires database: ${requiredDbAlias}. Good luck!`, "status-success");
-            } // End loadMission
-
-            function validateMissionQuery(query, results, criteria) {
-                 if (!criteria) { console.warn("No validation criteria for this mission."); return true; }
-                 if (!Array.isArray(results)) { console.log("Validation requires array results."); return false; }
-
-                 let isValid = true;
-                 const queryLower = query.toLowerCase();
-
-                 // 1. Expected Rows Check
-                 if (criteria.expectedRows !== undefined && results.length !== criteria.expectedRows) {
-                     console.log(`Validation Fail: Expected ${criteria.expectedRows} rows, got ${results.length}`);
-                     isValid = false;
-                 }
-
-                 if (results.length > 0) {
-                     const firstRow = results[0];
-                     const resultColumnNames = Object.keys(firstRow); // Actual names in the result (could be aliased)
-
-                     // *** FIX: Revised Must Contain Columns Check ***
-                     if (isValid && criteria.mustContainColumns) {
-                         if (!criteria.mustContainColumns.every(requiredCol => {
-                             // requiredCol might be 'planets.name' or just 'name'
-                             const baseRequiredCol = requiredCol.split('.').pop(); // Get 'name' part
-                             // Check if ANY result column name matches the base required name
-                             return resultColumnNames.some(resCol => resCol.toLowerCase() === baseRequiredCol.toLowerCase());
-                         })) {
-                             console.log(`Validation Fail: Missing required columns (or equivalent aliases). Need base columns like: ${criteria.mustContainColumns.join(', ')}`);
-                             isValid = false;
-                         }
-                     }
-
-
-                     // 3. Filters Check (remains the same)
-                     if (isValid && criteria.filters) { /* ... filter check logic ... */
-                          for (const filter of criteria.filters) { if (!results.every(row => checkFilterCondition(row[filter.column], filter.operator, filter.value))) { console.log(`Validation Fail: Filter: ${filter.column} ${filter.operator} ${filter.value}`); isValid = false; break; } }
-                      }
-
-                     // 4. Ordered Check (remains the same)
-                     if (isValid && criteria.ordered && criteria.ordered.column) { /* ... order check logic ... */
-                          const col = criteria.ordered.column; const desc = criteria.ordered.direction === 'desc'; if (!checkOrdering(results, col, desc)) { console.log(`Validation Fail: Order by ${col} ${desc ? 'DESC' : 'ASC'}`); isValid = false; }
-                      }
-
-                     // 5. Exact Match (remains the same)
-                      if (isValid && criteria.exactMatch) { /* ... exact match logic ... */
-                          if (!deepEqual(results, criteria.exactMatch)) { console.log(`Validation Fail: Exact match failed.`); isValid = false; }
-                      }
-
-                 } else if (criteria.expectedRows !== undefined && criteria.expectedRows > 0) {
-                     console.log(`Validation Fail: Expected ${criteria.expectedRows} rows, got 0`);
-                     isValid = false;
-                 }
-
-                 // 6. Keyword Check (remains the same)
-                 if (isValid && criteria.keywords) { /* ... keyword check logic ... */
-                     if (!criteria.keywords.every(kw => queryLower.includes(kw.toLowerCase()))) { console.log(`Validation Fail: Missing keywords: ${criteria.keywords.join(', ')}`); isValid = false; }
-                  }
-
-                 console.log("Validation Result:", isValid);
-                 return isValid;
-             }
-
-             // --- Helper for filter validation ---
-             function checkFilterCondition(value, operator, criteriaValue) {
-                 if (value === null || value === undefined) return false; // Basic handling of nulls
-                 switch(operator) {
-                     case '>': return value > criteriaValue;
-                     case '>=': return value >= criteriaValue;
-                     case '<': return value < criteriaValue;
-                     case '<=': return value <= criteriaValue;
-                     case '=': return value == criteriaValue; // Use == for potential type coercion, or === for strict
-                     case '!=': return value != criteriaValue;
-                     // Add 'LIKE', 'IN', etc. if needed
-                     default: console.warn(`Unsupported filter operator: ${operator}`); return false;
-                 }
-             }
-
-             // --- Helper for ordering validation ---
-            function checkOrdering(results, column, descending = false) {
-                for (let i = 1; i < results.length; i++) {
-                    const prev = results[i - 1][column];
-                    const current = results[i][column];
-                    if (prev === null || current === null) continue; // Skip nulls or handle differently
-
-                    if (descending) {
-                        if (prev < current) return false;
-                    } else {
-                        if (prev > current) return false;
-                    }
-                }
-                return true;
-            }
-
-            // --- Helper for deep comparison (for exactMatch) ---
-            function deepEqual(obj1, obj2) {
-                // Basic implementation, libraries like lodash have more robust versions
-                return JSON.stringify(obj1) === JSON.stringify(obj2);
-            }
-
-
-            function sendData() { // Complete Mission Action
-                if (!isMissionSolved || !currentMissionData) return;
-
-                console.log(`Completing mission ${currentMissionId}`);
-                const pointsEarned = currentMissionData.points || 0;
-                updateScore(score + pointsEarned);
-
-                completedMissionIds.add(currentMissionId);
-                console.log("Completed Missions:", completedMissionIds);
-
-                // --- UI Update for Completed Mission Row ---
-                try {
-                    const missionTable = resultsDiv.querySelector('table.missions-table');
-                    if (missionTable) { // Check if the mission table is the one currently displayed
-                        const completedRow = missionTable.querySelector(`tr[data-mission-id="${currentMissionId}"]`);
-                        if (completedRow) {
-                            completedRow.style.textDecoration = 'line-through';
-                            completedRow.style.color = '#888';
-                            completedRow.style.cursor = 'default';
-                            completedRow.onclick = null; // Disable click handler
-                            console.log(`Styled mission row ${currentMissionId} as completed.`);
-                        } else {
-                            console.log(`Mission row ${currentMissionId} not found in the current results table.`);
-                        }
-                    } else {
-                        console.log("Mission table not currently displayed in results, skipping row style update.");
-                    }
-                } catch (e) {
-                    console.error("Error updating completed mission row style:", e);
-                }
-                // --- End UI Update ---
-
-
-                // Show completion popup
-                missionCompletePopup.style.display = 'block';
-                const descEl = missionCompletePopup.querySelector('.mission-complete-description');
-                descEl.innerHTML = `${currentMissionData.successMessage}<br><br><strong>+${pointsEarned} points earned!</strong>`;
-
-                // Disable button, reset state for next
-                completeMissionBtn.style.display = 'none';
-                isMissionSolved = false;
-
-                // <<< ADDED: Reset mission display area after completion, before 'Next' is clicked >>>
-                resetMissionDisplay();
-            }
-
-            function nextMission() {
-                missionCompletePopup.style.display = 'none'; // Close the popup
-
-                // <<< CHANGE: Always reset to the default state after closing the popup >>>
-                // <<< unless ALL missions are complete >>>
-
-                const totalMissions = gameData.databases.mission_control?.missions?.data?.length || 0;
-
-                // Check if ALL missions are now complete - Handle this special case first
-                if (totalMissions > 0 && completedMissionIds.size === totalMissions) {
-                    // Handle game completion display (keep this logic)
-                    missionTitle.textContent = "All Missions Complete!";
-                    missionDesc.innerHTML = `Congratulations, SQL Commander! You've mastered all available missions.<br><br><strong>Final Score: ${score}</strong>`;
-                    missionDifficulty.textContent = "🏆";
-                    hintToggler.closest('.hint-section').style.display = 'none';
-                    document.querySelector('.solution-section').style.display = 'none';
-                    clearResults(); // Clear results for the final screen
-                    updateVisualization(null);
-                    currentMissionId = null; // Ensure state is fully reset
-                    currentMissionData = null;
-                    displayMessage("You finished all missions!", "status-success");
-                    console.log("All missions completed!");
-                } else {
-                    // If not all missions are complete, just reset the display
-                    // The user will need to query `SELECT * FROM missions;` again
-                    // and click a row to load the next one.
-                    resetMissionDisplay();
-                    // Optionally, display a message guiding the user
-                    displayMessage("Mission complete! Query `missions` again to choose your next task.", "status-success", 4000); // Auto-clears after 4s
-                    // Optionally, clear the results table if you want them to re-query
-                    // clearResults();
-                }
-            }
-
-             function updateScore(newScore) {
-                 score = newScore;
-                 scoreDisplay.textContent = score;
-                 // Update rank or other score-dependent UI here if needed
-             }
-
-            function toggleHint() {
-                 const isHidden = hintContent.style.display === 'none';
-                 hintContent.style.display = isHidden ? 'block' : 'none';
-                 hintToggleIcon.textContent = isHidden ? '-' : '+';
-             }
-
-             function togglePanel(panelElement) {
-                panelElement.classList.toggle('collapsed');
-                const isCollapsed = panelElement.classList.contains('collapsed');
-                 // Update button text/icon based on state
-                 toggleMapBtn.textContent = isCollapsed ? '>' : '<';
-                 // Optional: redraw lines if collapsing/expanding affects layout significantly
-                 if (!isCollapsed) {
-                     setTimeout(updateAllJoinLines, 350); // Redraw after transition
-                 }
-             }
-
-             function resetMissionDisplay() {
-                missionTitle.textContent = "No Mission Loaded";
-                missionDesc.innerHTML = "Mount the <code class='pixel-inline-code'>mission_control</code> database from the <strong>DB Registry</strong>. Then query <code class='pixel-inline-code'>SELECT * FROM missions;</code> and click a mission row to load it.";
-                missionDifficulty.textContent = "☆☆☆☆☆";
-                hintToggler.closest('.hint-section').style.display = 'none'; // Hide hint section
-                document.querySelector('.solution-section').style.display = 'none'; // Hide solution section
-                document.getElementById('hint-content').style.display = 'none'; // Ensure content is hidden
-                document.getElementById('solution-content').style.display = 'none'; // Ensure content is hidden
-                document.getElementById('hint-toggle').textContent = '+';
-                document.getElementById('solution-toggle').textContent = '+';
-                currentMissionId = null;
-                currentMissionData = null;
-                isMissionSolved = false;
-                completeMissionBtn.style.display = 'none';
-                // Optionally clear results here too, or leave them
-                // clearResults();
-            }
-
-            function toggleSolution() {
-                const solutionContent = document.getElementById('solution-content');
-                const solutionToggleIcon = document.getElementById('solution-toggle');
-                const isHidden = solutionContent.style.display === 'none';
-                solutionContent.style.display = isHidden ? 'block' : 'none';
-                solutionToggleIcon.textContent = isHidden ? '-' : '+';
-            }
-
-            // --- UI Functions (Display & Errors) ---
-            function displayResults(data, container) { // Modified to handle mission rows
-            container.innerHTML = ''; // Clear previous results/status in container
-            resultStatusContainer.innerHTML = ''; // Clear separate status container
-
-            if (typeof data === 'number') { displayMessage(`Query OK. Rows affected: ${data}`, "status-success"); return; }
-            if (!Array.isArray(data)) { displayMessage("Query executed, but no tabular results returned.", "status-success"); return; }
-            if (data.length === 0) { displayMessage("Query executed successfully. No matching rows found.", "status-success"); return; }
-
-            const table = document.createElement('table'); table.className = 'pixel-results-table';
-            const thead = document.createElement('thead'); const tbody = document.createElement('tbody');
-            const headerRow = document.createElement('tr');
-            const columns = Object.keys(data[0]);
-            columns.forEach(col => { const th = document.createElement('th'); th.textContent = col.replace(/`/g,''); headerRow.appendChild(th); });
-            thead.appendChild(headerRow);
-
-            // Check if these results are from the missions table
-            // <<< MORE ROBUST CHECK: Check for expected columns >>>
-            const expectedMissionCols = ['id', 'title', 'difficulty', 'points', 'dbAlias'];
-            const isMissionList = expectedMissionCols.every(col => columns.includes(col));
-
-            // <<< ADD CLASS if it's the mission list >>>
-            if (isMissionList) {
-                table.classList.add('missions-table');
-            }
-
-            data.forEach(rowData => {
-                const tr = document.createElement('tr');
-                if (isMissionList) {
-                    tr.className = 'mission-row';
-                    // <<< ADD data attribute to identify row >>>
-                    tr.dataset.missionId = rowData.id;
-                    // Check if this mission is already completed when drawing the list
-                    if (completedMissionIds.has(rowData.id)) {
-                        tr.style.textDecoration = 'line-through';
-                        tr.style.color = '#888';
-                        tr.style.cursor = 'default';
-                        // Don't attach onclick if already completed
-                    } else {
-                         tr.onclick = () => loadMission(rowData.id); // Click to load only if not completed
-                    }
-                }
-                columns.forEach(col => {
-                    const td = document.createElement('td');
-                     let value = rowData[col];
-                    if (isMissionList && col === 'difficulty') {
-                         td.textContent = '★'.repeat(value) + '☆'.repeat(5 - value);
-                         td.className = 'difficulty-stars';
-                     } else if (value === null || typeof value === 'undefined') {
-                        td.textContent = 'NULL'; td.className = 'null-value';
-                     } else if (typeof value === 'object') { td.textContent = JSON.stringify(value); }
-                     else { td.textContent = value; }
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
-            });
-            table.appendChild(thead); table.appendChild(tbody); container.appendChild(table);
-
-             // Add status message after table
-             let statusText = `Query OK. ${data.length} row(s) returned.`;
-             if (isMissionList) statusText += " Click an available mission row to load it.";
-             displayMessage(statusText, "status-success");
-        }
-
-            function showError(message) { // Shows errors in main panel
-                const errorMsg = document.createElement('div');
-                errorMsg.className = 'result-status status-error';
-                errorMsg.textContent = message;
-                resultStatusContainer.innerHTML = ''; // Clear previous status
-                resultStatusContainer.appendChild(errorMsg);
-            }
-
-             function displayMessage(message, type = "status-success") { // Shows status messages
-                 const msgDiv = document.createElement('div');
-                 msgDiv.className = `result-status ${type}`;
-                 msgDiv.textContent = message;
-                 resultStatusContainer.innerHTML = ''; // Clear previous status
-                 resultStatusContainer.appendChild(msgDiv);
-             }
-
-
-            function clearResults() { // Clears main content results/errors/status
-                resultsDiv.innerHTML = '';
-                errorDiv.textContent = ''; // Clear general JS error div too
-                errorDiv.style.display = 'none';
-                resultStatusContainer.innerHTML = ''; // Clear status messages
-                completeMissionBtn.style.display = 'none'; // Hide button
-                isMissionSolved = false; // Reset solved state
-            }
-
-            // --- Visualizer Map Functions (Keep As Is) ---
-            function generateVisualizerMetadata() {
-                const combinedMetadata = { tables: {}, relationships: [] };
-                let totalTables = 0;
-                const positions = [ { top: 20, left: 20 }, { top: 20, left: 200 }, { top: 180, left: 20 }, { top: 180, left: 200 }, { top: 340, left: 20 }, { top: 340, left: 200 } ];
-
-                console.log("Generating map metadata for mounted DBs:", mountedDbAliases);
-
-                mountedDbAliases.forEach(alias => { // Iterate the Set
-                    const dbSchema = gameData.databases[alias];
-                    if (!dbSchema) { console.warn(`Schema not found for mounted alias: ${alias}`); return; }
-
-                    for (const tableName in dbSchema) {
-                         if (combinedMetadata.tables[tableName]) { console.warn(`Table name conflict: "${tableName}" exists in multiple mounted databases.`); }
-                        const schema = dbSchema[tableName];
-                        const columns = Object.keys(schema.columns).map(c => c.replace(/`/g, ''));
-                        combinedMetadata.tables[tableName] = {
-                             position: positions[totalTables % positions.length], columns: columns, dbAlias: alias
-                        };
-                        // Relationship inference (within same alias)
-                        columns.forEach(colName => { if (colName.endsWith('_id') && colName !== 'id') { const targetTable = colName.substring(0, colName.length - 3) + 's'; if (dbSchema[targetTable]) { combinedMetadata.relationships.push({ from: `${tableName}.${colName}`, to: `${targetTable}.id` }); } } });
-                        totalTables++;
-                    }
-                });
-
-                console.log("Generated Combined Metadata:", combinedMetadata);
-                dbMetadataVis = combinedMetadata; // *** IMPORTANT: Update the global variable ***
-                // Return value is not strictly needed if global is updated
-            }
-            function setupMap() {
-                console.log("setupMap called.");
-                if (!mapCanvas) { console.error("setupMap: mapCanvas not found!"); return; }
-                mapCanvas.querySelectorAll('.db-table-vis').forEach(el => el.remove());
-                if (svgContainer) svgContainer.innerHTML = '';
-                setupSvgDefs();
-
-                // *** FIX: Check dbMetadataVis and dbMetadataVis.tables before using Object.entries ***
-                if (!dbMetadataVis || !dbMetadataVis.tables || typeof dbMetadataVis.tables !== 'object') {
-                    console.warn("setupMap: dbMetadataVis.tables is invalid or empty. Skipping table drawing.");
-                     if (mountedDbAliases.size === 0) {
-                         showMapPlaceholder("No database mounted. Use DB REGISTRY.");
-                     } else {
-                          showMapPlaceholder("Error generating map data."); // Should ideally not happen now
-                     }
-                    return;
-                }
-
-                 // Ensure placeholder is hidden if we have tables
-                 if (Object.keys(dbMetadataVis.tables).length > 0) {
-                    hideMapPlaceholder();
-                 } else if (mountedDbAliases.size === 0) {
-                     showMapPlaceholder("No database mounted. Use DB REGISTRY.");
-                 }
-
-
-                Object.entries(dbMetadataVis.tables).forEach(([tableName, tableData]) => {
-                    // ... rest of table drawing logic ...
-                     const tableEl = document.createElement('div'); tableEl.className = 'db-table-vis'; tableEl.id = `vis-table-${tableName}`; tableEl.style.top = `${tableData.position.top}px`; tableEl.style.left = `${tableData.position.left}px`; tableEl.dataset.tableName = tableName; const headerEl = document.createElement('div'); headerEl.className = 'table-header-vis'; const nameSpan = document.createElement('span'); nameSpan.textContent = tableName; const seqSpan = document.createElement('span'); seqSpan.className = 'table-sequence-number'; seqSpan.id = `seq-${tableName}`; headerEl.appendChild(nameSpan); headerEl.appendChild(seqSpan); tableEl.appendChild(headerEl); const colListEl = document.createElement('ul'); colListEl.className = 'column-list-vis'; tableData.columns.forEach(colName => { const colItemEl = document.createElement('li'); colItemEl.className = 'column-item-vis'; colItemEl.id = `vis-col-${tableName}-${colName.replace(/`/g, '')}`; colItemEl.textContent = colName.replace(/`/g, ''); colListEl.appendChild(colItemEl); }); tableEl.appendChild(colListEl); mapCanvas.appendChild(tableEl); makeMapElementDraggable(tableEl);
-                 });
-                console.log("setupMap completed.");
-            }
-            function setupSvgDefs() { if (!svgContainer || svgContainer.querySelector('defs')) return; const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs'); defs.innerHTML = ` <marker id="arrowhead-active-cyan" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z" fill="#00ffcc"></path></marker> <marker id="arrowhead-inactive" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z" fill="#888"></path></marker> `; svgContainer.appendChild(defs); }
-            function parseQueryForVis(query) {
-                console.log("Parsing query for visualization:", query);
-                const qLower = query.toLowerCase();
-                const tableAliases = {};
-                const info = {
-                    selectColumns: new Set(),
-                    tablesInvolved: [],
-                    joinConditions: [],
-                    aliases: tableAliases
-                };
-            
-                const cleanQuery = query.replace(/`/g, '');
-                const cleanQLower = cleanQuery.toLowerCase();
-            
-                // SELECT clause parsing remains the same...
-                const selectMatch = cleanQuery.match(/SELECT\s+(.*?)\s+FROM/i);
-                if (selectMatch && selectMatch[1]) {
-                    const colsString = selectMatch[1].trim(); 
-                    if (colsString === '*') { 
-                        info.selectColumns.add('*'); 
-                    } else { 
-                        colsString.split(',').forEach(c => { 
-                            let colPart = c.trim().split(/\s+as\s+/i)[0].trim(); 
-                            const funcMatch = colPart.match(/\w+\(([\w.*]+)\)/i); 
-                            if (funcMatch && funcMatch[1] !== '*') { 
-                                info.selectColumns.add(funcMatch[1]); 
-                            } else if (!funcMatch) { 
-                                info.selectColumns.add(colPart); 
-                            } 
-                            info.selectColumns.add(c.trim()); 
-                        }); 
-                    }
-                } else { 
-                    console.warn("VisParser: Could not find SELECT/FROM structure."); 
-                    return null; 
-                }
-            
-                // FROM/JOIN clause parsing
-                const fromJoinPartMatch = cleanQLower.match(/from\s+([\s\S]*?)(?:where|group by|order by|limit|$)/);
-                if (fromJoinPartMatch && fromJoinPartMatch[1]) {
-                    let fromJoinString = fromJoinPartMatch[1].trim();
-                    const firstTableRegex = /^(\w+)(?:\s+(?:as\s+)?(\w+))?/;
-                    const firstTableMatch = fromJoinString.match(firstTableRegex);
-            
-                    if (firstTableMatch) {
-                        const fromTable = firstTableMatch[1];
-                        const alias = firstTableMatch[2];
-                        // CHANGED: Rely *only* on dbMetadataVis
-                        if (dbMetadataVis.tables[fromTable]) { // Check if table is known *because it's mounted*
-                            info.tablesInvolved.push(fromTable);
-                            if (alias) { 
-                                tableAliases[alias] = fromTable; 
-                            } else { 
-                                tableAliases[fromTable] = fromTable; 
-                            }
-                            fromJoinString = fromJoinString.substring(firstTableMatch[0].length).trim();
-                        } else { 
-                            console.warn(`VisParser: FROM table "${fromTable}" not in metadata (not mounted or invalid).`); 
-                            return info; 
-                        }
-                    } else { 
-                        console.warn("VisParser: Could not parse FROM table."); 
-                        return info; 
-                    }
-            
-                    // JOIN parsing
-                    const joinRegex = /(?:inner\s+|left\s+|right\s+)?join\s+(\w+)(?:\s+(?:as\s+)?(\w+))?\s+on\s+([\w.]+)\s*=\s*([\w.]+)/gi;
-                    let joinMatch;
-                    while ((joinMatch = joinRegex.exec(fromJoinString)) !== null) {
-                        const joinTable = joinMatch[1];
-                        const alias = joinMatch[2];
-                        const conditionLeft = joinMatch[3]; 
-                        const conditionRight = joinMatch[4];
-            
-                        // CHANGED: Rely *only* on dbMetadataVis
-                        if (dbMetadataVis.tables[joinTable]) { // Check if JOIN table is known *because it's mounted*
-                            if (!info.tablesInvolved.includes(joinTable)) {
-                                info.tablesInvolved.push(joinTable);
-                            }
-                            if (alias) { 
-                                tableAliases[alias] = joinTable; 
-                            } else { 
-                                tableAliases[joinTable] = joinTable; 
-                            }
-            
-                            // Resolve aliases
-                            const resolveAlias = (colIdentifier) => { 
-                                if (colIdentifier.includes('.')) { 
-                                    const [prefix, colName] = colIdentifier.split('.'); 
-                                    const realTable = tableAliases[prefix]; 
-                                    if (realTable) { 
-                                        return `${realTable}.${colName}`; 
-                                    } 
-                                    if (dbMetadataVis.tables[prefix]) { 
-                                        return colIdentifier; 
-                                    } 
-                                    console.warn(`VisParser: Cannot resolve prefix "${prefix}" in JOIN.`); 
-                                    return null; 
-                                } 
-                                console.warn(`VisParser: Ambiguous column "${colIdentifier}" in JOIN.`); 
-                                return null; 
-                            };
-                            const resolvedLeft = resolveAlias(conditionLeft);
-                            const resolvedRight = resolveAlias(conditionRight);
-            
-                            if (resolvedLeft && resolvedRight) {
-                                info.joinConditions.push({ from: resolvedLeft, to: resolvedRight });
-                                info.selectColumns.add(resolvedLeft);
-                                info.selectColumns.add(resolvedRight);
-                            } else { 
-                                console.warn(`VisParser: Failed to resolve JOIN: ${conditionLeft}=${conditionRight}`); 
-                            }
-                        } else { 
-                            console.warn(`VisParser: Unknown JOIN table "${joinTable}" (not mounted or invalid).`); 
-                        }
-                    }
-                } else { 
-                    console.warn("VisParser: Could not parse FROM/JOIN clause."); 
-                    return info; 
-                }
-            
-                info.tablesInvolved = [...new Set(info.tablesInvolved)];
-                console.log("Parsed Info for Vis:", info);
-                return info;
-            }
-            function updateVisualization(parsedInfo) {
-                 console.log("updateVisualization called with:", parsedInfo);
-                 lastParsedInfoVis = parsedInfo; // Store the whole info object, including aliases
-
-                 // 1. Reset previous state (remains the same)
-                document.querySelectorAll('.db-table-vis').forEach(el => { el.classList.remove('highlight-table'); const seqNumEl = el.querySelector('.table-sequence-number'); if(seqNumEl) { seqNumEl.textContent = ''; seqNumEl.style.opacity = '0'; } });
-                document.querySelectorAll('.column-item-vis').forEach(el => { el.classList.remove('highlight-column'); });
-                 if (svgContainer) { const lines = svgContainer.querySelectorAll('line.join-line-vis'); lines.forEach(el => el.remove()); }
-
-
-                // *** Check if parsedInfo or its critical parts are missing ***
-                 if (!parsedInfo || !parsedInfo.tablesInvolved || !parsedInfo.aliases || parsedInfo.tablesInvolved.length === 0) {
-                    console.log("Resetting visualization (invalid info or no tables to visualize).");
-                    // Do not attempt further processing if essential info is missing
-                    return;
-                }
-
-                // 2. Highlight Tables & Sequence Numbers (remains the same)
-                 parsedInfo.tablesInvolved.forEach((tableName, index) => { const tableEl = document.getElementById(`vis-table-${tableName}`); if (tableEl) { tableEl.classList.add('highlight-table'); const seqNumEl = tableEl.querySelector(`#seq-${tableName}`); if(seqNumEl) { seqNumEl.textContent = index + 1; seqNumEl.style.opacity = '1'; } } else { console.warn(`Vis element not found for table: vis-table-${tableName}`); } });
-
-                // *** Enhanced findColElement using stored aliases ***
-                 const findColElement = (colIdRaw) => {
-                     let el = null;
-                     const colId = colIdRaw.replace(/`/g, '').split(/\s+as\s+/i)[0].trim(); // Clean identifier, remove AS alias
-                     const tableAliases = parsedInfo.aliases || {}; // Use aliases from parsed info
-
-                     if (colId.includes('.')) {
-                         const [prefix, colName] = colId.split('.');
-                         const realTable = tableAliases[prefix]; // Check if prefix is a known alias
-                         if (realTable) {
-                             // Found via alias
-                             el = document.getElementById(`vis-col-${realTable}-${colName}`);
-                         } else if (dbMetadataVis.tables[prefix]) {
-                              // Prefix was the actual table name
-                             el = document.getElementById(`vis-col-${prefix}-${colName}`);
-                         } else {
-                              console.warn(`Vis Element: Cannot resolve table/alias "${prefix}" for column "${colIdRaw}"`);
-                         }
-                     } else {
-                         // Column name without prefix - search involved tables
-                         for (const involvedTable of parsedInfo.tablesInvolved) {
-                             el = document.getElementById(`vis-col-${involvedTable}-${colId}`);
-                             if (el) break; // Found it
-                         }
-                         if (!el) console.warn(`Vis Element: Could not find table for column "${colIdRaw}"`);
-                     }
-                      // Removed redundant warning from original code
-                     // if (!el) console.warn(`Vis Element: Could not find element for column ID: ${colIdRaw}`);
-                     return el;
-                 };
-
-
-                // 3. Highlight Selected Columns (Use enhanced findColElement)
-                parsedInfo.selectColumns.forEach(colIdentifier => {
-                     // colIdentifier might be 'p.name AS planet_name' or 'planets.id' or 'name' or '*'
-                     // or even a resolved join condition like 'planets.id'
-                     colIdentifier = colIdentifier.trim();
-                     if (colIdentifier === '*') {
-                         parsedInfo.tablesInvolved.forEach(tableName => { const tableMeta = dbMetadataVis.tables[tableName]; if (tableMeta) { tableMeta.columns.forEach(colName => { const colEl = document.getElementById(`vis-col-${tableName}-${colName.replace(/`/g, '')}`); if (colEl) colEl.classList.add('highlight-column'); }); } });
-                     } else {
-                         const colEl = findColElement(colIdentifier); // Use enhanced finder
-                         if (colEl) colEl.classList.add('highlight-column');
-                     }
-                 });
-
-                 // 4. Highlight columns used in JOIN ON conditions (already added to selectColumns in parser)
-                 // No separate loop needed here anymore if parser adds resolved conditions to selectColumns
-
-                // 5. Draw Join Lines (remains the same, uses resolved conditions)
-                 if (parsedInfo.joinConditions.length > 0) { console.log("Drawing join lines..."); setTimeout(() => { if (!svgContainer) return; svgContainer.querySelectorAll('line.join-line-vis').forEach(el => el.remove()); parsedInfo.joinConditions.forEach(cond => { console.log(`Attempting to draw line for: ${cond.from} = ${cond.to}`); drawSimpleJoinLine(cond.from, cond.to); }); }, 50); } else { console.log("No join conditions to draw lines for."); }
-             }
-            function getTableCenter(tableId) { /* ... Keep as is ... */ const tableEl = document.getElementById(tableId); if (!tableEl || !mapCanvas) return null; const tableRect = tableEl.getBoundingClientRect(); const canvasRect = mapCanvas.getBoundingClientRect(); const x = Math.round(tableRect.left - canvasRect.left + tableRect.width / 2); const y = Math.round(tableRect.top - canvasRect.top + tableRect.height / 2); return { x, y }; }
-            function drawSimpleJoinLine(fromColFullId, toColFullId) { /* ... Keep as is ... */ if (!svgContainer) return; const cleanFrom = fromColFullId.replace(/`/g, ''); const cleanTo = toColFullId.replace(/`/g, ''); if (!cleanFrom.includes('.') || !cleanTo.includes('.')) return; const [fromTable, ] = cleanFrom.split('.'); const [toTable, ] = cleanTo.split('.'); const fromTableElId = `vis-table-${fromTable}`; const toTableElId = `vis-table-${toTable}`; const startPos = getTableCenter(fromTableElId); const endPos = getTableCenter(toTableElId); if (startPos && endPos && (startPos.x !== endPos.x || startPos.y !== endPos.y)) { const dx = endPos.x - startPos.x; const dy = endPos.y - startPos.y; const angle = Math.atan2(dy, dx); const length = Math.sqrt(dx*dx + dy*dy); const adjustedLength = Math.max(0, length - (ARROWHEAD_ADJUSTMENT * 1.5)); const endXAdjusted = startPos.x + adjustedLength * Math.cos(angle); const endYAdjusted = startPos.y + adjustedLength * Math.sin(angle); const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('x1', startPos.x); line.setAttribute('y1', startPos.y); line.setAttribute('x2', endXAdjusted); line.setAttribute('y2', endYAdjusted); line.classList.add('join-line-vis'); line.setAttribute('marker-end', 'url(#arrowhead-inactive)'); svgContainer.appendChild(line); requestAnimationFrame(() => { line.classList.add('active'); line.setAttribute('marker-end', 'url(#arrowhead-active-cyan)'); }); console.log(`Simple line drawn for ${fromColFullId} -> ${toColFullId}`); } else if (!startPos || !endPos) { console.warn(`Could not get center points for tables ${fromTable} or ${toTable}`); } }
-
-            // --- Draggable Logic (Map tables & Console) ---
-            function makeMapElementDraggable(element) { /* ... Keep as is ... */ let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0; const header = element.querySelector('.table-header-vis') || element; header.onmousedown = dragMouseDown; function dragMouseDown(e) { e = e || window.event; if (e.button !== 0) return; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; document.addEventListener('mouseup', closeDragElement, { once: true }); document.addEventListener('mousemove', elementDrag); element.style.cursor = 'grabbing'; element.style.zIndex = 20; } function elementDrag(e) { e = e || window.event; e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; const mapBounds = mapCanvas.getBoundingClientRect(); const elmBounds = element.getBoundingClientRect(); let newTop = element.offsetTop - pos2; let newLeft = element.offsetLeft - pos1; const parentPadding = 10; newTop = Math.max(0, Math.min(newTop, mapBounds.height - elmBounds.height - parentPadding)); newLeft = Math.max(0, Math.min(newLeft, mapBounds.width - elmBounds.width - parentPadding)); element.style.top = newTop + "px"; element.style.left = newLeft + "px"; updateAllJoinLines(); } function closeDragElement() { document.removeEventListener('mousemove', elementDrag); element.style.cursor = 'grab'; element.style.zIndex = 10; } }
-            function updateAllJoinLines() { /* ... Keep as is ... */ if (!svgContainer || !lastParsedInfoVis || !lastParsedInfoVis.joinConditions) return; svgContainer.querySelectorAll('line.join-line-vis').forEach(el => el.remove()); setTimeout(() => { lastParsedInfoVis.joinConditions.forEach(cond => { drawSimpleJoinLine(cond.from, cond.to); }); }, 0); }
-            function makeConsoleDraggable(element, handle) { /* ... Keep as is ... */ let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0; handle.onmousedown = dragMouseDown; function dragMouseDown(e) { e = e || window.event; if (e.button !== 0) return; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; const rect = element.getBoundingClientRect(); element.style.bottom = 'auto'; element.style.top = rect.top + 'px'; document.addEventListener('mouseup', closeDragElement, { once: true }); document.addEventListener('mousemove', elementDrag); handle.style.cursor = 'grabbing'; element.style.zIndex = 101; } function elementDrag(e) { e = e || window.event; e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; let newTop = element.offsetTop - pos2; let newLeft = element.offsetLeft - pos1; const elmRect = element.getBoundingClientRect(); newTop = Math.max(0, Math.min(newTop, window.innerHeight - elmRect.height)); newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - elmRect.width)); element.style.top = newTop + "px"; element.style.left = newLeft + "px"; } function closeDragElement() { document.removeEventListener('mousemove', elementDrag); handle.style.cursor = 'grab'; element.style.zIndex = 100; } }
-            function debounce(func, delay) { /* ... Keep as is ... */ let debounceTimer; return function(...args) { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { func.apply(this, args); }, delay); }; }
-
-            // --- Event Listeners Setup ---
-            function setupEventListeners() {
-                submitBtn.addEventListener('click', executeQueryAndVisualize);
-                clearBtn.addEventListener('click', () => { sqlInput.value = ''; clearResults(); updateVisualization(null); });
-                sqlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); executeQueryAndVisualize(); } });
-                sqlInput.addEventListener('input', debounce(() => { const currentQuery = sqlInput.value.trim(); if (currentQuery && currentMissionId === null) { try { const parsedInfo = parseQueryForVis(currentQuery); updateVisualization(parsedInfo); } catch(e) { console.error("Error parsing for vis on input:", e); updateVisualization(null); } } else if (!currentQuery) { updateVisualization(null); } }, 500)); // Only update map if not in mission? Or always? Let's update always for now.
-                hintToggler.addEventListener('click', toggleHint);
-                completeMissionBtn.addEventListener('click', sendData);
-                nextMissionBtn.addEventListener('click', nextMission);
-                toggleMapBtn.addEventListener('click', () => togglePanel(mapContainer));
+                <!-- Review content -->
+                <input type="hidden" name="timestamp" id="review-timestamp">
                 
-                // Add solution toggler event listener
-                const solutionToggler = document.getElementById('solution-toggler');
-                if (solutionToggler) {
-                    solutionToggler.addEventListener('click', toggleSolution);
-                }
-                
-                // Database Browser event listeners
-                setupDatabaseBrowserEvents();
-            }
-
-            // --- Database Browser Functions ---
-
-            // NEW function to generate browser items from gameData
-            function renderDatabaseBrowserItems() {
-                const itemsContainer = document.querySelector('.db-browser-items');
-                itemsContainer.innerHTML = ''; // Clear existing static items
-
-                // <<< ADD mission_control entry >>>
-                const descriptions = { mission_control: "Core mission data and system tables.", galaxy1: "Core planetary and species data for the primary star system.", sdg_education: "Global education metrics including enrollment rates, gender disparity, and funding.", health_metrics: "Global health indicators including life expectancy, infant mortality, and disease prevalence statistics.", climate_data: "Climate change metrics including temperature records, rainfall patterns, and carbon emissions by country.", economic_indicators:"Economic data including GDP, inequality metrics, poverty rates, and employment statistics.", infrastructure: "Global infrastructure data including access to clean water, electricity, and transportation networks.", biodiversity_critical:"Endangered species locations and population data. Access restricted.", conflict_zones:"Conflict zone data including resource disputes, active conflicts, and humanitarian crisis information." };
-                // <<< ADD mission_control entry >>>
-                const sizes = { mission_control: "5MB", galaxy1: "50MB", sdg_education: "275MB", health_metrics: "450MB", climate_data: "1.2GB", economic_indicators:"890MB", infrastructure: "620MB", biodiversity_critical:"2.3GB", conflict_zones:"780MB" };
-                // <<< ADD mission_control entry >>>
-                const accessLevels = { mission_control: 1, galaxy1: 1, sdg_education: 1, health_metrics: 2, climate_data: 2, economic_indicators: 2, infrastructure: 2, biodiversity_critical: 3, conflict_zones: 3 };
-
-
-                for (const dbAlias in gameData.databases) {
-                    // ... rest of the function remains the same ...
-                    const dbItem = document.createElement('div');
-                    dbItem.className = 'db-item';
-                    dbItem.dataset.dbAlias = dbAlias;
-
-                    const level = accessLevels[dbAlias] || 1;
-                    const size = sizes[dbAlias] || 'N/A';
-                    const description = descriptions[dbAlias] || 'No description available.';
-
-                    const isCurrentlyMounted = mountedDbAliases.has(dbAlias);
-                    const buttonText = isCurrentlyMounted ? "UNMOUNT" : (level === 3 ? "REQUEST" : "MOUNT");
-                    const buttonClass = isCurrentlyMounted ? "db-unmount-button" : (level === 3 ? "db-restricted-button" : "db-mount-button");
-
-                    dbItem.innerHTML = `
-                        <div class="db-item-header">
-                            <div class="db-item-name">${dbAlias}.db</div>
-                            <div class="db-item-size">${size}</div>
+                <div class="review-section">
+                    <h3>How was your experience?</h3>
+                    <div class="rating-container">
+                        <div class="rating">
+                            <span class="star" data-rating="1">★</span>
+                            <span class="star" data-rating="2">★</span>
+                            <span class="star" data-rating="3">★</span>
+                            <span class="star" data-rating="4">★</span>
+                            <span class="star" data-rating="5">★</span>
                         </div>
-                        <div class="db-item-description">${description}</div>
-                        <div class="db-item-footer">
-                            <div class="db-access-level access-level-${level}">Level ${level}</div>
-                            <button class="db-item-button ${buttonClass}" data-mounted="${isCurrentlyMounted}">${buttonText}</button>
-                        </div>
-                    `;
-                     if (isCurrentlyMounted) {
-                        dbItem.style.boxShadow = "0 0 8px rgba(0, 255, 204, 0.4)";
-                     }
-                    itemsContainer.appendChild(dbItem);
-                }
-                updateActiveDbCount(mountedDbAliases.size);
-            }
+                        <input type="hidden" name="rating" id="rating-value" value="0">
+                    </div>
+                </div>
+                
+                <div class="review-section">
+                    <h3>Your Feedback</h3>
+                    <textarea name="review" placeholder="Share your thoughts about the game..." required></textarea>
+                </div>
+                
+                <div class="review-buttons">
+                    <button type="submit" id="submit-review" class="pixel-btn">Submit Review</button>
+                    <button type="button" id="cancel-review" class="pixel-btn pixel-btn-secondary">Cancel</button>
+                </div>
+            </form>
+            
+            <div id="review-thankyou-message" style="display: none;">
+                Thank you for your feedback! We appreciate you taking the time to help us improve.
+            </div>
+        </div>
+    </div>
 
-            function updateActiveDbCount(count) {
-                 const maxDatabases = 5; // Define max allowed mounted DBs
-                 document.getElementById('active-db-count').textContent = `${count}/${maxDatabases}`;
-                 // Optionally disable mount buttons if count reaches max
-                 document.querySelectorAll('.db-mount-button').forEach(btn => {
-                     btn.disabled = (count >= maxDatabases);
-                 });
-            }
-
-
-            // MODIFIED function to handle dynamic items and map updates
-            function setupDatabaseBrowserEvents() {
-                const dbBrowser = document.getElementById('db-browser-overlay');
-                const dbBackdrop = document.querySelector('.db-browser-backdrop');
-                const dbClose = document.querySelector('.db-browser-close');
-                const itemsContainer = document.querySelector('.db-browser-items');
-                const headerElement = document.querySelector('.game-header');
-
-                // Header Button setup remains the same...
-                let dbHeaderButton = headerElement.querySelector('#open-db-browser-header-btn'); if (!dbHeaderButton) { dbHeaderButton = document.createElement('button'); dbHeaderButton.id = 'open-db-browser-header-btn'; dbHeaderButton.className = 'db-header-button'; dbHeaderButton.textContent = 'DB REGISTRY'; const playerStats = headerElement.querySelector('.player-stats'); if (playerStats) { headerElement.insertBefore(dbHeaderButton, playerStats); } else { headerElement.appendChild(dbHeaderButton); } }
-                dbHeaderButton.addEventListener('click', () => { renderDatabaseBrowserItems(); dbBrowser.style.display = 'flex'; dbBackdrop.style.display = 'block'; });
-                const closeBrowser = () => { dbBrowser.style.display = 'none'; dbBackdrop.style.display = 'none'; }; dbClose.addEventListener('click', closeBrowser); dbBackdrop.addEventListener('click', closeBrowser);
-
-                // Use event delegation
-                itemsContainer.addEventListener('click', (event) => {
-                    if (!event.target.matches('.db-item-button')) return;
-
-                    const button = event.target;
-                    const dbItem = button.closest('.db-item');
-                    const dbAlias = dbItem.dataset.dbAlias;
-                    const isMounted = button.dataset.mounted === 'true'; // Read current state from button
-
-                    console.log(`Button clicked for ${dbAlias}. Currently Mounted: ${isMounted}`);
-
-                    if (button.classList.contains('db-restricted-button')) { /* ... handle restricted ... */ return; }
-
-                    let currentMountedCount = mountedDbAliases.size; // Use Set size
-
-                    if (!isMounted) { // --- Try to MOUNT ---
-                        const maxDatabases = 5;
-                        if (currentMountedCount >= maxDatabases) {
-                            displayMessage(`Cannot mount ${dbAlias}.db. Max limit (${maxDatabases}) reached.`, "status-error", 4000);
-                            return;
-                        }
-
-                        // Attempt to mount the tables for this alias
-                        if (mountDatabase(dbAlias)) { // Calls AlaSQL CREATE/INSERT for this alias
-                            generateVisualizerMetadata(); // Regenerate based on updated mountedDbAliases Set
-                            setupMap(); // Redraw map with combined schemas
-                            hideMapPlaceholder(); // Ensure placeholder is hidden
-
-                            // Update button state in the browser
-                            button.textContent = "UNMOUNT";
-                            button.classList.remove('db-mount-button');
-                            button.classList.add('db-unmount-button');
-                            button.dataset.mounted = 'true'; // Update the data attribute
-                            dbItem.style.boxShadow = "0 0 8px rgba(0, 255, 204, 0.4)";
-
-                            updateActiveDbCount(mountedDbAliases.size); // Update count display
-                            displayMessage(`Database ${dbAlias}.db mounted. Map updated.`, "status-success", 3000);
-                            // closeBrowser(); // Optionally close
-                        } else {
-                            displayMessage(`Failed to mount ${dbAlias}.db.`, "status-error", 4000);
-                            // State remains unchanged if mount failed
-                        }
-
-                    } else { // --- Try to UNMOUNT ---
-                        if (unmountDatabase(dbAlias)) { // Calls AlaSQL DROP TABLE for this alias
-                            generateVisualizerMetadata(); // Regenerate map data
-                            setupMap(); // Redraw map
-
-                            // Update button state
-                            button.textContent = "MOUNT";
-                            button.classList.remove('db-unmount-button');
-                            button.classList.add('db-mount-button');
-                            button.dataset.mounted = 'false'; // Update the data attribute
-                            dbItem.style.boxShadow = "none";
-
-                            updateActiveDbCount(mountedDbAliases.size); // Update count display
-
-                            // If unmounting the last DB, show placeholder
-                            if (mountedDbAliases.size === 0) {
-                                showMapPlaceholder("No database mounted. Use DB REGISTRY.");
-                                // Maybe reset currentMission if its DB was unmounted?
-                                if(currentMissionData && currentMissionData.dbAlias === dbAlias) {
-                                    resetMissionDisplay();
-                                }
-                            }
-                             displayMessage(`Database ${dbAlias}.db unmounted. Map updated.`, "status-success", 3000);
-
-                        } else {
-                            displayMessage(`Failed to unmount ${dbAlias}.db.`, "status-error", 4000);
-                        }
-                    }
-                });
-            } // End setupDatabaseBrowserEvents
-
-            // --- Utility Functions ---
-            // Modify displayMessage to allow auto-clearing
-            function displayMessage(message, type = "status-success", clearAfterMs = 0) {
-                 const msgDiv = document.createElement('div');
-                 msgDiv.className = `result-status ${type}`;
-                 msgDiv.textContent = message;
-                 resultStatusContainer.innerHTML = ''; // Clear previous status
-                 resultStatusContainer.appendChild(msgDiv);
-
-                 if (clearAfterMs > 0) {
-                     setTimeout(() => {
-                         if (msgDiv.parentNode === resultStatusContainer) { // Only clear if it's still the current message
-                            resultStatusContainer.innerHTML = '';
-                         }
-                     }, clearAfterMs);
-                 }
-             }
-
-            // --- Start Game ---
-            initializeGame(); // This calls initializeDatabase('galaxy1'), setupMap, etc.
-        }); // End DOMContentLoaded
-    </script>
+    <script src="js/schemaLoader.js"></script>
+    <script src="js/databaseEngine.js"></script>
+    <script src="js/missions.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/map-integration.js"></script>
 </body>
 </html>

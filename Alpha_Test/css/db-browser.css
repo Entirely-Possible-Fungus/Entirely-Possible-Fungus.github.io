@@ -1,0 +1,141 @@
+/* --- Database Browser Overlay --- */
+#db-browser-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 900px; height: 85%; max-height: 650px; background-color: #061019; border: 2px solid #27d7fb; box-shadow: 0 0 30px rgba(39, 215, 251, 0.5), inset 0 0 20px rgba(39, 215, 251, 0.2); z-index: 1000; display: none; flex-direction: column; font-family: 'Share Tech Mono', monospace; color: #27d7fb; overflow: hidden; }
+.db-browser-header { background-color: #0c1720; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #27d7fb; position: relative; }
+.db-browser-header::after { content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 100%; background: linear-gradient(to right, transparent, #27d7fb 20%, #27d7fb 80%, transparent); }
+.db-browser-header h2 { margin: 0; font-size: 1.6em; color: #27d7fb; text-shadow: 0 0 10px rgba(39, 215, 251, 0.7); font-weight: normal; letter-spacing: 2px; text-transform: uppercase; }
+.db-browser-close { cursor: pointer; font-size: 1.5em; color: #ff3c5a; padding: 0 10px; text-shadow: 0 0 10px rgba(255, 60, 90, 0.7); }
+.db-browser-content { padding: 20px; overflow-y: auto; flex-grow: 1; background: linear-gradient(0deg, rgba(6, 16, 25, 0.9), rgba(6, 16, 25, 0.9)), repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(39, 215, 251, 0.05) 2px, rgba(39, 215, 251, 0.05) 4px); }
+.db-browser-search { padding: 15px 0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(39, 215, 251, 0.3); }
+.db-browser-search input { flex-grow: 1; background-color: rgba(39, 215, 251, 0.1); border: 1px solid #27d7fb; padding: 8px 12px; color: #27d7fb; font-family: inherit; font-size: 0.9em; margin-right: 10px; }
+.db-browser-search input::placeholder { color: rgba(39, 215, 251, 0.5); }
+.db-browser-search button { background-color: rgba(39, 215, 251, 0.2); color: #27d7fb; border: 1px solid #27d7fb; padding: 8px 15px; font-family: inherit; font-size: 0.9em; cursor: pointer; transition: all 0.2s; }
+.db-browser-search button:hover { background-color: rgba(39, 215, 251, 0.3); box-shadow: 0 0 10px rgba(39, 215, 251, 0.5); }
+.db-status-indicator { display: flex; justify-content: space-between; margin-bottom: 20px; background-color: rgba(6, 16, 25, 0.7); padding: 10px 15px; border: 1px solid rgba(39, 215, 251, 0.5); position: relative; overflow: hidden; }
+.db-status-indicator::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, rgba(39, 215, 251, 0) 0%, rgba(39, 215, 251, 0.1) 50%, rgba(39, 215, 251, 0) 100%); animation: scanLine 2s linear infinite; }
+@keyframes scanLine { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.db-status-text { font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
+.db-browser-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+.db-item { background-color: rgba(6, 16, 25, 0.8); border: 1px solid rgba(39, 215, 251, 0.5); padding: 15px; transition: all 0.3s; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.db-item::after { content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 1px; background: linear-gradient(to right, transparent, #27d7fb, transparent); animation: borderFlow 3s ease-in-out infinite; animation-delay: var(--delay, 0s); }
+.db-item:nth-child(odd)::after { animation-delay: 1.5s; }
+@keyframes borderFlow { 0% { left: -100%; } 50% { left: 100%; } 100% { left: 100%; } }
+.db-item:hover { box-shadow: 0 0 15px rgba(39, 215, 251, 0.3); transform: translateY(-2px); }
+.db-item-header { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(39, 215, 251, 0.3); }
+.db-item-name { color: #27d7fb; font-weight: bold; font-size: 1em; letter-spacing: 1px; }
+.db-item-size { color: rgba(39, 215, 251, 0.7); font-size: 0.8em; }
+.db-item-description { color: rgba(255, 255, 255, 0.8); font-size: 0.85em; margin-bottom: 15px; flex-grow: 1; line-height: 1.4; }
+.db-item-stats { color: rgba(39, 215, 251, 0.7); font-size: 0.75em; margin-bottom: 10px; display: flex; justify-content: space-between; }
+.db-item-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+.db-access-level { font-size: 0.75em; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; letter-spacing: 1px; }
+.access-level-1 { background-color: rgba(39, 215, 251, 0.2); color: #27d7fb; border: 1px solid rgba(39, 215, 251, 0.5); }
+.access-level-2 { background-color: rgba(255, 204, 0, 0.2); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.5); }
+.access-level-3 { background-color: rgba(255, 60, 90, 0.2); color: #ff3c5a; border: 1px solid rgba(255, 60, 90, 0.5); }
+.db-item-button { font-family: inherit; font-size: 0.8em; padding: 5px 10px; background-color: rgba(39, 215, 251, 0.2); color: #27d7fb; border: 1px solid #27d7fb; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+.db-item-button:hover { background-color: rgba(39, 215, 251, 0.3); box-shadow: 0 0 10px rgba(39, 215, 251, 0.5); }
+.db-item-button:active { transform: translateY(1px); }
+.db-mount-button { background-color: rgba(39, 215, 251, 0.2); color: #27d7fb; border: 1px solid #27d7fb; }
+.db-unmount-button { background-color: rgba(255, 60, 90, 0.2); color: #ff3c5a; border: 1px solid #ff3c5a; }
+.db-restricted-button { background-color: rgba(255, 204, 0, 0.2); color: #ffcc00; border: 1px solid #ffcc00; }
+.db-browser-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); z-index: 999; display: none; }
+/* Database Header Button */
+.db-header-button { font-family: 'Share Tech Mono', monospace; background-color: rgba(39, 215, 251, 0.2); color: #27d7fb; border: 1px solid #27d7fb; padding: 8px 12px; font-size: 0.85em; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; position: relative; overflow: hidden; transition: all 0.3s; }
+.db-header-button::before { content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, rgba(39, 215, 251, 0) 0%, rgba(39, 215, 251, 0.3) 50%, rgba(39, 215, 251, 0) 100%); transition: all 0.6s; }
+.db-header-button:hover::before { left: 100%; }
+.db-header-button:hover { box-shadow: 0 0 10px rgba(39, 215, 251, 0.5); }
+
+/* Mission Info Box Styling */
+#mission-info-box {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.85);
+    border: 1px solid #4CAF50;
+    border-radius: 5px;
+    padding: 15px;
+    width: 300px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 1000;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+}
+
+#mission-info-box h3 {
+    color: #4CAF50;
+    margin-top: 0;
+    border-bottom: 1px solid #4CAF50;
+    padding-bottom: 5px;
+}
+
+.mission-select-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-family: 'Courier New', monospace;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+.mission-select-btn:hover {
+    background-color: #388E3C;
+}
+
+/* Mission Details Styling */
+.mission-details {
+    margin-top: 15px;
+    border: 1px solid #4CAF50;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.mission-details h4 {
+    color: #4CAF50;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.mission-item {
+    border-bottom: 1px dotted #4CAF50;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.mission-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.mission-difficulty {
+    color: #FFC107;
+    margin-bottom: 8px;
+}
+
+.mission-description {
+    font-size: 0.9em;
+    color: #ccc;
+    margin-bottom: 10px;
+}
+
+.activate-mission-btn {
+    background-color: #4CAF50;
+    color: white;
+    text-align: center;
+    padding: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 3px;
+    transition: background-color 0.3s;
+}
+
+.activate-mission-btn:hover {
+    background-color: #388E3C;
+}
+
+/* Difficulty colors */
+.difficulty-1 { color: #4CAF50; } /* Very Easy */
+.difficulty-2 { color: #8BC34A; } /* Easy */
+.difficulty-3 { color: #FFC107; } /* Medium */
+.difficulty-4 { color: #FF9800; } /* Hard */
+.difficulty-5 { color: #FF5722; } /* Very Hard */
