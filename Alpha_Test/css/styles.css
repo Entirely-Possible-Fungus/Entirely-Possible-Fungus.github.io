@@ -595,7 +595,7 @@ input:checked + .slider:before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #050c14;
+    background-color: #000101;
     z-index: 9999;
     display: flex;
     justify-content: center;
@@ -616,6 +616,7 @@ input:checked + .slider:before {
 
 .particle-portrait-container {
     position: relative;
+    right: 12px;
     width: 100%;
     height: 100vh;
     overflow: hidden;
@@ -673,7 +674,7 @@ input:checked + .slider:before {
 
 .title-container {
     position: absolute;
-    bottom: 180px;
+    bottom: 240px;
     text-align: center;
     z-index: 15;
     width: 100%;
