@@ -26,7 +26,7 @@
                 "points": 25,
                 "timeLimit": 300,
                 "timerEnabled": false,
-                "successMessage": "Excellent! You've mounted your first database. Now you can access the mission_control database and continue your adventure!",
+                "successMessage": "Excellent! You've mounted your first database. Now you can access the mission_control database to see what we have available.",
                 "dbAlias": "mission_control",
                 "validationCriteria": {
                     "databaseMounted": true,

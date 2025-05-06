@@ -320,6 +320,22 @@ function setupMap(mapCanvas, svgContainer) {
         tableEl.style.left = `${tableData.position.left}px`; 
         tableEl.dataset.tableName = tableName; 
         
+        // Add collapse/expand button to each table
+        const collapseBtn = document.createElement('div');
+        collapseBtn.className = 'table-collapse-btn';
+        collapseBtn.textContent = '-';
+        collapseBtn.title = 'Collapse/Expand';
+        collapseBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent triggering drag
+            tableEl.classList.toggle('collapsed');
+            this.textContent = tableEl.classList.contains('collapsed') ? '+' : '-';
+            // Update join lines if table state changes
+            if (!tableEl.classList.contains('collapsed')) {
+                updateAllJoinLines(mapCanvas);
+            }
+        });
+        tableEl.appendChild(collapseBtn);
+        
         const headerEl = document.createElement('div'); 
         headerEl.className = 'table-header-vis'; 
         const nameSpan = document.createElement('span'); 
@@ -628,9 +644,19 @@ function drawSimpleJoinLine(fromColFullId, toColFullId, mapCanvas, svgContainer)
 
 // Make schema visualization elements draggable
 function makeMapElementDraggable(element, mapCanvas) { 
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0; 
-    const header = element.querySelector('.table-header-vis') || element; 
-    header.onmousedown = dragMouseDown; 
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    
+    // Make the entire element draggable, not just the header
+    element.style.cursor = 'grab';
+    element.onmousedown = dragMouseDown;
+    
+    // Also set up header events as before (in case user expects header to work)
+    const header = element.querySelector('.table-header-vis');
+    if (header) {
+        header.onmousedown = dragMouseDown;
+    }
+    
+    // Remove the mouseenter event - we only want z-index to change on drag
     
     function dragMouseDown(e) { 
         e = e || window.event; 
@@ -641,7 +667,14 @@ function makeMapElementDraggable(element, mapCanvas) {
         document.addEventListener('mouseup', closeDragElement, { once: true }); 
         document.addEventListener('mousemove', elementDrag); 
         element.style.cursor = 'grabbing'; 
-        element.style.zIndex = 20; 
+        
+        // Set highest z-index only when actively dragging
+        document.querySelectorAll('.db-table-vis').forEach(table => {
+            if (table !== element) {
+                table.style.zIndex = '10';
+            }
+        });
+        element.style.zIndex = '20';
     } 
     
     function elementDrag(e) { 
@@ -666,7 +699,8 @@ function makeMapElementDraggable(element, mapCanvas) {
     function closeDragElement() { 
         document.removeEventListener('mousemove', elementDrag); 
         element.style.cursor = 'grab'; 
-        element.style.zIndex = 10; 
+        // We keep the element at a higher z-index after dragging is complete
+        // This ensures the one you've just dragged stays on top
     } 
 }
 

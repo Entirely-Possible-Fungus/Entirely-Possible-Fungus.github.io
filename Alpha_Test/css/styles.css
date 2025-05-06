@@ -16,13 +16,13 @@ body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Silkscreen', san
 .stat-item span { color: #fff; margin-left: 5px; }
 
 /* --- Layout: Content Area (Results + Schema Map) --- */
-.content-area { display: flex; flex-grow: 1; overflow: hidden; border-top: 4px solid #555; }
-.main-content { flex-grow: 1; padding: 15px; overflow-y: auto; border-right: 4px solid #555; background-color: #252525; display: flex; flex-direction: column; }
-.mission-display { border: 2px solid #444; background-color: #303030; padding: 10px; margin-bottom: 15px; flex-shrink: 0; max-height: none; /* Remove any existing height limit on the container */ }
+.content-area { display: flex; flex-grow: 1; overflow: hidden; border-top: 4px solid #555; position: relative; /* Ensure the absolute positioning of the handle works within this container */ }
+.main-content { flex-grow: 1; padding: 15px; overflow-y: hidden; border-right: 4px solid #555; background-color: #252525; display: flex; flex-direction: column; position: relative; overflow: hidden; /* Hide horizontal overflow */ }
+.mission-display { border: 2px solid #444; background-color: #303030; padding: 10px; margin-bottom: 15px; flex-shrink: 0; max-height: none; /* Remove any existing height limit on the container */ position: relative; min-height: 100px; max-height: 70vh; overflow-y: auto; will-change: height; /* Optimize for animation performance */ display: flex; flex-direction: column; }
 .mission-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
 .mission-header .pixel-h2 { color: #ffcc00; margin-bottom: 0; text-shadow: 1px 1px 0px #806600;}
 #mission-difficulty { color: #ffcc00; font-size: 1.2em; letter-spacing: 2px; }
-#mission-description { margin-bottom: 10px; line-height: 1.8; max-height: 140px; /* Approximately 50 words at standard font size */ overflow-y: auto; padding-right: 10px; /* Provide space for scrollbar */ scrollbar-width: thin; /* Firefox */ scrollbar-color: #0f0 #222; /* Firefox: thumb and track colors */ }
+#mission-description { margin-bottom: 10px; line-height: 1.8; max-height: none; /* Remove max height restriction */ overflow-y: visible; /* Allow content to flow naturally */ padding-right: 10px; /* Provide space for scrollbar */ padding-bottom: 15px; /* Add padding to ensure text isn't hidden under the resize handle */ scrollbar-width: thin; /* Firefox */ scrollbar-color: #0f0 #222; /* Firefox: thumb and track colors */ }
 #mission-description strong { color: #00ffcc; }
 #mission-description::-webkit-scrollbar { width: 6px; }
 #mission-description::-webkit-scrollbar-track { background: #222; border-radius: 3px; }
@@ -61,7 +61,7 @@ body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Silkscreen', san
 #solution-content { display: none; margin-top: 5px; padding: 8px; background-color: #2a2a2a; border: 1px solid #444; color: #c0c0c0; line-height: 1.7; }
 #solution-content code { color: #99ccff; background: #3a3a3a; padding: 1px 3px; display: block; white-space: pre-wrap; margin: 5px 0; }
 
-.results-area { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+.results-area { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 100px; will-change: height; /* Optimize for animation performance */ }
 #query-results { border: 2px solid #444; padding: 0; background-color: #222; min-height: 50px; overflow: auto; flex-grow: 1; }
 #query-results table { border-collapse: collapse; width: 100%; font-size: 0.9em; table-layout: auto; border: 1px solid #555; } #query-results th, #query-results td { border: 1px solid #555; padding: 4px 6px; text-align: left; white-space: nowrap; } #query-results th { background-color: #444; color: #00ffcc; position: sticky; top: 0; z-index: 1; } #query-results td { color: #d0d0d0; } #query-results .null-value { font-style: italic; color: #888;}
 .result-status { padding: 5px; margin-top: 5px; border: 1px solid; text-align: center; }
@@ -73,12 +73,140 @@ tr.mission-row:hover td { background-color: #404040 !important; } /* Highlight o
 td.difficulty-stars { color: #ffcc00; letter-spacing: 1px; }
 
 /* --- DB Map Visualizer Area (Right Side - Schema Map) - PIXEL STYLED --- */
-#db-map-container { flex-shrink: 0; width: 40%; max-width: 450px; position: relative; background-color: #2b2b2b; border-left: 4px solid #555; overflow: hidden; font-family: inherit; font-size: 10px; color: #e0e0e0; padding: 10px; box-sizing: border-box; transition: width 0.3s ease, padding 0.3s ease; }
+#db-map-container { flex-shrink: 0; width: 40%; max-width: 80%; min-width: 100px; position: relative; background-color: #2b2b2b; border-left: 4px solid #555; overflow: hidden; font-family: inherit; font-size: 10px; color: #e0e0e0; padding: 10px; box-sizing: border-box; transition: width 0.1s ease, padding 0.1s ease; will-change: width; /* Optimize for animation performance */ }
 #db-map-container.collapsed { width: 30px; padding: 10px 0; cursor: pointer; } /* Collapsed state */
 #db-map-container.collapsed #map-canvas { display: none; } /* Hide canvas when collapsed */
 #map-canvas { width: 100%; height: 100%; position: relative; }
 /* --- DB Map Table/Column Styles - PIXEL STYLED --- */
-.db-table-vis { position: absolute; border: 2px solid #666; background-color: #3a3a3a; padding: 6px; border-radius: 0; font-size: inherit; min-width: 120px; transition: border-color 0.3s, box-shadow 0.3s; box-shadow: 3px 3px 0px #1a1a1a; z-index: 10; cursor: grab; color: #e0e0e0; } .db-table-vis:active { cursor: grabbing; } .table-header-vis { font-weight: normal; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #555; display: flex; justify-content: space-between; align-items: center; user-select: none; color: #ffcc00; font-size: inherit; text-shadow: 1px 1px 0px #806600; } .table-sequence-number { display: inline-block; background-color: #00ffcc; color: #1a1a1a; border-radius: 0; width: 14px; height: 14px; font-size: 0.8em; text-align: center; line-height: 14px; margin-left: 4px; opacity: 0; transition: opacity 0.3s; user-select: none; border: 1px solid #0d7377; } .column-list-vis { list-style: none; padding: 0; margin: 0; user-select: none; } .column-item-vis { padding: 1px 3px; border-bottom: 1px dotted #555; transition: background-color 0.3s, font-weight 0.3s; white-space: nowrap; user-select: none; position: relative; margin: 1px 0; color: #c0c0c0; } .column-item-vis:last-child { border-bottom: none; } .highlight-table { border-color: #00ffcc; box-shadow: 0 0 8px rgba(0, 255, 204, 0.4), 3px 3px 0px #0d7377; } .highlight-table .table-sequence-number { opacity: 1; } .highlight-column { background-color: rgba(0, 255, 204, 0.15); font-weight: normal; color: #ffffff; }
+.db-table-vis { 
+    position: absolute; 
+    border: 2px solid #666; 
+    background-color: #3a3a3a; 
+    padding: 6px; 
+    border-radius: 0; 
+    font-size: inherit; 
+    min-width: 120px; 
+    transition: border-color 0.3s, box-shadow 0.3s; 
+    box-shadow: 3px 3px 0px #1a1a1a; 
+    z-index: 10; 
+    cursor: grab; 
+    color: #e0e0e0; 
+} 
+
+.db-table-vis:active { cursor: grabbing; } 
+
+.table-header-vis { 
+    font-weight: normal; 
+    margin-bottom: 4px; 
+    padding-bottom: 3px; 
+    border-bottom: 1px solid #555; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    user-select: none; 
+    color: #ffcc00; 
+    font-size: inherit; 
+    text-shadow: 1px 1px 0px #806600; 
+} 
+
+.table-sequence-number { 
+    display: inline-block; 
+    background-color: #00ffcc; 
+    color: #1a1a1a; 
+    border-radius: 0; 
+    width: 14px; 
+    height: 14px; 
+    font-size: 0.8em; 
+    text-align: center; 
+    line-height: 14px; 
+    margin-left: 4px; 
+    opacity: 0; 
+    transition: opacity 0.3s; 
+    user-select: none; 
+    border: 1px solid #0d7377; 
+} 
+
+.column-list-vis { 
+    list-style: none; 
+    padding: 0; 
+    margin: 0; 
+    user-select: none;
+    overflow: hidden;
+    max-height: 500px;
+    transition: max-height 0.3s ease;
+} 
+
+.column-item-vis { 
+    padding: 1px 3px; 
+    border-bottom: 1px dotted #555; 
+    transition: background-color 0.3s, font-weight 0.3s; 
+    white-space: nowrap; 
+    user-select: none; 
+    position: relative; 
+    margin: 1px 0; 
+    color: #c0c0c0; 
+} 
+
+.column-item-vis:last-child { border-bottom: none; } 
+
+.highlight-table { 
+    border-color: #00ffcc; 
+    box-shadow: 0 0 8px rgba(0, 255, 204, 0.4), 3px 3px 0px #0d7377; 
+} 
+
+.highlight-table .table-sequence-number { opacity: 1; } 
+
+.highlight-column { 
+    background-color: rgba(0, 255, 204, 0.15); 
+    font-weight: normal; 
+    color: #ffffff; 
+}
+
+/* Schema panel collapse/expand button */
+.table-collapse-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 16px;
+    height: 16px;
+    background-color: #ff5555;
+    color: #000;
+    border: 1px solid #333;
+    border-radius: 3px;
+    text-align: center;
+    line-height: 14px;
+    font-size: 10px;
+    cursor: pointer;
+    z-index: 12;
+    transition: background-color 0.2s;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+    user-select: none;
+}
+
+.table-collapse-btn:hover {
+    background-color: #ff7777;
+}
+
+/* Collapsed state styles */
+.db-table-vis.collapsed .column-list-vis {
+    max-height: 0;
+    overflow: hidden;
+}
+
+.db-table-vis.collapsed {
+    padding-bottom: 3px;
+}
+
+.db-table-vis.collapsed .table-header-vis {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+/* Remove the old toggle button */
+#toggle-map-btn {
+    display: none;  /* Hide the old red button */
+}
+
 /* --- DB Map SVG Line/Arrow Styles --- */
 #line-svg-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; } .join-line-vis { stroke: #888; stroke-width: 1.5; opacity: 0; transition: opacity 0.5s, stroke 0.3s, stroke-width 0.3s; marker-end: url(#arrowhead-inactive); stroke-dasharray: none; } .join-line-vis.active { opacity: 1; stroke: #00ffcc; stroke-width: 2; marker-end: url(#arrowhead-active-cyan); stroke-dasharray: 3, 3; } #arrowhead-active-cyan path { stroke: none; fill: #00ffcc; } #arrowhead-inactive path { stroke: none; fill: #888; }
 /* Panel Toggle Button */
@@ -595,7 +723,7 @@ input:checked + .slider:before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #000101;
+    background-color: #050c14;
     z-index: 9999;
     display: flex;
     justify-content: center;
@@ -616,7 +744,6 @@ input:checked + .slider:before {
 
 .particle-portrait-container {
     position: relative;
-    right: 12px;
     width: 100%;
     height: 100vh;
     overflow: hidden;
@@ -674,7 +801,7 @@ input:checked + .slider:before {
 
 .title-container {
     position: absolute;
-    bottom: 240px;
+    bottom: 180px;
     text-align: center;
     z-index: 15;
     width: 100%;
@@ -963,4 +1090,231 @@ input:checked + .slider:before {
     text-align: center;
     border-radius: 5px;
     margin-top: 20px;
+}
+
+/* Panel resize handles */
+.resize-handle {
+    position: absolute;
+    z-index: 20;
+    background-color: #9d9d9d;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.resize-handle:hover {
+    opacity: 0.8;
+    cursor: row-resize;
+}
+
+.resize-handle.vertical {
+    height: 12px; /* Increased from 8px */
+    width: 100%;
+    left: 0;
+    cursor: row-resize;
+}
+
+.resize-handle.horizontal {
+    width: 12px; /* Increased from 8px */
+    height: 100%;
+    top: 0;
+    cursor: col-resize;
+}
+
+/* Add yellow grip indicator to resize handles */
+.resize-handle::after {
+    content: '';
+    display: block;
+    background-color: #ff0059;
+    /* box-shadow: 0 0 5px rgba(255, 204, 0, 0.6); */
+}
+
+.resize-handle.vertical::after {
+    width: 60px; /* Increased from 40px */
+    height: 4px; /* Increased from 3px */
+    border-radius: 2px;
+}
+
+.resize-handle.horizontal::after {
+    width: 4px; /* Increased from 3px */
+    height: 60px; /* Increased from 40px */
+    border-radius: 2px;
+}
+
+/* Mission panel resize handle - position directly above Query Results */
+#mission-resize-handle-container {
+    position: relative;
+    height: -9px;
+    width: 100%;
+    top: -14px;
+    margin-bottom: -9px;
+    z-index: 25;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background-color: #2525254a; */
+}
+
+/* Mission resize handle is now in its own container */
+#mission-resize-handle {
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    cursor: row-resize;
+    /* background-color: #333;
+    border-top: 1px solid #444;
+    border-bottom: 1px solid #444; */
+    z-index: 25;
+}
+
+/* Make the handle's yellow indicator more prominent */
+#mission-resize-handle::after {
+    /* content: ''; */
+    display: block;
+    width: 80px;
+    height: 6px;
+    border-radius: 2px;
+    background-color: #000000;
+    /* box-shadow: 0 0 8px rgba(255, 204, 0, 0.8); */
+}
+
+/* Adjust Query Results heading to make space for the handle */
+.results-area .pixel-h3 {
+    margin-top: 8px;
+    padding-top: 4px;
+}
+
+/* Results panel resize handle (underneath mission panel) */
+#results-resize-handle {
+    bottom: 6px;
+    transform: translateY(50%);
+    height: 12px; /* Make handle taller */
+}
+
+/* Schema panel resize handle */
+#schema-resize-handle {
+    left: -4px;
+}
+
+/* Add body style for resizing cursor */
+body.resizing {
+    cursor: col-resize !important;
+    user-select: none;
+}
+
+body.resizing-vertical {
+    cursor: row-resize !important;
+    user-select: none;
+}
+
+/* Central resize handle - floating control that follows content */
+.central-resize-handle {
+    position: absolute;
+    z-index: 40; /* Higher than other elements to ensure it's always clickable */
+    background-color: rgba(51, 51, 51, 0.9);
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.6);
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: move; /* Show move cursor to indicate multi-directional capability */
+    transform: translate(-50%, -50%); /* Center the handle on its position */
+    /* border: 2px solid #555; */
+    transition: background-color 0.2s;
+    bottom: 0; /* Stick to bottom of its container */
+}
+
+/* Multidirectional central resize handle */
+.central-resize-handle {
+    position: absolute;
+    z-index: 50;
+    background-color: #333;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: move;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+    border: 2px solid #555;
+    top: 50%;
+    right: -39px;
+    /* transform: translate(50%, -50%); */
+    /* user-select: none;
+    touch-action: none; */
+}
+
+.central-resize-handle:hover {
+    background-color: #444;
+}
+
+.central-resize-handle.dragging {
+    background-color: #666;
+    /* transform: translate(50%, -50%) scale(1.1); */
+}
+
+.central-grip {
+    width: 18px;
+    height: 18px;
+    background-color: #ffcc00;
+    clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.8);
+}
+
+.central-resize-handle.dragging {
+    background-color: #666;
+}
+
+/* Results Area Header with Resize Handle */
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.results-header .pixel-h3 {
+    margin: 0;
+}
+
+/* Multidirectional central resize handle - new position in results area */
+.central-resize-handle {
+    position: relative;
+    z-index: 50;
+    background-color: #333;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: move;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+    border: 2px solid #555;
+    margin-right: 10px;
+    user-select: none;
+    touch-action: none;
+}
+
+.central-resize-handle:hover {
+    background-color: #444;
+}
+
+.central-resize-handle.dragging {
+    background-color: #666;
+    /* transform: scale(1.1); */
+}
+
+.central-grip {
+    width: 16px;
+    height: 16px;
+    background-color: #ffcc00;
+    clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.8);
 }

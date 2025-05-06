@@ -379,6 +379,12 @@
             openMapBtn.style.display = 'none';
         }
         
+        // Make panels resizable
+        initializeResizablePanels();
+        
+        // Setup the central multidirectional resize handle
+        window.centralHandleController = setupCentralResizeHandle();
+        
         // Mission data is now directly loaded from mission_control.json schema
         // through the schemaLoader.js file, no need to load it separately
         
@@ -700,6 +706,128 @@
         } 
     }
     
+    // --- Panel Resizing Logic ---
+    function setupResizablePanels() {
+        // Mission panel resize
+        const missionPanel = document.getElementById('mission-area');
+        const missionResizeHandle = document.getElementById('mission-resize-handle');
+        
+        // Results panel resize
+        const resultsPanel = document.querySelector('.results-area');
+        const resultsResizeHandle = document.getElementById('results-resize-handle');
+        
+        // Schema panel resize
+        const schemaPanel = document.getElementById('db-map-container');
+        const schemaResizeHandle = document.getElementById('schema-resize-handle');
+        
+        // Set initial heights
+        let initialMissionHeight = parseInt(getComputedStyle(missionPanel).height);
+        let initialResultsHeight = parseInt(getComputedStyle(resultsPanel).height);
+        
+        // Mission panel resize handler
+        if (missionResizeHandle && missionPanel) {
+            makeResizable(missionResizeHandle, missionPanel, 'vertical');
+        }
+        
+        // Results panel resize handler
+        if (resultsResizeHandle && resultsPanel) {
+            makeResizable(resultsResizeHandle, resultsPanel, 'vertical');
+        }
+        
+        // Schema panel resize handler
+        if (schemaResizeHandle && schemaPanel) {
+            makeResizable(schemaResizeHandle, schemaPanel, 'horizontal');
+        }
+        
+        // Generic function to make an element resizable
+        function makeResizable(handle, panel, direction) {
+            let startPos = 0;
+            let startSize = 0;
+            
+            handle.addEventListener('mousedown', function(e) {
+                startPos = direction === 'vertical' ? e.clientY : e.clientX;
+                startSize = direction === 'vertical' ? panel.offsetHeight : panel.offsetWidth;
+                
+                document.body.classList.add(direction === 'vertical' ? 'resizing-vertical' : 'resizing');
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResize);
+                
+                e.preventDefault(); // Prevent text selection during resize
+            });
+            
+            function resize(e) {
+                if (direction === 'vertical') {
+                    const newHeight = startSize + (e.clientY - startPos);
+                    
+                    // Set minimum and maximum heights
+                    if (newHeight >= 100 && newHeight <= window.innerHeight * 0.8) {
+                        panel.style.height = newHeight + 'px';
+                        
+                        // If this is the mission panel, adjust map lines
+                        if (panel.id === 'mission-area' && window.DatabaseEngine) {
+                            window.DatabaseEngine.updateAllJoinLines(document.getElementById('map-canvas'));
+                        }
+                    }
+                } else {
+                    // Horizontal resize for schema panel
+                    const parentWidth = panel.parentElement.offsetWidth;
+                    const deltaX = e.clientX - startPos;
+                    // For schema panel we need to convert size to percentage
+                    const currentWidth = panel.offsetWidth;
+                    const newWidth = startSize - deltaX;
+                    
+                    // Calculate percentage of parent width
+                    const newWidthPercent = (newWidth / parentWidth) * 100;
+                    
+                    // Set minimum and maximum widths in percentage
+                    if (newWidthPercent >= 10 && newWidthPercent <= 80) {
+                        panel.style.width = newWidthPercent + '%';
+                        
+                        // Update DB map lines after resize
+                        if (window.DatabaseEngine) {
+                            window.DatabaseEngine.updateAllJoinLines(document.getElementById('map-canvas'));
+                        }
+                    }
+                }
+            }
+            
+            function stopResize() {
+                document.removeEventListener('mousemove', resize);
+                document.body.classList.remove('resizing', 'resizing-vertical');
+                
+                // Save the panel sizes to localStorage to preserve user preferences
+                localStorage.setItem('missionPanelHeight', missionPanel.offsetHeight);
+                localStorage.setItem('resultsPanelHeight', resultsPanel.offsetHeight);
+                localStorage.setItem('schemaPanelWidth', schemaPanel.offsetWidth);
+            }
+        }
+        
+        // Load saved sizes from localStorage if available
+        function loadSavedPanelSizes() {
+            const savedMissionHeight = localStorage.getItem('missionPanelHeight');
+            const savedResultsHeight = localStorage.getItem('resultsPanelHeight');
+            const savedSchemaWidth = localStorage.getItem('schemaPanelWidth');
+            
+            if (savedMissionHeight && missionPanel) {
+                missionPanel.style.height = savedMissionHeight + 'px';
+            }
+            
+            if (savedResultsHeight && resultsPanel) {
+                resultsPanel.style.height = savedResultsHeight + 'px';
+            }
+            
+            if (savedSchemaWidth && schemaPanel) {
+                // Calculate width as percentage of parent width
+                const parentWidth = schemaPanel.parentElement.offsetWidth;
+                const widthPercent = (savedSchemaWidth / parentWidth) * 100;
+                schemaPanel.style.width = widthPercent + '%';
+            }
+        }
+        
+        // Try to load saved sizes
+        loadSavedPanelSizes();
+    }
+
     // --- Helper Functions ---
     function debounce(func, delay) { 
         let debounceTimer; 
@@ -1046,5 +1174,316 @@
     // --- Start Game ---
     initializeGame();
     
+    
+    // --- Resizable Panel Functionality ---
+    function initializeResizablePanels() {
+        // Panel elements
+        const missionPanel = document.querySelector('.mission-display');
+        const resultsPanel = document.querySelector('.results-area');
+        const schemaPanel = document.getElementById('db-map-container');
+        const mainContent = document.querySelector('.main-content');
+        
+        // Resize handles
+        const missionResizeHandle = document.getElementById('mission-resize-handle');
+        const resultsResizeHandle = document.getElementById('results-resize-handle');
+        const schemaResizeHandle = document.getElementById('schema-resize-handle');
+        
+        // Store initial sizes from localStorage or defaults
+        const savedSizes = JSON.parse(localStorage.getItem('panelSizes') || '{}');
+        
+        if (savedSizes.missionHeight) {
+            missionPanel.style.height = savedSizes.missionHeight + 'px';
+        }
+        
+        if (savedSizes.schemaWidth) {
+            schemaPanel.style.width = savedSizes.schemaWidth + 'px';
+        }
+        
+        // Variables to track resize state
+        let isResizing = false;
+        let currentPanel = null;
+        let initialSize = 0;
+        let initialMousePos = 0;
+        let resizeTimer = null;
+        
+        // Mission panel resizing - now the handle is in a separate container
+        if (missionResizeHandle) {
+            missionResizeHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startResize(e, missionPanel, 'height');
+            });
+        }
+        
+        // Results panel resizing
+        if (resultsResizeHandle) {
+            resultsResizeHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startResize(e, resultsPanel, 'height');
+            });
+        }
+        
+        // Schema panel resizing
+        if (schemaResizeHandle) {
+            schemaResizeHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startResize(e, schemaPanel, 'width');
+            });
+        }
+        
+        function startResize(e, panel, dimension) {
+            isResizing = true;
+            currentPanel = panel;
+            initialSize = dimension === 'height' ? panel.offsetHeight : panel.offsetWidth;
+            initialMousePos = dimension === 'height' ? e.clientY : e.clientX;
+            
+            // Add resizing class to body
+            document.body.classList.add(dimension === 'height' ? 'resizing-vertical' : 'resizing');
+            
+            // Set up mouse move and mouse up events
+            document.addEventListener('mousemove', handleResize);
+            document.addEventListener('mouseup', stopResize);
+        }
+        
+        function handleResize(e) {
+            if (!isResizing || !currentPanel) return;
+            
+            // Throttle updates for better performance
+            if (resizeTimer) return;
+            
+            resizeTimer = setTimeout(() => {
+                if (currentPanel === missionPanel) {
+                    const newHeight = initialSize + (e.clientY - initialMousePos);
+                    // Set min and max constraints
+                    const constrainedHeight = Math.max(100, Math.min(mainContent.offsetHeight * 0.7, newHeight));
+                    currentPanel.style.height = constrainedHeight + 'px';
+                    // Save size to localStorage
+                    saveSize('missionHeight', constrainedHeight);
+                } else if (currentPanel === resultsPanel) {
+                    const newHeight = initialSize + (e.clientY - initialMousePos);
+                    const constrainedHeight = Math.max(100, Math.min(mainContent.offsetHeight * 0.7, newHeight));
+                    currentPanel.style.height = constrainedHeight + 'px';
+                    // Save size to localStorage
+                    saveSize('resultsHeight', constrainedHeight);
+                } else if (currentPanel === schemaPanel) {
+                    const newWidth = initialSize - (e.clientX - initialMousePos);
+                    // Set min and max constraints
+                    const constrainedWidth = Math.max(100, Math.min(window.innerWidth * 0.8, newWidth));
+                    currentPanel.style.width = constrainedWidth + 'px';
+                    // Save size to localStorage
+                    saveSize('schemaWidth', constrainedWidth);
+                }
+                
+                // Update schema join lines if needed
+                if (window.DatabaseEngine) {
+                    // Use requestAnimationFrame for smoother updates of join lines
+                    requestAnimationFrame(() => {
+                        window.DatabaseEngine.updateAllJoinLines(mapCanvas);
+                    });
+                }
+                
+                resizeTimer = null;
+            }, 16); // ~60fps timing
+        }
+        
+        function stopResize() {
+            isResizing = false;
+            currentPanel = null;
+            
+            // Clear any pending timer
+            if (resizeTimer) {
+                clearTimeout(resizeTimer);
+                resizeTimer = null;
+            }
+            
+            // Remove resizing classes from body
+            document.body.classList.remove('resizing', 'resizing-vertical');
+            
+            // Remove event listeners
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+            
+            // Final update of schema join lines
+            if (window.DatabaseEngine) {
+                window.DatabaseEngine.updateAllJoinLines(mapCanvas);
+            }
+        }
+        
+        function saveSize(key, value) {
+            // Load current saved sizes
+            const currentSizes = JSON.parse(localStorage.getItem('panelSizes') || '{}');
+            // Update the specified size
+            currentSizes[key] = value;
+            // Save back to localStorage
+            localStorage.setItem('panelSizes', JSON.stringify(currentSizes));
+        }
+    }
+    
+    // Position the central handle at the fixed bottom of the main content area
+    function repositionCentralHandle() {
+        if (!centralHandle || !mainContent || !schemaPanel) return;
+        
+        // Calculate position based on current panel layout
+        const contentRect = contentArea.getBoundingClientRect();
+        const mainRect = mainContent.getBoundingClientRect();
+        const schemaRect = schemaPanel.getBoundingClientRect();
+        
+        // Position at the intersection of main content and schema panel horizontally
+        const xPosition = mainRect.right;
+        
+        // Position at the bottom of the main content container (not tied to mission panel)
+        // This ensures it stays at the bottom even when mission content scrolls
+        const yPosition = mainRect.bottom - 20; // 20px from the bottom for better visibility
+        
+        // Position relative to the content area
+        centralHandle.style.left = (xPosition - contentRect.left) + 'px';
+        centralHandle.style.top = (yPosition - contentRect.top) + 'px';
+    }
+    
+    // --- Multidirectional Central Resize Handle Logic ---
+    function setupCentralResizeHandle() {
+        const centralHandle = document.getElementById('central-resize-handle');
+        const contentArea = document.querySelector('.content-area');
+        const mainContent = document.querySelector('.main-content');
+        const schemaPanel = document.getElementById('db-map-container');
+        const missionPanel = document.querySelector('.mission-display');
+        const resultsPanel = document.querySelector('.results-area');
+        
+        if (!centralHandle || !contentArea || !mainContent || !schemaPanel) {
+            console.error('Central resize handle or required elements not found');
+            return;
+        }
+        
+        // Variables for resize state
+        let isResizing = false;
+        let startX = 0;
+        let startY = 0;
+        let startMainWidth = 0;
+        let startSchemaWidth = 0;
+        let startMissionHeight = 0;
+        
+        // Handle mouse events
+        centralHandle.addEventListener('mousedown', startResize);
+        
+        function startResize(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            isResizing = true;
+            centralHandle.classList.add('dragging');
+            document.body.style.cursor = 'move';
+            
+            // Get the starting position of pointer
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            // Measure initial sizes
+            startMainWidth = mainContent.offsetWidth;
+            startSchemaWidth = schemaPanel.offsetWidth;
+            startMissionHeight = missionPanel.offsetHeight;
+            
+            // Add event listeners for resize
+            document.addEventListener('mousemove', handleResize);
+            document.addEventListener('mouseup', stopResize);
+        }
+        
+        // Control update frequency
+        let lastUpdateTime = 0;
+        const minUpdateInterval = 16; // ~60fps
+        
+        function handleResize(e) {
+            if (!isResizing) return;
+            
+            // Throttle updates
+            const now = Date.now();
+            if (now - lastUpdateTime < minUpdateInterval) return;
+            lastUpdateTime = now;
+            
+            // Calculate delta movements
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            // Horizontal resize - adjust main content and schema widths
+            if (Math.abs(deltaX) > 3) {
+                const contentWidth = contentArea.offsetWidth;
+                const newMainWidth = startMainWidth + deltaX;
+                const newSchemaWidth = contentWidth - newMainWidth;
+                
+                // Apply constraints
+                if (newMainWidth >= 250 && newSchemaWidth >= 100) {
+                    const mainPercent = (newMainWidth / contentWidth) * 100;
+                    const schemaPercent = 100 - mainPercent;
+                    
+                    mainContent.style.flexBasis = `${mainPercent}%`;
+                    schemaPanel.style.width = `${schemaPercent}%`;
+                    
+                    // Save sizes
+                    localStorage.setItem('mainContentWidth', mainPercent);
+                    localStorage.setItem('schemaPanelWidth', schemaPercent);
+                }
+            }
+            
+            // Vertical resize - adjust mission panel height
+            if (Math.abs(deltaY) > 3) {
+                const mainHeight = mainContent.offsetHeight;
+                const newMissionHeight = startMissionHeight + deltaY;
+                
+                // Apply constraints
+                if (newMissionHeight >= 100 && newMissionHeight <= mainHeight * 0.7) {
+                    missionPanel.style.height = `${newMissionHeight}px`;
+                    
+                    // Save size
+                    localStorage.setItem('missionPanelHeight', newMissionHeight);
+                }
+            }
+            
+            // Update schema join lines with the smoothest possible performance
+            if (window.DatabaseEngine) {
+                requestAnimationFrame(() => {
+                    window.DatabaseEngine.updateAllJoinLines(mapCanvas);
+                });
+            }
+        }
+        
+        function stopResize() {
+            if (!isResizing) return;
+            
+            isResizing = false;
+            centralHandle.classList.remove('dragging');
+            document.body.style.cursor = '';
+            
+            // Clean up event listeners
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+            
+            // Final update of schema join lines
+            if (window.DatabaseEngine) {
+                window.DatabaseEngine.updateAllJoinLines(mapCanvas);
+            }
+        }
+        
+        // Load saved sizes if available
+        function loadSavedSizes() {
+            const mainPercent = localStorage.getItem('mainContentWidth');
+            const schemaPercent = localStorage.getItem('schemaPanelWidth');
+            const missionHeight = localStorage.getItem('missionPanelHeight');
+            
+            if (mainPercent && schemaPercent) {
+                mainContent.style.flexBasis = `${mainPercent}%`;
+                schemaPanel.style.width = `${schemaPercent}%`;
+            }
+            
+            if (missionHeight) {
+                missionPanel.style.height = `${missionHeight}px`;
+            }
+        }
+        
+        // Initialize with saved sizes
+        loadSavedSizes();
+        
+        // Handle window resize events to ensure handle stays in position
+        window.addEventListener('resize', debounce(() => {
+            // No need to reposition, CSS handles this
+        }, 100));
+    }
     
 }); // End DOMContentLoaded

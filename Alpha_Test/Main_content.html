@@ -43,13 +43,6 @@
 
     <!-- Splash Screen -->
     <div id="splash-screen" class="splash-screen">
-        <!-- Trippy background animations -->
-        <div class="liquid-bg">
-            <div class="liquid-blob blob1"></div>
-            <div class="liquid-blob blob2"></div>
-            <div class="liquid-blob blob3"></div>
-            <div class="liquid-blob blob4"></div>
-        </div>
         <div class="splash-content">
             <div class="particle-portrait-container">
                 <img src="./images/particle_portrait_20250503-1538.png" alt="Particle Portrait" class="particle-portrait">
@@ -57,16 +50,12 @@
             </div>
             <!-- <div class="company-logo">ALIEN CORP©</div> -->
             <div class="title-container">
-                <div class="etl-logo">
-                    <div class="etl-letter"><span class="letter glitch-effect">E</span></div>
-                    <div class="etl-letter"><span class="letter glitch-effect">T</span></div>
-                    <div class="etl-letter"><span class="letter glitch-effect">L</span></div>
+                <div class="tagline">
+                    <span class="letter glitch-effect">E</span>XTRA 
+                    <span class="letter glitch-effect">T</span>ERRESTRIAL 
+                    <span class="letter glitch-effect">L</span>OADER
                 </div>
-                <div class="etl-text">
-                    <div>EXTRA</div>
-                    <div>TERRESTRIAL</div>
-                    <div>LOADER</div>
-                </div>
+                <!-- <div class="version-tag">v2.5.0</div> -->
             </div>
             <div class="system-controls">
                 <div class="system-status"><span class="status-dot"></span>SYSTEM STANDBY</div>
@@ -121,11 +110,24 @@
                     </div>
                 </div>
 
+                <!-- Mission resize handle - now positioned outside mission container but still within main content -->
+                <div id="mission-resize-handle-container">
+                    <div id="mission-resize-handle" class="resize-handle vertical"></div>
+                </div>
+
                  <!-- Results Area -->
                  <div class="results-area">
-                     <h3 class="pixel-h3">Query Results</h3>
+                     <div class="results-header">
+                        <h3 class="pixel-h3">Query Results</h3>
+                        <!-- Multidirectional resize handle positioned inside results area -->
+                        <div id="central-resize-handle" class="central-resize-handle">
+                            <div class="central-grip"></div>
+                        </div>
+                     </div>
                      <div id="query-results"></div>
                      <div id="result-status-container"></div> <!-- Container for status messages -->
+                     <!-- Results resize handle -->
+                     <div id="results-resize-handle" class="resize-handle vertical"></div>
                 </div>
                 <div id="error-message" class="error"></div> <!-- General JS errors -->
 
@@ -134,12 +136,15 @@
              </main>
 
             <aside id="db-map-container">
+                 <!-- Schema panel resize handle -->
+                 <div id="schema-resize-handle" class="resize-handle horizontal"></div>
                  <button id="toggle-map-btn" class="pixel-btn pixel-btn-secondary"><</button> <!-- Panel Toggle -->
                 <div id="map-canvas">
                      <svg id="line-svg-container"> <defs> <marker id="arrowhead-active-cyan" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z"></path></marker> <marker id="arrowhead-inactive" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z"></path></marker> </defs> </svg>
                     <!-- DB Schema Tables Rendered Here by JS -->
                 </div>
             </aside>
+            
         </div>
 
         <!-- Hovering SQL Console Window -->
@@ -317,7 +322,7 @@
             <div class="review-close">✕</div>
         </div>
         <div class="review-content">
-            <form id="review-form" action="https://formsubmit.co/entirely_possible_fungus@outlook.com" method="POST">
+            <form id="review-form" action="https://formsubmit.co/a964bad3b35fb3f1c51d852d130d1926" method="POST">
                 <!-- FormSubmit configuration -->
                 <input type="hidden" name="_subject" id="review-email-subject" value="ETL-Review">
                 <input type="hidden" name="_template" value="table">
