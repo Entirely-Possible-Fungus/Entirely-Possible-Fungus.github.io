@@ -50,85 +50,154 @@
             // Reset mission locations array
             missionLocations = [];
             
-            // Check if required databases are mounted
-            const isMissionControlMounted = window.DatabaseEngine && 
-                window.DatabaseEngine.mountedDbAliases && 
-                window.DatabaseEngine.mountedDbAliases.has('mission_control');
-                
-            if (!isMissionControlMounted) {
-                console.log("Mission points not loaded: mission_control database not mounted");
-                return [];
-            }
+            console.log("DIRECT FIX: Loading mission locations from all sources");
             
+            // DIRECT APPROACH: Manually add known mission locations
+            // These should match the locations in mission_control.json
+            const fixedMissionLocations = [
+                {
+                    missionId: "8",
+                    name: "Global Geography Analysis",
+                    country: "United States",
+                    location: [-74.0060, 40.7128],
+                    description: "Locate New York City, your first mission destination.",
+                    difficulty: 2
+                },
+                {
+                    missionId: "9",
+                    name: "Mission: First Contact (New York)",
+                    country: "United States",
+                    location: [-74.0060, 40.7128],
+                    description: "First Contact mission in New York. Objective: Query city data.",
+                    difficulty: 1
+                },
+                {
+                    missionId: "10",
+                    name: "Mission: Resource Discovery (London)",
+                    country: "United Kingdom",
+                    location: [-0.1278, 51.5074],
+                    description: "Resource Discovery mission in London. Objective: Query valuable UK resources.",
+                    difficulty: 2
+                },
+                {
+                    missionId: "11",
+                    name: "Mission: Cultural Heritage Scan (Tokyo)",
+                    country: "Japan",
+                    location: [139.6917, 35.6895],
+                    description: "Cultural Heritage Scan in Tokyo. Objective: Query significant sites.",
+                    difficulty: 2
+                },
+                {
+                    missionId: "12",
+                    name: "Paris With Love: Sustainable Tech Analysis",
+                    country: "France",
+                    location: [2.3522, 48.8566],
+                    description: "Active mission in Paris: Query sustainable tech.",
+                    difficulty: 3
+                },
+            ];
+            
+            console.log(`Adding ${fixedMissionLocations.length} predefined mission locations`);
+            
+            // Add the fixed mission locations to our array
+            missionLocations = missionLocations.concat(fixedMissionLocations);
+            
+            // If you want to also try the original method of loading missions:
+            tryLoadingFromGameData();
+            
+            console.log(`Total missions with locations: ${missionLocations.length}`);
+            return missionLocations;
+        }
+        
+        // Try to load mission locations from game data as a backup
+        function tryLoadingFromGameData() {
             // First, ensure mission data has map details when mission_control is mounted
             injectMapDetailsIntoMissions();
             
             // Check if game data is available
-            if (!window.GameSystem?.gameData?.databases?.mission_control?.missions?.data) {
-                console.warn("Mission data not available in gameData");
-                return [];
+            if (!window.GameSystem?.gameData?.databases) {
+                console.warn("Game data databases not available");
+                return;
             }
             
-            // Get all missions from game data
-            const missionsData = window.GameSystem.gameData.databases.mission_control.missions.data;
-            console.log("Loading mission locations, found missions:", missionsData.length);
+            // Look through ALL mounted databases for missions with map details
+            const databases = window.GameSystem.gameData.databases;
+            console.log("Looking for missions with mapDetails in all mounted databases:", Object.keys(databases));
             
-            // Filter and map missions that have map details and showOnMap=true
-            missionsData.forEach(mission => {
-                console.log(`Checking mission ${mission.id}: showOnMap=`, 
-                    mission.mapDetails?.showOnMap, 
-                    "location=", mission.mapDetails?.location);
-                
-                // First, check if this mission should show on the map
-                if (mission.mapDetails && mission.mapDetails.showOnMap === true) {
-                    // Extract coordinates from location data
-                    let coordinates = mission.mapDetails.location;
+            // Keep track of how many missions we've found
+            let totalMissionsFound = 0;
+            let totalMissionsWithMapDetails = 0;
+            let totalMissionsWithValidLocations = 0;
+            
+            // Process each database
+            Object.keys(databases).forEach(dbName => {
+                // Only process if the database contains a missions collection
+                if (databases[dbName]?.missions?.data && Array.isArray(databases[dbName].missions.data)) {
+                    const missionsData = databases[dbName].missions.data;
+                    totalMissionsFound += missionsData.length;
                     
-                    if (coordinates && Array.isArray(coordinates) && coordinates.length === 2) {
-                        // If coordinates are provided as strings, convert them to numbers
-                        if (typeof coordinates[0] === 'string') coordinates[0] = parseFloat(coordinates[0]);
-                        if (typeof coordinates[1] === 'string') coordinates[1] = parseFloat(coordinates[1]);
-                        
-                        // Validate coordinates are valid numbers
-                        if (!isNaN(coordinates[0]) && !isNaN(coordinates[1])) {
-                            console.log(`Adding mission ${mission.id} at [${coordinates}]`);
-                            missionLocations.push({
-                                name: mission.title || `Mission ${mission.id}`,
-                                location: coordinates, // [longitude, latitude]
-                                country: mission.mapDetails.country || "Unknown",
-                                description: mission.mapDetails.description || mission.description || mission.title,
-                                missionId: mission.id.toString(),
-                                difficulty: mission.difficulty || 1
-                            });
-                        } else {
-                            console.warn(`Invalid coordinates for mission ${mission.id}: [${coordinates}]`);
+                    console.log(`Checking database '${dbName}' for missions with mapDetails - found ${missionsData.length} missions`);
+                    
+                    // Filter and process missions that have mapDetails
+                    missionsData.forEach(mission => {
+                        // CRITICAL FIX: First check if this mission has mapDetails at all
+                        if (mission.mapDetails) {
+                            // Count missions with any mapDetails
+                            totalMissionsWithMapDetails++;
+                            
+                            // Force showOnMap to true for all missions with location data
+                            if (mission.mapDetails.location) {
+                                mission.mapDetails.showOnMap = true;
+                                
+                                // Debug: Print detailed information about each mission with location
+                                console.log(`Found mission ${mission.id} (${mission.title || 'Unnamed'}) with location data:`, {
+                                    location: mission.mapDetails.location,
+                                    country: mission.mapDetails.country,
+                                    showOnMap: mission.mapDetails.showOnMap
+                                });
+                                
+                                // Extract coordinates from location data
+                                let coordinates = mission.mapDetails.location;
+                                
+                                if (coordinates && Array.isArray(coordinates) && coordinates.length === 2) {
+                                    // If coordinates are provided as strings, convert them to numbers
+                                    if (typeof coordinates[0] === 'string') coordinates[0] = parseFloat(coordinates[0]);
+                                    if (typeof coordinates[1] === 'string') coordinates[1] = parseFloat(coordinates[1]);
+                                    
+                                    // Validate coordinates are valid numbers
+                                    if (!isNaN(coordinates[0]) && !isNaN(coordinates[1])) {
+                                        console.log(`Adding mission ${mission.id} at [${coordinates}] from database ${dbName}`);
+                                        
+                                        // Check if this mission is already in our fixed list
+                                        const isDuplicate = missionLocations.some(m => m.missionId === mission.id.toString());
+                                        
+                                        if (!isDuplicate) {
+                                            missionLocations.push({
+                                                name: mission.title || `Mission ${mission.id}`,
+                                                location: coordinates, // [longitude, latitude]
+                                                country: mission.mapDetails.country || "Unknown",
+                                                description: mission.mapDetails.description || mission.description || mission.title,
+                                                missionId: mission.id.toString(),
+                                                difficulty: mission.difficulty || 1,
+                                                database: dbName // Track which database this came from
+                                            });
+                                            totalMissionsWithValidLocations++;
+                                        } else {
+                                            console.log(`Mission ${mission.id} already in locations list, skipping duplicate`);
+                                        }
+                                    } else {
+                                        console.warn(`Invalid coordinates for mission ${mission.id}: [${coordinates}]`);
+                                    }
+                                }
+                            }
                         }
-                    } else if (mission.latitude && mission.longitude) {
-                        // Alternative format: separate lat/long properties
-                        const lon = parseFloat(mission.longitude);
-                        const lat = parseFloat(mission.latitude);
-                        
-                        if (!isNaN(lon) && !isNaN(lat)) {
-                            console.log(`Adding mission ${mission.id} at [${lon}, ${lat}]`);
-                            missionLocations.push({
-                                name: mission.title || `Mission ${mission.id}`,
-                                location: [lon, lat],
-                                country: mission.country || "Unknown",
-                                description: mission.description || mission.title,
-                                missionId: mission.id.toString(),
-                                difficulty: mission.difficulty || 1
-                            });
-                        } else {
-                            console.warn(`Invalid lat/long for mission ${mission.id}: lat=${mission.latitude}, lon=${mission.longitude}`);
-                        }
-                    } else {
-                        console.warn(`Mission ${mission.id} has showOnMap=true but no valid location data`);
-                    }
+                    });
                 }
             });
             
-            console.log(`Loaded ${missionLocations.length} mission locations from schema`);
-            return missionLocations;
+            console.log(`Found ${totalMissionsFound} total missions across all databases`);
+            console.log(`Found ${totalMissionsWithMapDetails} missions with mapDetails`);
+            console.log(`Found ${totalMissionsWithValidLocations} missions with valid location coordinates`);
         }
         
         // Function to inject map details directly into mission data
@@ -141,50 +210,89 @@
             const missionsData = window.GameSystem.gameData.databases.mission_control.missions.data;
             console.log("Injecting map details into", missionsData.length, "missions");
             
-            // Define map details for ONLY the Paris mission
-            const missionMapDetails = {
-                7: {
+            // Map of predefined mission details for specific missions
+            const missionDetailsMap = {
+                // Mission 8 (New York)
+                8: {
                     showOnMap: true,
-                    country: "France",
-                    location: [2.3522, 48.8566],
-                    description: "Paris With Love - A special mission in the beautiful city of Paris"
+                    country: "United States",
+                    location: [-74.0060, 40.7128],
+                    description: "First Contact mission in New York. Objective: Query city data."
+                },
+                // Mission 9 (New York again - same location)
+                9: {
+                    showOnMap: true,
+                    country: "United States",
+                    location: [-74.0060, 40.7128],
+                    description: "First Contact mission in New York. Objective: Query city data."
+                },
+                // Mission 10 (London)
+                10: {
+                    showOnMap: true,
+                    country: "United Kingdom",
+                    location: [-0.1278, 51.5074],
+                    description: "Resource Discovery mission in London. Objective: Query valuable UK resources."
+                },
+                // Mission 11 (Tokyo)
+                11: {
+                    showOnMap: true,
+                    country: "Japan",
+                    location: [139.6917, 35.6895],
+                    description: "Cultural Heritage Scan in Tokyo. Objective: Query significant sites."
                 }
             };
             
-            // First, make sure no missions show on map by default
-            missionsData.forEach(mission => {
-                if (mission.mapDetails) {
-                    mission.mapDetails.showOnMap = false;
-                }
-            });
+            // Display all missions for debugging
+            console.log("Before injection, mission mapDetails are:", missionsData.map(m => ({ 
+                id: m.id, 
+                title: m.title,
+                mapDetails: m.mapDetails ? {
+                    showOnMap: m.mapDetails.showOnMap,
+                    hasLocation: !!m.mapDetails.location
+                } : null 
+            })));
             
-            // Then inject map details only for Paris mission
+            // Process each mission
             missionsData.forEach(mission => {
                 const id = mission.id;
-                // Check if this is the Paris mission (id 7) or has title containing "Paris"
-                if (missionMapDetails[id] || 
-                    (mission.title && mission.title.toLowerCase().includes('paris'))) {
-                    
-                    console.log(`Injecting map details for Paris mission: ${mission.title || id}`);
-                    
-                    // If it's mission 7 or has Paris in the title, use our defined details
-                    if (missionMapDetails[id]) {
-                        mission.mapDetails = missionMapDetails[id];
-                    } else {
-                        // For any mission with "Paris" in the title that doesn't have id 7
-                        mission.mapDetails = {
-                            showOnMap: true,
-                            country: "France",
-                            location: [2.3522, 48.8566],
-                            description: "Paris With Love - A special mission in the beautiful city of Paris"
-                        };
+                
+                // If this mission has predefined map details in our map, apply them
+                if (missionDetailsMap[id]) {
+                    // Only override if it doesn't already have valid map details
+                    if (!mission.mapDetails || !mission.mapDetails.location) {
+                        console.log(`Adding predefined map details for mission ${id} (${mission.title || 'Unnamed'})`);
+                        mission.mapDetails = missionDetailsMap[id];
                     }
+                }
+                
+                // IMPORTANT: Ensure all missions with mapDetails have showOnMap set to true
+                if (mission.mapDetails && mission.mapDetails.location) {
+                    mission.mapDetails.showOnMap = true;
+                    console.log(`Ensuring mission ${id} (${mission.title || 'Unnamed'}) is set to showOnMap=true with location: ${JSON.stringify(mission.mapDetails.location)}`);
+                }
+                
+                // Extra debugging for missions with mapDetails but no location
+                if (mission.mapDetails && !mission.mapDetails.location) {
+                    console.warn(`Mission ${id} (${mission.title || 'Unnamed'}) has mapDetails but no location coordinates`);
                 }
             });
             
-            console.log("Map details injection complete");
+            // Display missions again after fixing
+            console.log("After injection, mission mapDetails are:", missionsData.map(m => ({ 
+                id: m.id, 
+                title: m.title,
+                mapDetails: m.mapDetails ? {
+                    showOnMap: m.mapDetails.showOnMap,
+                    hasLocation: !!m.mapDetails.location
+                } : null 
+            })));
+            
+            console.log("Map details processing complete");
         }
 
+        // FIXED: Ensure consistent marker size across all states
+        const MISSION_MARKER_RADIUS = 12; // Define a standard marker size
+        
         // Create mission points layer with enhanced styling
         function createMissionPointsLayer() {
             const features = [];
@@ -218,19 +326,36 @@
                         difficulty: mission.difficulty
                     });
                     
-                    // Create custom style based on difficulty
+                    // Check if this mission is completed
+                    const isCompleted = window.MissionSystem && 
+                                      window.MissionSystem.completedMissionIds && 
+                                      window.MissionSystem.completedMissionIds.has(parseInt(mission.missionId));
+                    
+                    // Store completion status on the feature
+                    feature.set('completed', isCompleted);
+                    
+                    // Create custom style based on difficulty and completion status
                     const missionStyle = new ol.style.Style({
                         image: new ol.style.Circle({
-                            radius: 8,
+                            radius: MISSION_MARKER_RADIUS, // FIXED: Use constant size
                             fill: new ol.style.Fill({
-                                // Color based on difficulty (1-5)
-                                color: getDifficultyColor(mission.difficulty)
+                                // Use red color for completed missions, otherwise use difficulty color
+                                color: isCompleted ? '#FF0000' : getDifficultyColor(mission.difficulty)
                             }),
                             stroke: new ol.style.Stroke({
                                 color: '#FFFFFF',
                                 width: 2
                             })
-                        })
+                        }),
+                        // Add a text label with higher z-index to indicate it's completed
+                        text: isCompleted ? new ol.style.Text({
+                            text: '✓',
+                            font: 'bold 14px Arial',
+                            fill: new ol.style.Fill({
+                                color: '#FFFFFF'
+                            }),
+                            offsetY: 1
+                        }) : null
                     });
                     
                     // Set style for the mission point
@@ -249,7 +374,7 @@
             // Create and return the vector layer
             return new ol.layer.Vector({
                 source: missionSource,
-                zIndex: 100 // Make sure mission points appear above other layers
+                zIndex: 1000 // INCREASED from 100 to 1000 to ensure mission points appear above everything
             });
         }
         
@@ -331,15 +456,41 @@
         function setupMapInteractions() {
             debugLog('Setting up map interactions');
             if (selectInteraction) { worldMap.removeInteraction(selectInteraction); }
+            
+            // Create a pointer-hover style function that maintains consistent mission marker size
+            const hoverStyleFunction = function(feature) {
+                // Special handling for mission points
+                if (feature.getGeometry() instanceof ol.geom.Point) {
+                    const isCompleted = feature.get('completed') === true;
+                    return new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: MISSION_MARKER_RADIUS, // Use consistent size
+                            fill: new ol.style.Fill({
+                                color: isCompleted ? '#FF0000' : getDifficultyColor(feature.get('difficulty'))
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#FFFF00', // Yellow highlight on hover
+                                width: 3
+                            })
+                        }),
+                        // Keep the checkmark if it's completed
+                        text: isCompleted ? new ol.style.Text({
+                            text: '✓',
+                            font: 'bold 14px Arial',
+                            fill: new ol.style.Fill({
+                                color: '#FFFFFF'
+                            }),
+                            offsetY: 1
+                        }) : null
+                    });
+                }
+                // Default hover style for countries and other features
+                return hoverStyle;
+            };
+            
             selectInteraction = new ol.interaction.Select({ 
-                condition: ol.events.condition.click, 
-                style: function(feature) {
-                    // Check if the feature is a mission point
-                    if (feature.getGeometry() instanceof ol.geom.Point) {
-                        return missionPointStyle;
-                    }
-                    return hoverStyle;
-                },
+                condition: ol.events.condition.click,
+                style: hoverStyleFunction,
                 multi: false 
             });
             
@@ -388,17 +539,21 @@
                 
                 if (isHitFeatureSelected) { 
                     hitFeature = null; 
-                } 
+                }
                 
-                if (hitFeature !== hoveredFeature) { 
-                    if (hoveredFeature && !selectedFeatures.includes(hoveredFeature)) { 
-                        hoveredFeature.setStyle(undefined); 
-                    } 
-                    hoveredFeature = hitFeature; 
-                    if (hitFeature && !selectedFeatures.includes(hitFeature)) { 
-                        hitFeature.setStyle(hoverStyle); 
-                    } 
-                } 
+                // Reset previously hovered feature unless it's selected
+                if (hoveredFeature && !selectedFeatures.includes(hoveredFeature)) { 
+                    hoveredFeature.setStyle(undefined); 
+                }
+                
+                // Set new hovered feature
+                hoveredFeature = hitFeature; 
+                
+                // Apply hover style to new feature if it's not already selected
+                if (hitFeature && !selectedFeatures.includes(hitFeature)) {
+                    // Apply hover style using the same style function for consistency
+                    hitFeature.setStyle(hoverStyleFunction(hitFeature));
+                }
                 
                 worldMap.getTargetElement().style.cursor = hitFeature ? 'pointer' : ''; 
             });
@@ -534,6 +689,10 @@
 
         // Add a new function to update the dedicated mission info box
         function updateMissionInfoBox(feature) {
+            // Just return early - we're disabling this popup since we have the sidebar info already
+            return;
+            
+            /* Original functionality commented out
             const missionInfoBox = document.getElementById('mission-info-box');
             if (!missionInfoBox) return;
             
@@ -607,6 +766,7 @@
                     activateMission(missionId);
                 });
             }
+            */
         }
 
         // Add a new function to show missions for a country
@@ -678,42 +838,122 @@
                 console.log("Mount status:", window.DatabaseEngine.mountedDbAliases.has('mission_control'));
             }
             
-            // Directly load the mission using MissionSystem
-            if (window.MissionSystem && typeof window.MissionSystem.load === 'function') {
-                // Convert to number if it's a string
-                const id = parseInt(missionId, 10) || missionId;
+            // Convert to number if it's a string
+            const id = parseInt(missionId, 10) || missionId;
+            
+            // Check if mission exists in gameData
+            console.log("Checking if mission exists in gameData...");
+            let missionExists = false;
+            
+            if (window.GameSystem?.gameData?.databases?.mission_control?.missions?.data) {
+                const missionData = window.GameSystem.gameData.databases.mission_control.missions.data;
+                console.log("Available missions:", missionData.map(m => m.id));
                 
-                // Check if mission exists in gameData
-                console.log("Checking if mission exists in gameData...");
-                if (window.GameSystem?.gameData?.databases?.mission_control?.missions?.data) {
-                    const missionData = window.GameSystem.gameData.databases.mission_control.missions.data;
-                    console.log("Available missions:", missionData.map(m => m.id));
-                    
-                    const missionExists = missionData.some(m => m.id == id);
-                    console.log("Mission exists:", missionExists);
-                    
-                    if (missionExists) {
-                        // Load the mission
-                        console.log("Loading mission...");
-                        window.MissionSystem.load(id);
-                        console.log(`Mission ${id} activated from map`);
-                    } else {
-                        console.error(`Mission with ID ${id} not found in gameData`);
-                        if (window.GameSystem.showError) {
-                            window.GameSystem.showError(`Mission ${id} not found in database. Make sure missions are properly loaded.`);
-                        }
-                    }
-                } else {
-                    console.error("Mission data not available in gameData");
-                    if (window.GameSystem.showError) {
-                        window.GameSystem.showError("Mission data not available. Check mission_control database.");
-                    }
+                missionExists = missionData.some(m => m.id == id);
+                console.log("Mission exists in loaded game data:", missionExists);
+            }
+            
+            if (missionExists) {
+                // Case 1: Mission exists in game data - activate normally
+                console.log(`Mission ${id} found in game data, activating normally`);
+                
+                // Set a flag to indicate this mission was activated from the map
+                // This will be used to allow map-based missions to load even if they have showOnMap=true
+                if (!window.MissionSystem.mapActivatedMissions) {
+                    window.MissionSystem.mapActivatedMissions = new Set();
+                }
+                window.MissionSystem.mapActivatedMissions.add(id);
+                
+                // Scroll to the top of the page before loading the mission
+                window.scrollTo(0, 0);
+                
+                // Also scroll the mission container to top if it exists
+                const missionContainer = document.getElementById('mission-panel');
+                if (missionContainer) {
+                    missionContainer.scrollTop = 0;
+                }
+                
+                // Load the mission using MissionSystem
+                if (window.MissionSystem && typeof window.MissionSystem.load === 'function') {
+                    console.log(`Loading mission ${id} (activated from map)`);
+                    window.MissionSystem.load(id);
+                    console.log(`Mission ${id} activated from map`);
                 }
             } else {
-                console.error("MissionSystem not available for activating mission");
-                if (window.GameSystem && window.GameSystem.showError) {
-                    window.GameSystem.showError("Unable to activate mission: MissionSystem not available");
+                // Case 2: Mission doesn't exist in game data - try to load it directly from the JSON file
+                console.log(`Mission ${id} not found in game data, attempting to load from JSON file`);
+                
+                // First, show a loading message to the user
+                if (window.GameSystem && window.GameSystem.displayMessage) {
+                    window.GameSystem.displayMessage(`Loading mission ${id} data...`, "status-info");
                 }
+                
+                // Dynamically fetch the mission_control.json file to get mission data
+                fetch('./data/db_schemas/mission_control.json')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch mission_control.json: ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data && data.missions && Array.isArray(data.missions.data)) {
+                            // Find the mission in the full JSON data
+                            const mission = data.missions.data.find(m => m.id == id);
+                            
+                            if (mission) {
+                                console.log(`Found mission ${id} in mission_control.json:`, mission.title);
+                                
+                                // Add this mission to the game data
+                                if (window.GameSystem?.gameData?.databases?.mission_control?.missions?.data) {
+                                    console.log(`Adding mission ${id} to game data`);
+                                    window.GameSystem.gameData.databases.mission_control.missions.data.push(mission);
+                                    
+                                    // Now activate the mission normally
+                                    // Set the flag to indicate this mission was activated from the map
+                                    if (!window.MissionSystem.mapActivatedMissions) {
+                                        window.MissionSystem.mapActivatedMissions = new Set();
+                                    }
+                                    window.MissionSystem.mapActivatedMissions.add(id);
+                                    
+                                    // Scroll to the top before loading
+                                    window.scrollTo(0, 0);
+                                    const missionContainer = document.getElementById('mission-panel');
+                                    if (missionContainer) {
+                                        missionContainer.scrollTop = 0;
+                                    }
+                                    
+                                    // Load the mission
+                                    if (window.MissionSystem && typeof window.MissionSystem.load === 'function') {
+                                        console.log(`Loading mission ${id} (added from JSON file)`);
+                                        window.MissionSystem.load(id);
+                                        console.log(`Mission ${id} activated after adding from JSON`);
+                                    }
+                                } else {
+                                    console.error("Game data structure not ready for adding mission");
+                                    if (window.GameSystem && window.GameSystem.showError) {
+                                        window.GameSystem.showError(`Game data not initialized properly. Please refresh the page.`);
+                                    }
+                                }
+                            } else {
+                                console.error(`Mission ${id} not found in mission_control.json`);
+                                if (window.GameSystem && window.GameSystem.showError) {
+                                    window.GameSystem.showError(`Mission ${id} not found in mission_control.json file.`);
+                                }
+                            }
+                        } else {
+                            console.error("Invalid mission_control.json structure", data);
+                            if (window.GameSystem && window.GameSystem.showError) {
+                                window.GameSystem.showError(`Invalid mission data structure in mission_control.json.`);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error(`Error loading mission ${id} from JSON:`, error);
+                        if (window.GameSystem && window.GameSystem.showError) {
+                            window.GameSystem.showError(`Error loading mission ${id}: ${error.message}`);
+                        }
+                    });
             }
         }
 
@@ -739,12 +979,25 @@
                 // Check if mission_control database is mounted and refresh markers
                 this.refreshMissionMarkers();
 
+                // MODIFIED: Don't hide the SQL console when showing map
+                // Keep the SQL console visible to allow querying map data
+                const sqlConsole = document.getElementById('sql-console');
+                if (sqlConsole) {
+                    // Apply special styling for SQL console when over map
+                    sqlConsole.classList.add('over-map');
+                    // Ensure it's visible at the highest z-index to be above everything
+                    sqlConsole.style.zIndex = "1001";
+                }
+
                 mapOverlayElement.style.display = 'flex';
                 mapBackdropElement.style.display = 'block';
                 isMapVisible = true;
 
                 if (worldMap) {
-                    setTimeout(() => { console.log("Updating map size for overlay."); worldMap.updateSize(); }, 0);
+                    setTimeout(() => { 
+                        console.log("Updating map size for overlay."); 
+                        worldMap.updateSize(); 
+                    }, 0);
                 }
             },
             hide: function() {
@@ -753,6 +1006,15 @@
                 if (!mapBackdropElement) mapBackdropElement = document.querySelector('.map-overlay-backdrop');
                 if (!mapOverlayElement || !mapBackdropElement) { console.error("Map overlay or backdrop element not found!"); return; }
                 console.log("Hiding Interactive Map Overlay...");
+                
+                // MODIFIED: Reset the SQL console when hiding map
+                const sqlConsole = document.getElementById('sql-console');
+                if (sqlConsole) {
+                    // Remove the over-map class
+                    sqlConsole.classList.remove('over-map');
+                    // Reset z-index to the default value
+                    sqlConsole.style.zIndex = "999";
+                }
 
                 mapOverlayElement.style.display = 'none';
                 mapBackdropElement.style.display = 'none';
@@ -789,7 +1051,239 @@
                 worldMap.addLayer(missionsLayer);
                 
                 return true;
-            }
+            },
+            // Add new method to highlight features on the map based on SQL query results
+            highlightCountries: function(countryNames) {
+                if (!worldMap || !isMapInitialized || !countrySource) return false;
+                
+                // Reset any previous highlighting
+                countrySource.forEachFeature(feature => {
+                    feature.setStyle(undefined);
+                });
+                
+                if (!countryNames || !countryNames.length) return true;
+                
+                // Convert country names to lowercase for case-insensitive comparison
+                const normalizedCountryNames = countryNames.map(name => name.toLowerCase());
+                
+                // Find and highlight matching features
+                countrySource.forEachFeature(feature => {
+                    const countryName = feature.get(GEOJSON_NAME_PROPERTY);
+                    if (countryName && normalizedCountryNames.includes(countryName.toLowerCase())) {
+                        // Apply highlight style
+                        feature.setStyle(new ol.style.Style({
+                            fill: new ol.style.Fill({
+                                color: 'rgba(255, 204, 0, 0.4)'
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#ffcc00',
+                                width: 3
+                            })
+                        }));
+                    }
+                });
+                
+                return true;
+            },
+            // Add new method to highlight features on the map based on ISO3 codes
+            highlightCountriesByCode: function(countryCodes) {
+                if (!worldMap || !isMapInitialized || !countrySource) {
+                    console.log("Cannot highlight countries: Map not initialized");
+                    return false;
+                }
+                
+                console.log("Highlighting countries by ISO3 code:", countryCodes);
+                
+                // Reset any previous highlighting first
+                countrySource.forEachFeature(feature => {
+                    feature.set('highlighted', false);
+                });
+                
+                if (!countryCodes || !countryCodes.length) return true;
+                
+                // Convert country codes to uppercase for case-insensitive comparison
+                const normalizedCodes = countryCodes.map(code => code.toUpperCase());
+                let highlightedCount = 0;
+                
+                // Find and highlight matching features by ISO3 code
+                countrySource.forEachFeature(feature => {
+                    const featureCode = feature.get(GEOJSON_LINK_PROPERTY);
+                    if (featureCode && normalizedCodes.includes(featureCode.toUpperCase())) {
+                        feature.set('highlighted', true);
+                        highlightedCount++;
+                    }
+                });
+                
+                console.log(`Highlighted ${highlightedCount} countries by ISO3 code`);
+                
+                // If countries were highlighted, fit the map view to show them
+                if (highlightedCount > 0) {
+                    const extent = ol.extent.createEmpty();
+                    
+                    countrySource.forEachFeature(feature => {
+                        if (feature.get('highlighted')) {
+                            const geometry = feature.getGeometry();
+                            if (geometry) {
+                                ol.extent.extend(extent, geometry.getExtent());
+                            }
+                        }
+                    });
+                    
+                    if (!ol.extent.isEmpty(extent)) {
+                        worldMap.getView().fit(extent, {
+                            padding: [50, 50, 50, 50],
+                            duration: 600,
+                            maxZoom: 8
+                        });
+                    }
+                }
+                
+                return true;
+            },
+            // Add new method to highlight regions on the map
+            highlightRegions: function(regionNames) {
+                if (!worldMap || !isMapInitialized || !countrySource) {
+                    console.log("Cannot highlight regions: Map not initialized");
+                    return false;
+                }
+                
+                console.log("Highlighting regions:", regionNames);
+                
+                // Reset any previous highlighting
+                countrySource.forEachFeature(feature => {
+                    feature.setStyle(undefined);
+                });
+                
+                if (!regionNames || !regionNames.length) return true;
+                
+                // Convert region names to lowercase for case-insensitive comparison
+                const normalizedRegionNames = regionNames.map(name => name.toLowerCase());
+                let highlightedCount = 0;
+                
+                // Find and highlight matching features by region
+                countrySource.forEachFeature(feature => {
+                    const region = feature.get(GEOJSON_REGION_PROPERTY);
+                    if (region && normalizedRegionNames.includes(region.toLowerCase())) {
+                        // Apply highlight style
+                        feature.setStyle(new ol.style.Style({
+                            fill: new ol.style.Fill({
+                                color: 'rgba(75, 192, 192, 0.4)' // Teal color for regions
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#4bc0c0',
+                                width: 3
+                            })
+                        }));
+                        highlightedCount++;
+                    }
+                });
+                
+                console.log(`Highlighted ${highlightedCount} countries in regions`);
+                
+                // If regions were highlighted, fit the map view to show them
+                if (highlightedCount > 0) {
+                    const extent = ol.extent.createEmpty();
+                    
+                    countrySource.forEachFeature(feature => {
+                        const region = feature.get(GEOJSON_REGION_PROPERTY);
+                        if (region && normalizedRegionNames.includes(region.toLowerCase())) {
+                            const geometry = feature.getGeometry();
+                            if (geometry) {
+                                ol.extent.extend(extent, geometry.getExtent());
+                            }
+                        }
+                    });
+                    
+                    if (!ol.extent.isEmpty(extent)) {
+                        worldMap.getView().fit(extent, {
+                            padding: [50, 50, 50, 50],
+                            duration: 600,
+                            maxZoom: 4 // Use a smaller zoom for regions as they cover larger areas
+                        });
+                    }
+                }
+                
+                // Also switch the map view to "regions" mode to show the regional data better
+                if (currentView !== 'regions') {
+                    switchView('regions');
+                }
+                
+                return true;
+            },
+
+            // Add new method to highlight continents on the map
+            highlightContinents: function(continentNames) {
+                if (!worldMap || !isMapInitialized || !countrySource) {
+                    console.log("Cannot highlight continents: Map not initialized");
+                    return false;
+                }
+                
+                console.log("Highlighting continents:", continentNames);
+                
+                // Reset any previous highlighting
+                countrySource.forEachFeature(feature => {
+                    feature.setStyle(undefined);
+                });
+                
+                if (!continentNames || !continentNames.length) return true;
+                
+                // Convert continent names to lowercase for case-insensitive comparison
+                const normalizedContinentNames = continentNames.map(name => name.toLowerCase());
+                let highlightedCount = 0;
+                
+                // Find and highlight matching features by continent
+                countrySource.forEachFeature(feature => {
+                    const continent = feature.get(GEOJSON_CONTINENT_PROPERTY);
+                    if (continent && normalizedContinentNames.includes(continent.toLowerCase())) {
+                        // Apply highlight style with continent-specific color
+                        const continentColor = continentColors[continent] || hashStringToColor(continent);
+                        
+                        feature.setStyle(new ol.style.Style({
+                            fill: new ol.style.Fill({
+                                color: continentColor.replace(')', ', 0.7)').replace('rgb', 'rgba') // Make semi-transparent
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: continentColor,
+                                width: 3
+                            })
+                        }));
+                        highlightedCount++;
+                    }
+                });
+                
+                console.log(`Highlighted ${highlightedCount} countries in continents`);
+                
+                // If continents were highlighted, fit the map view to show them
+                if (highlightedCount > 0) {
+                    const extent = ol.extent.createEmpty();
+                    
+                    countrySource.forEachFeature(feature => {
+                        const continent = feature.get(GEOJSON_CONTINENT_PROPERTY);
+                        if (continent && normalizedContinentNames.includes(continent.toLowerCase())) {
+                            const geometry = feature.getGeometry();
+                            if (geometry) {
+                                ol.extent.extend(extent, geometry.getExtent());
+                            }
+                        }
+                    });
+                    
+                    if (!ol.extent.isEmpty(extent)) {
+                        worldMap.getView().fit(extent, {
+                            padding: [50, 50, 50, 50],
+                            duration: 600,
+                            maxZoom: 2 // Use a smaller zoom for continents as they cover very large areas
+                        });
+                    }
+                }
+                
+                // Also switch the map view to "continents" mode to show the continent data better
+                if (currentView !== 'continents') {
+                    switchView('continents');
+                }
+                
+                return true;
+            },
+
         };
     })(); // END OF MAP INTEGRATION MODULE
 

@@ -1,5 +1,67 @@
+/* --- Font Declarations --- */
+@font-face {
+    font-family: 'Monogram';
+    src: url('../../monogram/ttf/monogram.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Monogram Extended';
+    src: url('../../monogram/ttf/monogram-extended.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Monogram Extended Italic';
+    src: url('../../monogram/ttf/monogram-extended-italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+/* --- Custom Scrollbar Styles --- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #222;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #00ffcc;
+    border-radius: 3px;
+    border: 1px solid #0d7377;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #33ffee;
+}
+
+/* Firefox scrollbar styles */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #00ffcc #222;
+}
+
 /* --- Base & Pixel Font --- */
-body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Silkscreen', sans-serif; font-size: 15px; line-height: 1.6; margin: 0; padding: 0; font-smooth: never; -webkit-font-smoothing: none; image-rendering: pixelated; image-rendering: crisp-edges; overflow: hidden; }
+body { 
+    background-color: #0a0a0a; 
+    color: #e0e0e0; 
+    font-family: 'Monogram', monospace; 
+    font-size: 16px; 
+    line-height: 1.6; 
+    margin: 0; 
+    padding: 0; 
+    font-smooth: never; 
+    -webkit-font-smoothing: none; 
+    image-rendering: pixelated; 
+    image-rendering: crisp-edges; 
+    overflow: hidden; 
+}
 
 /* Import Database Browser Styles */
 @import url('db-browser.css');
@@ -45,7 +107,13 @@ body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Silkscreen', san
 #complete-mission-btn {
     margin-top: 0;
     margin-left: 15px;
+    right: 25px;
     align-self: center;
+    background-color: #13df00;
+}
+
+#complete-mission-btn:hover {
+    background-color: #00f060;
 }
 
 .hint-section { margin-top: 0; border-top: none; padding-top: 0; }
@@ -73,7 +141,23 @@ tr.mission-row:hover td { background-color: #404040 !important; } /* Highlight o
 td.difficulty-stars { color: #ffcc00; letter-spacing: 1px; }
 
 /* --- DB Map Visualizer Area (Right Side - Schema Map) - PIXEL STYLED --- */
-#db-map-container { flex-shrink: 0; width: 40%; max-width: 80%; min-width: 100px; position: relative; background-color: #2b2b2b; border-left: 4px solid #555; overflow: hidden; font-family: inherit; font-size: 10px; color: #e0e0e0; padding: 10px; box-sizing: border-box; transition: width 0.1s ease, padding 0.1s ease; will-change: width; /* Optimize for animation performance */ }
+#db-map-container { 
+    flex-shrink: 0; 
+    width: 40%; 
+    max-width: 80%; 
+    min-width: 100px; 
+    position: relative; 
+    background-color: #2b2b2b; 
+    border-left: 4px solid #555; 
+    overflow: hidden; 
+    font-family: 'Monogram', monospace; /* Changed to Monogram for consistency */
+    font-size: 10px; /* Adjusted size for Monogram font */
+    color: #e0e0e0; 
+    padding: 10px; 
+    box-sizing: border-box; 
+    transition: width 0.1s ease, padding 0.1s ease; 
+    will-change: width; /* Optimize for animation performance */ 
+}
 #db-map-container.collapsed { width: 30px; padding: 10px 0; cursor: pointer; } /* Collapsed state */
 #db-map-container.collapsed #map-canvas { display: none; } /* Hide canvas when collapsed */
 #map-canvas { width: 100%; height: 100%; position: relative; }
@@ -222,7 +306,72 @@ td.difficulty-stars { color: #ffcc00; letter-spacing: 1px; }
  }
 
 /* --- Hovering SQL Console Window (Simplified) --- */
-.sql-console-window { position: fixed; bottom: 15px; left: 15px; width: 370px; background-color: #3a3a3a; border: 4px solid #555; box-shadow: 6px 6px 0px #1a1a1a; padding: 0; display: flex; flex-direction: column; z-index: 100; font-family: inherit; font-size: 10px; color: #e0e0e0; } .console-header { padding: 6px 10px; background-color: #4a4a4a; border-bottom: 2px solid #555; cursor: grab; user-select: none; flex-shrink: 0; } .console-header .pixel-h2 { font-size: 1.1em; margin: 0; color: #ffcc00; text-shadow: 1px 1px 0px #806600;} .sql-console-window:active .console-header { cursor: grabbing; } .sql-controls { padding: 10px; flex-shrink: 0; } textarea#sql-input { width: calc(100% - 10px); background-color: #1e1e1e; border: 2px solid #555; color: #f0f0f0; font-family: inherit; font-size: 10px; padding: 5px; margin-bottom: 10px; resize: none; box-shadow: inset 2px 2px 0px #000; height: 80px; line-height: 1.5; } .button-group { display: flex; gap: 10px; }
+.sql-console-window { 
+    position: fixed; 
+    bottom: 15px; 
+    left: 15px; 
+    width: 370px; 
+    background-color: #3a3a3a; 
+    border: 4px solid #555; 
+    box-shadow: 6px 6px 0px #1a1a1a; 
+    padding: 0; 
+    display: flex; 
+    flex-direction: column; 
+    z-index: 999; /* Increased z-index to be above the map */ 
+    font-family: inherit; 
+    font-size: 10px; 
+    color: #e0e0e0; 
+} 
+
+/* New style for SQL console when displayed over map */
+.sql-console-window.over-map {
+    bottom: 15px;
+    right: 15px;
+    left: auto; /* Override the default left positioning */
+    width: 350px; /* Reduced from 450px */
+    background-color: rgba(40, 40, 40, 0.95); /* Darker background for visibility */
+    border-color: #00ffcc;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+    z-index: 1001 !important; /* Ensure highest z-index with !important */
+}
+
+.console-header { padding: 6px 10px; background-color: #4a4a4a; border-bottom: 2px solid #555; cursor: grab; user-select: none; flex-shrink: 0; } 
+
+/* Modify console header for over-map style */
+.sql-console-window.over-map .console-header {
+    background-color: rgba(30, 30, 30, 0.9);
+    border-bottom-color: #00ffcc;
+}
+
+.console-header .pixel-h2 { font-size: 1.1em; margin: 0; color: #ffcc00; text-shadow: 1px 1px 0px #806600;} 
+
+.sql-console-window:active .console-header { cursor: grabbing; } 
+
+.sql-controls { padding: 10px; flex-shrink: 0; } 
+
+textarea#sql-input { 
+    width: calc(100% - 10px); 
+    background-color: #1e1e1e; 
+    border: 2px solid #555; 
+    color: #f0f0f0; 
+    font-family: 'Monogram', monospace; 
+    font-size: 12px; 
+    padding: 5px; 
+    margin-bottom: 10px; 
+    resize: none; 
+    box-shadow: inset 2px 2px 0px #000; 
+    height: 80px; 
+    line-height: 1.5; 
+} 
+
+/* Style SQL input when over map */
+.sql-console-window.over-map textarea#sql-input {
+    background-color: rgba(20, 20, 20, 0.8);
+    border-color: #00ffcc;
+    height: 60px; /* Reduced from 100px for more compact appearance */
+}
+
+.button-group { display: flex; gap: 10px; }
 
 /* --- Mission Completion Popup --- */
 #mission-complete {
@@ -253,7 +402,7 @@ td.difficulty-stars { color: #ffcc00; letter-spacing: 1px; }
     display: none; /* Hidden by default */
     flex-direction: column; /* To stack controls and map */
     overflow: hidden; /* Prevent content spill */
-    font-family: 'Silkscreen', sans-serif; /* Match game font */
+    font-family: 'Monogram', monospace; /* Updated to Monogram */
     color: #e0e0e0;
 }
 
@@ -1317,4 +1466,151 @@ body.resizing-vertical {
     background-color: #ffcc00;
     clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
     box-shadow: 0 0 8px rgba(255, 204, 0, 0.8);
+}
+
+.button-group {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.button-group button {
+    flex-grow: 1;
+}
+
+/* Complete Mission Button styling */
+#complete-mission-btn {
+    background-color: #555;
+    color: #888;
+    cursor: default;
+    box-shadow: none;
+    border-color: #444;
+    transition: background-color 0.3s, color 0.3s, transform 0.1s, box-shadow 0.1s;
+    pointer-events: none; /* Make it non-interactive when disabled */
+    opacity: 0.6;
+}
+
+#complete-mission-btn.mission-solved {
+    background-color: #00dfcc; /* Match Execute button color */
+    color: #1a1a1a;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #0d7377;
+    animation: pulse-green 1.5s infinite;
+    pointer-events: auto; /* Make it interactive when mission is solved */
+    opacity: 1;
+}
+
+#complete-mission-btn.mission-solved:hover {
+    background-color: #33ffee; /* Match Execute button hover color */
+}
+
+#complete-mission-btn.mission-solved:active {
+    box-shadow: 0px 0px 0px #0d7377;
+    transform: translate(2px, 2px);
+}
+
+@keyframes pulse-green {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 223, 204, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 223, 204, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 223, 204, 0);
+    }
+}
+
+/* Mission Answer Form Styles */
+.mission-answer-form {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid #00fffc;
+    border-radius: 5px;
+}
+
+.mission-answer-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #00fffc;
+}
+
+.answer-input-container {
+    display: flex;
+    gap: 10px;
+}
+
+#mission-answer-input {
+    flex: 1;
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid #00fffc;
+    color: #00fffc;
+    font-size: 16px;
+}
+
+.answer-feedback {
+    margin-top: 10px;
+    min-height: 20px;
+}
+
+.answer-feedback.success {
+    color: #00ff00;
+}
+
+.answer-feedback.error {
+    color: #ff3333;
+}
+
+/* SQL Console */
+.console-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.console-actions {
+    display: flex;
+    align-items: center;
+}
+
+/* Live Query toggle styling */
+.live-query-toggle {
+    display: flex;
+    align-items: center;
+    font-size: 0.85em;
+    color: #adff2f;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.live-query-toggle input {
+    margin-right: 5px;
+}
+
+.toggle-label {
+    font-family: 'Silkscreen', monospace;
+}
+
+/* Style for the graph toggle button in the header */
+#toggle-graph-btn {
+    font-size: 0.9em;
+    padding: 4px 10px;
+    margin: 0 10px;
+    background-color: #333;
+    border-color: #444;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#toggle-graph-btn:hover {
+    background-color: #00b3ff;
+}
+
+#toggle-graph-btn.active {
+    background-color: #00dfcc;
+    color: #1a1a1a;
+    box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.3);
 }

@@ -13,20 +13,20 @@
             "dbAlias": "STRING",
             "validationCriteria": "JSON",
             "mapDetails": "JSON",
-            "nextMissionId": "INT",
-            "submissions": "JSON"
+            "nextMissionId": "INT"
         },
         "data": [
             {
                 "id": 0,
-                "title": "Tutorial: Mount Database",
-                "description": "Welcome to Pixel SQL Adventure!\n\n<strong>Let's start with the basics:</strong>\n\n1. Click the <strong>DB REGISTRY</strong> button at the top of the screen\n\n2. In the registry, find and click the <strong>MOUNT</strong> button next to the <strong>mission_control</strong> database\n\n3. Close the DB Registry panel by clicking the ✕\n\n<strong>This will mount the missions database so you can access it.</strong>\n\nOnce mounted, you'll be able to complete this mission!",
+                "title": "Tutorial: Mounting Databases",
+                "description": "Hello Agent, before heading down to earth, lets first learn how to use the SQL systems. Databases are organized collections of structured information or data that can be easily accessed, managed, and updated. <br><br>To use a database, first we need to mount it.</p><ol><li>Click the <strong>DB REGISTRY</strong> button at the top of the screen</li><li>In the registry, find and click the <strong>MOUNT</strong> button next to the <strong>mission_control</strong> database</li><li>Close the <strong>DB Registry</strong> panel by clicking the <span style=\"color:red\">✕</span></li></ol><p><strong>This will mount the missions database so you can access it.</strong>\n\nOnce mounted, you'll be able to complete this mission and proceed to the next where we'll learn how to run SQL queries.<br> If you ever get stuck press hint for a tiny but of help or solution for the answer; currently there are no penalties, so just have fun.</p>",
                 "hint": "Click the DB REGISTRY button, find mission_control, click MOUNT, then close the registry panel.",
+                "solution": "Click the DB REGISTRY button, find mission_control, click MOUNT, then close the registry panel.",
                 "difficulty": 1,
                 "points": 25,
                 "timeLimit": 300,
                 "timerEnabled": false,
-                "successMessage": "Excellent! You've mounted your first database. Now you can access the mission_control database to see what we have available.",
+                "successMessage": "Excellent! You've mounted your first database. Now you can access the mission_control database to see what we have available. Click the green button below to continue on.",
                 "dbAlias": "mission_control",
                 "validationCriteria": {
                     "databaseMounted": true,
@@ -35,37 +35,14 @@
                 "mapDetails": {
                     "showOnMap": false
                 },
-                "nextMissionId": 1,
-                "submissions": [
-                    {
-                        "title": "Step 1: Mount the Database",
-                        "description": "Welcome to Pixel SQL Adventure!\n\n<strong>Let's start with the basics:</strong>\n\n1. Click the <strong>DB REGISTRY</strong> button at the top of the screen\n\n2. In the registry, find and click the <strong>MOUNT</strong> button next to the <strong>mission_control</strong> database\n\n3. Close the DB Registry panel by clicking the ✕\n\n<strong>This will mount the missions database so you can access it.</strong>",
-                        "hint": "Click the DB REGISTRY button, find mission_control, click MOUNT, then close the registry panel.",
-                        "successMessage": "Great job! You've mounted your first database. Now let's learn how to query it.",
-                        "validationCriteria": { 
-                            "databaseMounted": true, 
-                            "requiredDatabase": "mission_control" 
-                        }
-                    },
-                    {
-                        "title": "Step 2: Run Your First Query",
-                        "description": "Now that you've mounted the database, let's run your first SQL query!\n\n<strong>SQL Console:</strong> This is the text area at the bottom of the screen where you'll write and execute SQL queries.\n\n<strong>Try running your first query:</strong>\n\n<code class='pixel-inline-code'>SELECT * FROM missions;</code>\n\nThis will show you all the available missions in the database. The results will appear in the Query Results area.",
-                        "hint": "Type <code>SELECT * FROM missions;</code> in the SQL console and click the Execute button to see all the missions.",
-                        "solution": "SELECT * FROM missions;",
-                        "successMessage": "Excellent! You've run your first SQL query and can now see all available missions in the database.",
-                        "validationCriteria": {
-                            "expectedRows": 11,
-                            "mustContainColumns": ["id", "title"],
-                            "keywords": ["SELECT", "missions"]
-                        }
-                    }
-                ]
+                "nextMissionId": 1
             },
             {
                 "id": 1,
                 "title": "Tutorial: First Query",
-                "description": "Now that you've mounted the mission_control database, let's run your first SQL query!\n\n<strong>SQL Console:</strong> This is where you'll write and execute SQL queries\n\n<strong>Try running your first query:</strong>\n\n<code class='pixel-inline-code'>SELECT * FROM missions;</code>\n\n<strong>SQL Explanation:</strong>\n<ul>\n<li><code>SELECT *</code> - Retrieves all columns from the table (the asterisk is a wildcard meaning \"select everything\")</li>\n<li><code>FROM missions</code> - Specifies which table to get data from</li>\n<li><code>;</code> - Marks the end of the SQL statement</li>\n</ul>\n\nThis will show you all the available missions in the database. The results will appear in the Results Area below.", 
+                "description": "Now that you've mounted the mission_control database, let's run your first SQL query.<br><br>\n\n<strong>The SQL Console:</strong> This is where you'll write and execute SQL queries\n\n<strong>Try running your first query:</strong>\n\n<code class='pixel-inline-code'>SELECT * FROM missions;</code>\n\n<strong>SQL Explanation:</strong>\n<ul>\n<li><code>SELECT *</code> - Retrieves all columns from the table (the asterisk is a wildcard meaning \"select everything\")</li>\n<li><code>FROM missions</code> - Specifies which table to get data from</li>\n<li><code>;</code> - Marks the end of the SQL statement</li>\n</ul>\n\nThis will show you all the available missions in the database. The results will appear in the Results Area below.",
                 "hint": "Type <code>SELECT * FROM missions;</code> in the SQL console and click Execute to see all the missions.",
+                "solution": "SELECT * FROM missions;",
                 "difficulty": 1,
                 "points": 25,
                 "timeLimit": 300,
@@ -73,9 +50,8 @@
                 "successMessage": "Great job! You've run your first SQL query and can now see all available missions in the database.",
                 "dbAlias": "mission_control",
                 "validationCriteria": {
-                    "expectedRows": 11,
-                    "mustContainColumns": ["id", "title"],
-                    "keywords": ["SELECT", "missions"]
+                    "expectedRows": 15
+                    
                 },
                 "mapDetails": {
                     "showOnMap": false
@@ -84,62 +60,40 @@
             },
             {
                 "id": 2,
-                "title": "Tutorial: Explore Planets",
-                "description": "Now let's explore some planetary data. First, we need to mount another database.\n\n1. Click the <strong>DB REGISTRY</strong> button at the top\n\n2. Find the <strong>galaxy1</strong> database and click <strong>MOUNT</strong>\n\n3. Close the DB Registry panel\n\n4. Try running: <code class='pixel-inline-code'>SELECT * FROM planets;</code>\n\nThis will show information about all planets in our database.",
-                "hint": "First mount the galaxy1 database, then run <code>SELECT * FROM planets;</code> to see information about all planets.",
+                "title": "Cosmic Cartography: Calibration Scan (SELECT, FROM, WHERE, LIMIT)",
+                "description": "Agent, our long-range sensors require calibration using a targeted scan. We must begin our journey towards the Sol system by sifting through initial data.<br><br><strong>Part 1: Understanding SQL Filters</strong><br>In this mission, we'll learn how to filter data with the <code>WHERE</code> clause and limit results with <code>LIMIT</code>.<br><ul><li>The <code>WHERE</code> clause lets you filter rows based on specific conditions</li><li>The <code>LIMIT</code> clause controls how many rows are returned</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Mount the <code>deep_space_catalog</code> database using the DB REGISTRY button.<br>2. Write a query to select specific columns from the <code>DeepSpaceObjects</code> table:<br><code>SELECT object_name, object_type, distance_ly<br>FROM DeepSpaceObjects<br>WHERE star_system = 'Xylos Sector'<br>LIMIT 5;</code><br><br>This query does the following:<ul><li>Selects only the <code>object_name</code>, <code>object_type</code>, and <code>distance_ly</code> columns</li><li>Filters to show only objects in the 'Xylos Sector'</li><li>Limits the results to just 5 rows</li></ul><br><strong>Question:</strong> From your 5-entry scan of the Xylos Sector, what is the <code>object_name</code> of the <strong>third</strong> object listed in the results? You will need to type its name into the answer field.",
+                "hint": "Mount <code>deep_space_catalog</code>. Run the query: <code>SELECT object_name, object_type, distance_ly FROM DeepSpaceObjects WHERE star_system = 'Xylos Sector' LIMIT 5;</code> Then identify the third object name from the results and type it in.",
+                "solution": "SELECT object_name, object_type, distance_ly FROM DeepSpaceObjects WHERE star_system = 'Xylos Sector' LIMIT 5;",
                 "difficulty": 1,
-                "points": 25,
+                "points": 50,
                 "timeLimit": 300,
                 "timerEnabled": false,
-                "successMessage": "Excellent! You've mounted the galaxy1 database and retrieved data from the planets table.",
-                "dbAlias": "galaxy1",
+                "successMessage": "Calibration successful, Agent! Identifying 'Xylos Gamma' confirms sensor accuracy. This targeted data retrieval is key. Every accurate query refines our path to Earth.",
+                "dbAlias": "deep_space_catalog",
                 "validationCriteria": {
-                    "expectedRows": 5,
-                    "mustContainColumns": ["name", "type"],
-                    "keywords": ["SELECT", "planets"]
+                    "requiredDatabase": "deep_space_catalog",
+                    "answerToQuestion": "Xylos Gamma"
                 },
                 "mapDetails": {
                     "showOnMap": false
                 },
-                "nextMissionId": 3,
-                "submissions": [
-                    {
-                        "title": "Step 1: Mount the Galaxy Database",
-                        "description": "Now let's explore some planetary data. First, we need to mount another database.\n\n1. Click the <strong>DB REGISTRY</strong> button at the top\n\n2. Find the <strong>galaxy1</strong> database and click <strong>MOUNT</strong>\n\n3. Close the DB Registry panel",
-                        "hint": "Click the DB REGISTRY button, find galaxy1, click MOUNT, then close the registry panel.",
-                        "successMessage": "Great job! You've mounted the galaxy database. Now let's query it.",
-                        "validationCriteria": { 
-                            "databaseMounted": true, 
-                            "requiredDatabase": "galaxy1" 
-                        }
-                    },
-                    {
-                        "title": "Step 2: Query Planet Information",
-                        "description": "Now that you've mounted the galaxy1 database, let's explore the planets table.\n\n<strong>Try running this query:</strong>\n\n<code class='pixel-inline-code'>SELECT * FROM planets;</code>\n\nThis will show information about all planets in our database.",
-                        "hint": "Type <code>SELECT * FROM planets;</code> in the SQL console and click the Execute button to see all planets.",
-                        "solution": "SELECT * FROM planets;",
-                        "successMessage": "Excellent! You've successfully queried the planets table and can see all the planetary data.",
-                        "validationCriteria": {
-                            "expectedRows": 5,
-                            "mustContainColumns": ["name", "type"],
-                            "keywords": ["SELECT", "planets"]
-                        }
-                    }
-                ]
+                "nextMissionId": 3
             },
             {
                 "id": 3,
-                "title": "Tutorial: Interactive Map",
-                "description": "Great job running your first query! Now let's explore the interactive map feature.\n\n<strong>Our database contains planetary data, but we need geographical information to use the map.</strong>\n\n1. First, click the <strong>DB REGISTRY</strong> button at the top\n\n2. Find the <strong>maps</strong> database and click <strong>MOUNT</strong>\n\n3. Close the DB Registry panel\n\n4. Try running: <code class='pixel-inline-code'>SELECT earth FROM maps;</code>\n\nThis will open our interactive map interface.",
-                "hint": "The command <code>SELECT earth FROM maps;</code> will open the map. Make sure the 'maps' database is mounted first.",
-                "difficulty": 1,
-                "points": 25,
+                "title": "Signal Triangulation: Potential Havens? (AND, OR)",
+                "description": "With sensors calibrated, we're searching for potential havens or resource-rich locations in the <code>deep_space_catalog</code>. Our science team believes such locations are likely to be <code>'Planet'</code> type objects that are either flagged as <code>is_habitable_candidate = TRUE</code> <strong>OR</strong> have a <code>spectral_signature</code> of <code>'Water'</code>.<br><br><strong>Part 1: Understanding Complex Filters</strong><br>In this mission, we'll learn how to create more complex filters using logical operators:<br><ul><li><code>AND</code> - Both conditions must be true</li><li><code>OR</code> - At least one condition must be true</li><li>Parentheses <code>()</code> - Group conditions together, just like in math</li></ul><br><strong>Part 2: Using COUNT Function</strong><br>The <code>COUNT()</code> function counts the number of rows that match your criteria. When combined with <code>DISTINCT</code>, it counts only unique values.<br><br><strong>Step-by-Step Instructions:</strong><br>1. Make sure the <code>deep_space_catalog</code> database is still mounted.<br>2. Write a query that counts distinct objects matching our criteria:<br><code>SELECT COUNT(DISTINCT object_name)<br>FROM DeepSpaceObjects<br>WHERE object_type = 'Planet'<br>AND (is_habitable_candidate = TRUE<br>OR spectral_signature = 'Water');</code><br><br>This query does the following:<ul><li>Counts distinct planet names</li><li>First filters for only 'Planet' type objects</li><li>Then applies a complex filter using <code>AND</code> and <code>OR</code>:</li><ul><li>The planet must EITHER be a habitable candidate OR have water in its spectral signature</li></ul></ul><br><strong>Question:</strong> Using these criteria (<code>object_type = 'Planet'</code> AND (<code>is_habitable_candidate = TRUE</code> OR <code>spectral_signature = 'Water'</code>)), how many distinct planetary objects are identified in the entire <code>DeepSpaceObjects</code> table? Enter the count.",
+                "hint": "Use a query like: <code>SELECT COUNT(DISTINCT object_name) FROM DeepSpaceObjects WHERE object_type = 'Planet' AND (is_habitable_candidate = TRUE OR spectral_signature = 'Water');</code>. Type the resulting number.",
+                "solution": "SELECT COUNT(DISTINCT object_name) FROM DeepSpaceObjects WHERE object_type = 'Planet' AND (is_habitable_candidate = TRUE OR spectral_signature = 'Water');",
+                "difficulty": 2,
+                "points": 75,
                 "timeLimit": 300,
                 "timerEnabled": false,
-                "successMessage": "You've successfully opened the interactive map! This will be crucial for finding and activating missions.",
-                "dbAlias": "maps",
+                "successMessage": "You found 8 candidate planets. Interesting... Further analysis of their detailed telemetry reveals high M-class radiation on several, and others are primarily methane-ice. Not ideal first stops. We need a more direct approach: Let's find the *closest confirmed* habitable candidate. Time to prioritize by distance!",
+                "dbAlias": "deep_space_catalog",
                 "validationCriteria": {
-                    "keywords": ["SELECT", "earth", "maps"]
+                    "requiredDatabase": "deep_space_catalog",
+                    "answerToQuestion": "8"
                 },
                 "mapDetails": {
                     "showOnMap": false
@@ -148,18 +102,19 @@
             },
             {
                 "id": 4,
-                "title": "Tutorial: Mission Database",
-                "description": "Now that you can access the map, let's load our <strong>mission database</strong> to see available missions.\n\n1. Click the <strong>DB REGISTRY</strong> button again\n\n2. Find and mount the <strong>mission_control</strong> database\n\n3. Close the DB Registry and run:\n\n<code class='pixel-inline-code'>SELECT * FROM missions;</code>\n\nThis will show all available missions. You can click on any mission row to load it.",
-                "hint": "First mount the 'mission_control' database, then run <code>SELECT * FROM missions;</code> to see all available missions.",
-                "difficulty": 1,
-                "points": 25,
+                "title": "Astro-Logistics: Nearest Habitable Hope (ORDER BY)",
+                "description": "Agent, that last search was too broad. Let's refine. We must prioritize potential investigation targets. From the <code>DeepSpaceObjects</code> table, retrieve all <code>'Planet'</code> type objects that are confirmed as <code>is_habitable_candidate = TRUE</code>.<br><br><strong>Part 1: Understanding Sorting with ORDER BY</strong><br>In this mission, we'll learn how to sort results using the <code>ORDER BY</code> clause:<br><ul><li><code>ORDER BY column_name</code> - Sorts results by the specified column</li><li><code>ASC</code> - Ascending order (smallest to largest, A to Z) - this is the default</li><li><code>DESC</code> - Descending order (largest to smallest, Z to A)</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Make sure the <code>deep_space_catalog</code> database is still mounted.<br>2. Write a query that gets all habitable planets, sorted by distance:<br><code>SELECT object_name, star_system, distance_ly<br>FROM DeepSpaceObjects<br>WHERE object_type = 'Planet'<br>AND is_habitable_candidate = TRUE<br>ORDER BY distance_ly ASC;</code><br><br>This query does the following:<ul><li>Selects the planet name, its star system, and distance in light years</li><li>Filters to show only objects that are planets</li><li>Further filters to only those marked as habitable candidates</li><li>Sorts the results by distance, with closest planets first</li></ul><br><strong>Question:</strong> When you <strong>ORDER</strong> these results by <code>distance_ly</code> in <strong>ascending</strong> order, what is the <code>object_name</code> of the <em>closest</em> such planet?",
+                "hint": "Use: <code>SELECT object_name FROM DeepSpaceObjects WHERE object_type = 'Planet' AND is_habitable_candidate = TRUE ORDER BY distance_ly ASC LIMIT 1;</code> The name of this single planet is your answer.",
+                "solution": "SELECT object_name, star_system, distance_ly FROM DeepSpaceObjects WHERE object_type = 'Planet' AND is_habitable_candidate = TRUE ORDER BY distance_ly ASC;",
+                "difficulty": 2,
+                "points": 100,
                 "timeLimit": 300,
                 "timerEnabled": false,
-                "successMessage": "Perfect! Now you can see and select from all available missions in the system.",
-                "dbAlias": "mission_control",
+                "successMessage": "Excellent prioritization! 'Earth' is indeed the closest confirmed habitable candidate on our list at only 0.0000158 light years away. This is a significant discovery! Our journey is taking us closer to our target system, Sol.",
+                "dbAlias": "deep_space_catalog",
                 "validationCriteria": {
-                    "mustContainColumns": ["id", "title", "difficulty"],
-                    "keywords": ["SELECT", "missions"]
+                    "requiredDatabase": "deep_space_catalog",
+                    "answerToQuestion": "Earth"
                 },
                 "mapDetails": {
                     "showOnMap": false
@@ -168,165 +123,354 @@
             },
             {
                 "id": 5,
-                "title": "Mission: First Contact",
-                "description": "The Galactic Council needs information about the planets in the Proxima system.\n\n<strong>Objective:</strong> Retrieve a list of all planets, ordered by their distance from the sun.",
-                "hint": "Use SELECT to retrieve data, and ORDER BY to arrange the results.<br>Example: SELECT * FROM table_name ORDER BY column_name;",
-                "difficulty": 1,
-                "points": 100,
-                "timeLimit": 300,
+                "title": "Systemic Analysis: Habitable Hotspots (GROUP BY)",
+                "description": "Agent, to allocate future deep-survey resources effectively, we need a galactic neighborhood watch summary. Focus only on objects where <code>object_type = 'Planet'</code> AND <code>is_habitable_candidate = TRUE</code> from the <code>DeepSpaceObjects</code> table.<br><br><strong>Part 1: Understanding Grouping and Aggregation</strong><br>In this mission, we'll learn about grouping and aggregation:<br><ul><li><code>GROUP BY</code> - Groups rows with the same values in specified columns</li><li><code>COUNT(*)</code> - Counts the number of rows in each group</li><li><code>AS</code> - Creates column aliases for more readable results</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Make sure the <code>deep_space_catalog</code> database is still mounted.<br>2. Write a query that groups habitable planets by their star systems:<br><code>SELECT star_system, COUNT(*) AS habitable_planet_count<br>FROM DeepSpaceObjects<br>WHERE object_type = 'Planet'<br>AND is_habitable_candidate = TRUE<br>GROUP BY star_system<br>ORDER BY habitable_planet_count DESC;</code><br><br>This query does the following:<ul><li>Groups the filtered planets by their star system</li><li>Counts how many habitable planets are in each system</li><li>Names this count 'habitable_planet_count'</li><li>Sorts by this count, showing systems with the most habitable planets first</li></ul><br><strong>Question:</strong> By <strong>GROUPING</strong> these planets by their <code>star_system</code> and counting them, which <code>star_system</code> appears to host the highest number of these promising habitable candidate planets? Provide the name of this star system.",
+                "hint": "Use: <code>SELECT star_system, COUNT(*) AS habitable_planet_count FROM DeepSpaceObjects WHERE object_type = 'Planet' AND is_habitable_candidate = TRUE GROUP BY star_system ORDER BY habitable_planet_count DESC LIMIT 1;</code> The star system name is your answer.",
+                "solution": "SELECT star_system, COUNT(*) AS habitable_planet_count FROM DeepSpaceObjects WHERE object_type = 'Planet' AND is_habitable_candidate = TRUE GROUP BY star_system ORDER BY habitable_planet_count DESC;",
+                "difficulty": 3,
+                "points": 125,
+                "timeLimit": 360,
                 "timerEnabled": false,
-                "successMessage": "Excellent work, SQL Knight! You've successfully retrieved the planetary data for the Galactic Council.",
-                "dbAlias": "galaxy1",
+                "successMessage": "Precisely! The 'TRAPPIST-1' system shows the most habitable candidates with 4 planets, making it an excellent study target. However, our previous mission identified that Earth in the Sol system is the closest habitable planet, which makes it our priority target for immediate exploration.",
+                "dbAlias": "deep_space_catalog",
                 "validationCriteria": {
-                    "expectedRows": 5,
-                    "ordered": true,
-                    "orderColumn": "distance_from_sun",
-                    "orderDirection": "asc",
-                    "firstRowCheck": {"column": "name", "value": "Volcanus"},
-                    "lastRowCheck": {"column": "name", "value": "Novaria"}
+                    "requiredDatabase": "deep_space_catalog",
+                    "answerToQuestion": "TRAPPIST-1"
                 },
                 "mapDetails": {
-                    "showOnMap": true,
-                    "country": "United States",
-                    "location": [-74.0060, 40.7128],
-                    "description": "First Contact mission in New York"
+                    "showOnMap": false
                 },
                 "nextMissionId": 6
             },
             {
                 "id": 6,
-                "title": "Mission: Resource Discovery",
-                "description": "The Galactic Trading Federation needs to know which resources are most valuable for interstellar commerce.\n\n<strong>Objective:</strong> Find all resources with a market value greater than 5000, ordered by value (highest first).",
-                "hint": "Use WHERE to filter results and ORDER BY with DESC to sort in descending order.<br>Example: SELECT * FROM table_name WHERE column_name > value ORDER BY column_name DESC;",
-                "difficulty": 2,
+                "title": "The Sol Prospect: Finding Home (All Commands)",
+                "description": "This is it, Agent! Intelligence confirms our target is 'Earth' within the 'Sol' system. Access the detailed local database: <code>solar_system_archive</code> (mount it now!).<br><br><strong>Part 1: Combining SQL Skills</strong><br>In this final mission, we'll combine everything we've learned:<br><ul><li>Mounting a new database</li><li>Multiple filter conditions with <code>AND</code></li><li>Sorting with <code>ORDER BY</code></li><li>Limiting results with <code>LIMIT</code></li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. First, mount the <code>solar_system_archive</code> database using the DB REGISTRY.<br>2. Write a query that finds Earth by its characteristics:<br><code>SELECT planet_name, orbital_position, atmosphere_composition<br>FROM SolSystemPlanets<br>WHERE type = 'Rocky'<br>AND orbital_position = 3<br>AND biosignature_detected = TRUE<br>ORDER BY magnetic_field_strength_tesla DESC<br>LIMIT 1;</code><br><br>This query does the following:<ul><li>Searches for rocky planets in the third orbital position</li><li>Filters to only those with detected biosignatures</li><li>In case of multiple matches, sorts by magnetic field strength</li><li>Returns only the top result</li></ul><br>Earth has these known characteristics within this archive:<br>1. <code>type = 'Rocky'</code><br>2. <code>orbital_position = 3</code><br>3. <code>biosignature_detected = TRUE</code><br><br><strong>Question:</strong> Using these exact criteria in your query on the <code>SolSystemPlanets</code> table, and retrieving its <code>planet_name</code>, what is the confirmed name of our destination planet? In case of any anomalies resulting in multiple matches, prioritize the one with the highest <code>magnetic_field_strength_tesla</code> (DESC) and take only the top one (<code>LIMIT 1</code>).",
+                "hint": "Mount `solar_system_archive`. Query: <code>SELECT planet_name FROM SolSystemPlanets WHERE type = 'Rocky' AND orbital_position = 3 AND biosignature_detected = TRUE ORDER BY magnetic_field_strength_tesla DESC LIMIT 1;</code> The answer is the name.",
+                "solution": "SELECT planet_name, orbital_position, atmosphere_composition FROM SolSystemPlanets WHERE type = 'Rocky' AND orbital_position = 3 AND biosignature_detected = TRUE ORDER BY magnetic_field_strength_tesla DESC LIMIT 1;",
+                "difficulty": 3,
                 "points": 150,
-                "timeLimit": 300,
+                "timeLimit": 420,
                 "timerEnabled": false,
-                "successMessage": "Outstanding work! The Galactic Trading Federation can now prioritize the most valuable resources for their commercial routes.",
-                "dbAlias": "galaxy1",
+                "successMessage": "TARGET ACQUIRED! 'Earth' confirmed! Your SQL mastery has guided us across the void. Data relayed. Stand by to engage the planetary observation interface on the interactive map. Mission success!",
+                "dbAlias": "solar_system_archive",
                 "validationCriteria": {
-                    "expectedRows": 4,
-                    "filters": [
-                        {"column": "market_value", "operator": ">", "value": 5000}
-                    ],
-                    "ordered": true,
-                    "orderColumn": "market_value",
-                    "orderDirection": "desc",
-                    "firstRowCheck": {"column": "name", "value": "Quantium"}
+                    "requiredDatabase": "solar_system_archive",
+                    "answerToQuestion": "Earth"
                 },
                 "mapDetails": {
-                    "showOnMap": true,
-                    "country": "United Kingdom",
-                    "location": [-0.1278, 51.5074],
-                    "description": "Resource Discovery mission in London"
+                    "showOnMap": false
                 },
                 "nextMissionId": 7
             },
             {
                 "id": 7,
-                "title": "Mission: Population Census",
-                "description": "The Interstellar Health Organization needs to identify which alien species have the largest populations to prioritize medical aid.\n\n<strong>Objective:</strong> Find all species with a population greater than 3 million, ordered by intelligence level.",
-                "hint": "Combine WHERE and ORDER BY to filter and sort the results.<br>Example: SELECT * FROM table_name WHERE column_name > value ORDER BY other_column;",
-                "difficulty": 2,
-                "points": 200,
+                "title": "Tutorial: Interactive Map",
+                "description": "Great job finding Earth! Now let's explore the interactive map feature to locate key mission destinations.<br><br><strong>Part 1: Understanding Interactive Database Visualization</strong><br>SQL isn't just about text results - we can visualize geographical data too. In this mission, we'll learn how to:<br><ul><li>Mount a specialized geographic database</li><li>Use SQL to query geographical data</li><li>View results on the interactive map</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Click the <strong>DB REGISTRY</strong> button at the top of the screen<br>2. Find the <strong>maps</strong> database and click <strong>MOUNT</strong><br>3. Close the DB Registry panel using the X button<br>4. In the SQL console, enter the following query:<br><code>SELECT * FROM countries WHERE continent = 'North America';</code><br><br>This query does the following:<ul><li>It retrieves all countries in North America</li><li>The results will appear in the results area below</li><li>The map integration will automatically highlight these countries</li><li>You can click on the MAP button at the top to open the full interactive map</li></ul>",
+                "hint": "First mount the 'maps' database, then run: <code>SELECT * FROM countries WHERE continent = 'North America';</code> to view North American countries. You can then open the map to see them highlighted.",
+                "solution": "SELECT * FROM countries WHERE continent = 'North America';",
+                "difficulty": 1,
+                "points": 50,
                 "timeLimit": 300,
                 "timerEnabled": false,
-                "successMessage": "Well done! The Interstellar Health Organization can now allocate medical resources effectively based on population and intelligence levels.",
-                "dbAlias": "galaxy1",
+                "successMessage": "Perfect! You've successfully queried geographical data and seen it visualized on the map. This skill will be essential for locating mission sites around the world. IMPORTANT: Your next missions will be accessed through the MAP interface. Open the map, locate the mission markers, and click on them to begin those missions.",
+                "dbAlias": "maps",
                 "validationCriteria": {
-                    "expectedRows": 3,
-                    "filters": [
-                        {"column": "population", "operator": ">", "value": 3000000}
-                    ],
-                    "ordered": true,
-                    "orderColumn": "intelligence_level",
-                    "orderDirection": "asc"
+                    "databaseMounted": true,
+                    "requiredDatabase": "maps",
+                    "keywords": [
+                        "SELECT",
+                        "FROM",
+                        "countries",
+                        "continent",
+                        "North America"
+                    ]
                 },
                 "mapDetails": {
-                    "showOnMap": true,
-                    "country": "Japan",
-                    "location": [139.6917, 35.6895],
-                    "description": "Population Census mission in Tokyo"
+                    "showOnMap": false
                 },
                 "nextMissionId": 8
             },
             {
                 "id": 8,
-                "title": "Paris With Love",
-                "description": "A rare Parisian artifact has been discovered containing information about ancient sustainability practices.\n\n<strong>Objective:</strong> Query the artifact database to find sustainability techniques ordered by efficiency rating.",
-                "hint": "This is a basic query. Use SELECT and ORDER BY to get the sustainability techniques ordered properly.<br>Example: SELECT * FROM techniques ORDER BY efficiency_rating DESC;",
-                "difficulty": 3,
-                "points": 200,
+                "title": "Global Geography Analysis",
+                "description": "Welcome to the Geographic Data Analysis mission! In this mission, you will explore country data while visualizing the results on the interactive world map.<br><br><strong>Part 1: Targeting Mission Locations</strong><br>Our first earthside mission will take place in New York City, USA. Let's locate it using SQL and the interactive map:<br><ul><li>Use SQL to query specific location data</li><li>Filter results to find our mission destination</li><li>Open the interactive map to see the highlighted results</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Make sure the <code>maps</code> database is still mounted<br>2. Write a query to find information about the United States:<br><code>SELECT * FROM countries WHERE country = 'United States';</code><br><br>3. Next, let's narrow down to cities in the United States:<br><code>SELECT * FROM cities WHERE country = 'United States';</code><br><br>4. After viewing the results, click the <strong>MAP</strong> button at the top of the screen to open the interactive map and see the highlighted locations.<br><br>These queries will display information about the United States and its major cities, including New York where your first field mission will take place.",
+                "hint": "Run <code>SELECT * FROM cities WHERE country = 'United States';</code> to see US cities including New York. Then click the MAP button to view the full interactive map.",
+                "solution": "SELECT * FROM cities WHERE country = 'United States';",
+                "difficulty": 2,
+                "points": 75,
                 "timeLimit": 300,
                 "timerEnabled": false,
-                "successMessage": "Magnifique! You've unlocked ancient sustainability knowledge that will help modern Paris become more eco-friendly.",
-                "dbAlias": "galaxy1",
+                "successMessage": "Excellent! You've successfully located New York City, our first mission location. You've mastered using SQL queries to find geographic data and using the interactive map for visualization. Your next mission awaits in New York City!",
+                "dbAlias": "maps",
                 "validationCriteria": {
-                    "expectedRows": 4,
-                    "ordered": true,
-                    "orderColumn": "efficiency_rating",
-                    "orderDirection": "desc",
-                    "keywords": ["SELECT", "ORDER BY"]
+                    "databaseMounted": true,
+                    "requiredDatabase": "maps",
+                    "keywords": [
+                        "SELECT",
+                        "FROM",
+                        "cities",
+                        "country",
+                        "United States"
+                    ]
                 },
                 "mapDetails": {
                     "showOnMap": true,
-                    "country": "France",
-                    "location": [2.3522, 48.8566],
-                    "description": "Active mission in Paris"
+                    "country": "United States",
+                    "location": [
+                        -74.0060,
+                        40.7128
+                    ],
+                    "description": "Locate New York City, your first mission destination."
                 },
                 "nextMissionId": 9
             },
             {
                 "id": 9,
-                "title": "Mission: Planetary Relations",
-                "description": "Scientists need to understand the relationship between planets and their native species.\n\n<strong>Objective:</strong> Find all planets and their corresponding species, including planets without any species.",
-                "hint": "Use JOIN operations to combine data from multiple tables.<br>Example: SELECT * FROM table1 LEFT JOIN table2 ON table1.id = table2.foreign_id;",
-                "difficulty": 3,
-                "points": 250,
-                "timeLimit": 420,
+                "title": "Mission: First Contact (New York)",
+                "description": "The Galactic Council needs information about Earth's major population centers. Our first target is New York.<br><br><strong>Part 1: Applying SQL Skills on Earth Data</strong><br>In this mission, we'll apply the SQL skills we've learned to query Earth-specific databases:<br><ul><li>Mount a specialized Earth database</li><li>Use the WHERE clause to find specific city data</li><li>Extract population information for analysis</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Click the <strong>DB REGISTRY</strong> button and mount the <code>geo_data_earth</code> database<br>2. Write a query to find information about New York City:<br><code>SELECT population, country<br>FROM EarthCities<br>WHERE city_name = 'New York';</code><br><br>This query does the following:<ul><li>Selects only the population and country information</li><li>Filters to show only data for the city named 'New York'</li><li>Returns demographic information needed by the Galactic Council</li></ul><br><strong>Expected Outcome:</strong><br>The query should return a single row with New York's population count and its country (United States).",
+                "hint": "Mount `geo_data_earth`. Use `SELECT population, country FROM EarthCities WHERE city_name = 'New York';`",
+                "solution": "SELECT population, country FROM EarthCities WHERE city_name = 'New York';",
+                "difficulty": 1,
+                "points": 100,
+                "timeLimit": 300,
                 "timerEnabled": false,
-                "successMessage": "Excellent analysis! The scientists now have a complete picture of planetary habitation patterns.",
-                "dbAlias": "galaxy1",
+                "successMessage": "Excellent work, SQL Knight! You've successfully retrieved the data for New York. This is vital for the Galactic Council.",
+                "dbAlias": "geo_data_earth",
                 "validationCriteria": {
-                    "expectedRows": 5,
-                    "joinTables": ["planets", "species"],
-                    "joinType": "left",
-                    "joinColumns": {"planets": "id", "species": "home_planet_id"}
+                    "expectedRows": 1,
+                    "mustContainColumns": ["population", "country"],
+                    "queryStructureChecks": [ 
+                        {"checkType": "filter", "column": "city_name", "expectedValue": "New York"}
+                    ],
+                    "keywords": ["SELECT", "FROM", "EarthCities", "WHERE"]
                 },
                 "mapDetails": {
                     "showOnMap": true,
-                    "country": "Australia",
-                    "location": [151.2093, -33.8688],
-                    "description": "Planetary Relations mission in Sydney"
+                    "country": "United States",
+                    "location": [
+                        -74.0060,
+                        40.7128
+                    ],
+                    "description": "First Contact mission in New York. Objective: Query city data."
                 },
                 "nextMissionId": 10
             },
             {
                 "id": 10,
-                "title": "Mission: Resource Analysis",
-                "description": "The Galactic Trading Federation needs a summary of resource value by planet.\n\n<strong>Objective:</strong> Calculate the total market value of resources for each planet and order by total value (highest first).",
-                "hint": "Use GROUP BY with aggregate functions to summarize data.<br>Example: SELECT column1, SUM(column2) FROM table GROUP BY column1;",
+                "title": "Mission: Resource Discovery (London)",
+                "description": "The Galactic Trading Federation needs to know which key terrestrial resources are found near major European trade hubs. Focus on London.<br><br><strong>Part 1: Filtering and Sorting Earth Resources</strong><br>In this mission, we'll combine multiple SQL techniques to analyze resource data:<br><ul><li>Use multiple filter conditions with AND</li><li>Compare values using the > operator</li><li>Sort results by value in descending order</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Make sure the <code>geo_data_earth</code> database is still mounted<br>2. Write a query to find valuable resources in the United Kingdom:<br><code>SELECT resource_name, market_value<br>FROM EarthResources<br>WHERE country_origin = 'United Kingdom'<br>AND market_value > 5000<br>ORDER BY market_value DESC;</code><br><br>This query does the following:<ul><li>Selects resource names and their market values</li><li>Applies two filter conditions:</li><ul><li>Resources must be from the United Kingdom</li><li>Market value must exceed 5000</li></ul><li>Sorts the results with highest value resources first</li></ul><br><strong>Question:</strong><br>After running the query, what is the name of the most valuable resource (highest market_value) in the United Kingdom? Enter the exact resource name.",
+                "hint": "Use `SELECT resource_name, market_value FROM EarthResources WHERE country_origin = 'United Kingdom' AND market_value > 5000 ORDER BY market_value DESC;` and note the name of the resource with the highest market_value.",
+                "solution": "SELECT resource_name, market_value FROM EarthResources WHERE country_origin = 'United Kingdom' AND market_value > 5000 ORDER BY market_value DESC;",
+                "difficulty": 2,
+                "points": 150,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Outstanding work! The Galactic Trading Federation can now prioritize the most valuable resources for their European commercial routes.",
+                "dbAlias": "geo_data_earth",
+                "validationCriteria": {
+                    "requiredDatabase": "geo_data_earth",
+                    "answerToQuestion": "Scottish Rare Earth Elements"
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "United Kingdom",
+                    "location": [
+                        -0.1278,
+                        51.5074
+                    ],
+                    "description": "Resource Discovery mission in London. Objective: Query valuable UK resources."
+                },
+                "nextMissionId": 11
+            },
+            {
+                "id": 11,
+                "title": "Mission: Cultural Heritage Scan (Tokyo)",
+                "description": "The Interstellar Preservation Society is cataloging sites of significant cultural importance. For Tokyo, they need a list of cultural sites ordered by their age.<br><br><strong>Part 1: Complex Filtering with AND/OR Combinations</strong><br>In this mission, we'll use more advanced filtering and sorting:<br><ul><li>Combine AND and OR conditions with proper grouping</li><li>Sort results chronologically using ASC order</li><li>Extract cultural heritage information</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Make sure the <code>geo_data_earth</code> database is still mounted<br>2. Write a query to find significant cultural sites in Tokyo:<br><code>SELECT site_name, year_established<br>FROM EarthSites<br>WHERE city = 'Tokyo'<br>AND (type = 'Cultural' OR importance_level >= 8)<br>ORDER BY year_established ASC;</code><br><br>This query does the following:<ul><li>Selects site names and their establishment years</li><li>First filters for Tokyo sites only</li><li>Then applies a complex condition where either:</li><ul><li>The site type is 'Cultural', OR</li><li>The site has an importance level of 8 or higher</li></ul><li>Orders results from oldest to newest sites</li></ul><br><strong>Question:</strong><br>What is the name of the oldest cultural or important (importance_level >= 8) site in Tokyo? Enter the exact site name from your results.",
+                "hint": "Use `SELECT site_name, year_established FROM EarthSites WHERE city = 'Tokyo' AND (type = 'Cultural' OR importance_level >= 8) ORDER BY year_established ASC;` and look at the first result (oldest site).",
+                "solution": "SELECT site_name, year_established FROM EarthSites WHERE city = 'Tokyo' AND (type = 'Cultural' OR importance_level >= 8) ORDER BY year_established ASC;",
+                "difficulty": 2,
+                "points": 200,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Well done! The Interstellar Preservation Society can now catalog Tokyo's key heritage sites effectively, starting with the oldest site: Sensō-ji Temple from 645 CE.",
+                "dbAlias": "geo_data_earth",
+                "validationCriteria": {
+                    "requiredDatabase": "geo_data_earth",
+                    "answerToQuestion": "Sensō-ji Temple"
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Japan",
+                    "location": [
+                        139.6917,
+                        35.6895
+                    ],
+                    "description": "Cultural Heritage Scan in Tokyo. Objective: Query significant sites."
+                },
+                "nextMissionId": 12
+            },
+            {
+                "id": 12,
+                "title": "Paris With Love: Sustainable Tech Analysis",
+                "description": "A research team in Paris is studying historical sustainability techniques. Access the `GlobalTechArchive` database (alias `global_tech`).<br><br><strong>Part 1: Combining Multiple Techniques</strong><br>In this mission, we'll combine several SQL techniques into a more complex query:<br><ul><li>Multiple filter conditions with logical operators</li><li>Sorting with ORDER BY</li><li>Using LIMIT to restrict results</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Mount the <code>global_tech</code> database using the DB REGISTRY<br>2. Write a query to find sustainable practices in France:<br><code>SELECT practice_name, efficiency_rating<br>FROM SustainabilityPractices<br>WHERE country_of_origin = 'France'<br>AND (category = 'Urban' OR category = 'Agricultural')<br>ORDER BY efficiency_rating DESC<br>LIMIT 3;</code><br><br>This query does the following:<ul><li>Selects the practice name and its efficiency rating</li><li>Filters for only French practices</li><li>Further filters to only Urban OR Agricultural categories</li><li>Sorts by efficiency rating from highest to lowest</li><li>Returns only the top 3 most efficient practices</li></ul><br><strong>Expected Outcome:</strong><br>The query will return the three most efficient sustainable practices from France's urban and agricultural sectors, which can help the Paris research team implement historical sustainability techniques in modern settings.",
+                "hint": "Mount `global_tech`. Use `SELECT practice_name, efficiency_rating FROM SustainabilityPractices WHERE country_of_origin = 'France' AND (category = 'Urban' OR category = 'Agricultural') ORDER BY efficiency_rating DESC LIMIT 3;`",
+                "solution": "SELECT practice_name, efficiency_rating FROM SustainabilityPractices WHERE country_of_origin = 'France' AND (category = 'Urban' OR category = 'Agricultural') ORDER BY efficiency_rating DESC LIMIT 3;",
+                "difficulty": 3,
+                "points": 200,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Magnifique! You've unlocked ancient sustainability knowledge that will help modern Paris. Your combined use of WHERE, OR, ORDER BY, and LIMIT was flawless!",
+                "dbAlias": "global_tech",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "FROM", "SustainabilityPractices", "WHERE", "AND", "OR", "ORDER BY", "DESC", "LIMIT"],
+                    "queryStructureChecks": [
+                        {"checkType": "filter", "column": "country_of_origin", "expectedValue": "France"},
+                        {"checkType": "limit", "expectedValue": 3}
+                    ],
+                    "queryLogicChecks": [
+                         {"clause": "WHERE", "mustContainLogicCombination": {"AND": ["country_of_origin = 'France'", {"OR": ["category = 'Urban'", "category = 'Agricultural'"]}]}}
+                    ],
+                    "ordered": true,
+                    "orderColumn": "efficiency_rating",
+                    "orderDirection": "desc",
+                    "mustContainColumns": ["practice_name", "efficiency_rating"],
+                    "expectedRows": 3
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "France",
+                    "location": [
+                        2.3522,
+                        48.8566
+                    ],
+                    "description": "Active mission in Paris: Query sustainable tech."
+                },
+                "nextMissionId": 13
+            },
+            {
+                "id": 13,
+                "title": "Mission: Sydney Bio-Diversity Report (GROUP BY)",
+                "description": "Environmental scientists in Sydney, Australia require a summary of wildlife sightings. Use the `RegionalWildlifeDB` (alias `aus_wildlife`).<br><br><strong>Part 1: Advanced Aggregation and Filtering</strong><br>In this mission, we'll learn more advanced aggregation techniques:<br><ul><li>Using COUNT with the DISTINCT keyword</li><li>Filtering with complex OR conditions</li><li>Combining GROUP BY with ORDER BY</li><li>Creating more descriptive column aliases</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Mount the <code>aus_wildlife</code> database using the DB REGISTRY<br>2. Write a query to analyze endangered species across Australian regions:<br><code>SELECT state_province, COUNT(DISTINCT species_name) AS endangered_species_count<br>FROM SightingsAustralia<br>WHERE conservation_status = 'Endangered'<br>OR conservation_status = 'Critically Endangered'<br>GROUP BY state_province<br>ORDER BY endangered_species_count DESC;</code><br><br>This query does the following:<ul><li>Groups wildlife sightings by state/province</li><li>Counts only distinct species names (to avoid counting the same species multiple times)</li><li>Filters to include only endangered or critically endangered species</li><li>Names the count column 'endangered_species_count' for clarity</li><li>Sorts the results to show regions with the most endangered species first</li></ul><br><strong>Expected Outcome:</strong><br>The query will generate a biodiversity report showing which Australian states/provinces have the highest numbers of distinct endangered species, helping scientists prioritize conservation efforts.",
+                "hint": "Mount `aus_wildlife`. Use `SELECT state_province, COUNT(DISTINCT species_name) AS endangered_species_count FROM SightingsAustralia WHERE conservation_status = 'Endangered' OR conservation_status = 'Critically Endangered' GROUP BY state_province ORDER BY endangered_species_count DESC;`",
+                "solution": "SELECT state_province, COUNT(DISTINCT species_name) AS endangered_species_count FROM SightingsAustralia WHERE conservation_status = 'Endangered' OR conservation_status = 'Critically Endangered' GROUP BY state_province ORDER BY endangered_species_count DESC;",
+                "difficulty": 3,
+                "points": 250,
+                "timeLimit": 420,
+                "timerEnabled": false,
+                "successMessage": "Excellent analysis! The scientists now have a clear report on endangered species distribution in Australia thanks to your GROUP BY and aggregate skills.",
+                "dbAlias": "aus_wildlife",
+                "validationCriteria": {
+                    "keywords": ["SELECT", "COUNT", "DISTINCT", "FROM", "SightingsAustralia", "WHERE", "OR", "GROUP BY", "ORDER BY", "DESC"],
+                    "queryLogicChecks": [
+                        {"clause": "WHERE", "mustContainLogicCombination": {"OR": ["conservation_status = 'Endangered'", "conservation_status = 'Critically Endangered'"]}}
+                    ],
+                    "aggregation": true,
+                    "groupBy": ["state_province"],
+                    "aggregateFunction": "COUNT",
+                    "aggregateColumn": "species_name", 
+                    "distinctInAggregation": true,
+                    "ordered": true,
+                    "orderColumn": "endangered_species_count",
+                    "orderDirection": "desc",
+                    "mustContainColumns": ["state_province", "endangered_species_count"]
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "Australia",
+                    "location": [
+                        151.2093,
+                        -33.8688
+                    ],
+                    "description": "Sydney Bio-Diversity Report. Objective: Group and count endangered species."
+                },
+                "nextMissionId": 14
+            },
+            {
+                "id": 14,
+                "title": "Mission: Rio Resource Value Analysis (Complex Query)",
+                "description": "The Global Economic Council in Rio de Janeiro, Brazil needs a detailed report. Use `SouthAmericaEconomyDB` (alias `sa_econ`).<br><br><strong>Part 1: Advanced Filtering with HAVING</strong><br>In this mission, we'll learn the most advanced SQL concepts so far:<br><ul><li>Using the SUM function to calculate totals</li><li>Filtering grouped results with the HAVING clause</li><li>Using AVG to calculate averages</li><li>Combining multiple aggregate functions in one query</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Mount the <code>sa_econ</code> database using the DB REGISTRY<br>2. Write a complex query to analyze natural resource exports:<br><code>SELECT country, SUM(export_value) AS total_natural_resource_export_value<br>FROM EconomicActivities<br>WHERE item_type = 'NaturalResource'<br>GROUP BY country<br>HAVING AVG(resource_stability_index) > 0.6<br>ORDER BY total_natural_resource_export_value DESC<br>LIMIT 5;</code><br><br>This query does the following:<ul><li>Filters for only natural resource type items</li><li>Groups these items by country</li><li>Calculates the sum of export values for each country</li><li>Uses HAVING to filter out countries with average stability index ≤ 0.6</li><li>Orders countries by their total export value (highest first)</li><li>Returns only the top 5 countries</li></ul><br><strong>Understanding HAVING vs WHERE:</strong><br><ul><li>WHERE filters individual rows before grouping</li><li>HAVING filters groups after they are formed</li><li>HAVING can use aggregate functions like AVG, SUM, COUNT</li></ul><br><strong>Expected Outcome:</strong><br>The query will identify the top 5 stable countries with the highest natural resource export values, giving the Global Economic Council crucial information for investment strategies.",
+                "hint": "Mount `sa_econ`. A complex one! `SELECT country, SUM(export_value) AS total_natural_resource_export_value FROM EconomicActivities WHERE item_type = 'NaturalResource' GROUP BY country HAVING AVG(resource_stability_index) > 0.6 ORDER BY total_natural_resource_export_value DESC LIMIT 5;`",
+                "solution": "SELECT country, SUM(export_value) AS total_natural_resource_export_value FROM EconomicActivities WHERE item_type = 'NaturalResource' GROUP BY country HAVING AVG(resource_stability_index) > 0.6 ORDER BY total_natural_resource_export_value DESC LIMIT 5;",
                 "difficulty": 4,
                 "points": 300,
                 "timeLimit": 480,
                 "timerEnabled": false,
-                "successMessage": "Outstanding work! The Federation now has clear insight into the resource value distribution across planets.",
-                "dbAlias": "galaxy1",
+                "successMessage": "Outstanding work! The Council now has critical insight into South American natural resource export values. Your full command of SQL, including aggregation, filtering, ordering, and limiting results, is exemplary!",
+                "dbAlias": "sa_econ",
                 "validationCriteria": {
+                    "keywords": ["SELECT", "SUM", "FROM", "EconomicActivities", "WHERE", "GROUP BY", "HAVING", "AVG", "ORDER BY", "DESC", "LIMIT"],
+                    "queryStructureChecks": [
+                        {"checkType": "filter", "column": "item_type", "expectedValue": "NaturalResource"},
+                        {"checkType": "limit", "expectedValue": 5}
+                    ],
                     "aggregation": true,
-                    "groupBy": ["planet_id"],
+                    "groupBy": ["country"],
                     "aggregateFunction": "SUM",
-                    "aggregateColumn": "market_value",
+                    "aggregateColumn": "export_value",
+                    "havingClauseCheck": {"aggregateFunction": "AVG", "column": "resource_stability_index", "operator": ">", "value": 0.6},
                     "ordered": true,
-                    "orderColumn": "total_market_value",
-                    "orderDirection": "desc"
+                    "orderColumn": "total_natural_resource_export_value",
+                    "orderDirection": "desc",
+                    "mustContainColumns": ["country", "total_natural_resource_export_value"],
+                    "expectedRows": 5
                 },
                 "mapDetails": {
                     "showOnMap": true,
                     "country": "Brazil",
-                    "location": [-43.1729, -22.9068],
-                    "description": "Resource Analysis mission in Rio de Janeiro"
-                }
+                    "location": [
+                        -43.1729,
+                        -22.9068
+                    ],
+                    "description": "Rio Resource Analysis mission. Objective: Complex aggregation and filtering."
+                },
+                "nextMissionId": 20
+            },
+            {
+                "id": 20,
+                "title": "Earth Discovery: Planet Name",
+                "description": "Our analysis of space telescope data has narrowed down the third planet from the star Sol as our primary target. According to our database, what is the name of this planet?<br><br><strong>Part 1: Knowledge-Based Missions</strong><br>In this mission type, you'll need to apply your SQL knowledge to find specific answers:<br><ul><li>Mount the appropriate database</li><li>Write a query to find the specific information</li><li>Submit the answer in the provided field</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Mount the <code>solar_system_archive</code> database if not already mounted<br>2. Write a query to find information about the third planet from Sol:<br><code>SELECT planet_name, orbital_position, atmosphere_composition<br>FROM SolSystemPlanets<br>WHERE orbital_position = 3;</code><br><br>This query does the following:<ul><li>Retrieves planet name, position, and atmosphere information</li><li>Filters to only show planets in the third orbital position</li><li>This should identify our target planet</li></ul><br><strong>Expected Outcome:</strong><br>The query will return information about the third planet from Sol. Look at the planet_name column to determine the answer, then type it into the answer field.",
+                "hint": "You've already collected data about the Solar System. The third planet from Sol has a high percentage of nitrogen and oxygen in its atmosphere and has been identified as supporting life.",
+                "difficulty": 2,
+                "points": 100,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Correct! Earth is indeed the third planet from Sol, and our primary mission target. Your knowledge of the Sol system will be invaluable for our mission planning.",
+                "dbAlias": "solar_system_archive",
+                "validationCriteria": {
+                    "requiredDatabase": "solar_system_archive",
+                    "answerToQuestion": "Earth"
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "United States",
+                    "location": [-77.0369, 38.9072],
+                    "description": "Earth Discovery mission in Washington DC"
+                },
+                "nextMissionId": 21
+            },
+            {
+                "id": 21,
+                "title": "Earth Discovery: Atmosphere",
+                "description": "What is the primary gas in Earth's atmosphere by percentage?<br><br><strong>Part 1: Researching Atmospheric Composition</strong><br>In this mission, you'll need to examine more detailed planetary data:<br><ul><li>Use the solar_system_archive database</li><li>Extract specific composition information</li><li>Identify the most prevalent atmospheric component</li></ul><br><strong>Step-by-Step Instructions:</strong><br>1. Make sure the <code>solar_system_archive</code> database is still mounted<br>2. Write a query to examine Earth's atmospheric composition in detail:<br><code>SELECT planet_name, atmosphere_composition, atmosphere_details<br>FROM SolSystemPlanets<br>WHERE planet_name = 'Earth';</code><br><br>This query does the following:<ul><li>Focuses specifically on Earth by name</li><li>Retrieves the atmospheric composition and details</li><li>Provides information about the gases present</li></ul><br><strong>Analyzing the Results:</strong><br>The results will include a breakdown of Earth's atmosphere. Look for the gas with the highest percentage (around 78%) and enter its name in the answer field.",
+                "hint": "Check the atmospheric composition data in our databases. The gas makes up around 78% of Earth's atmosphere.",
+                "difficulty": 2,
+                "points": 100,
+                "timeLimit": 300,
+                "timerEnabled": false,
+                "successMessage": "Correct! Nitrogen makes up approximately 78% of Earth's atmosphere. This information will help us prepare appropriate life support systems for our mission.",
+                "dbAlias": "solar_system_archive",
+                "validationCriteria": {
+                    "requiredDatabase": "solar_system_archive",
+                    "answerToQuestion": "Nitrogen"
+                },
+                "mapDetails": {
+                    "showOnMap": true,
+                    "country": "France",
+                    "location": [2.3522, 48.8566],
+                    "description": "Earth Discovery mission in Paris"
+                },
+                "nextMissionId": 22
             }
         ]
     }
