@@ -1,9 +1,269 @@
 // Add randomized CRT flicker intensity
 document.addEventListener('DOMContentLoaded', () => {
+    // Function to properly initialize Web Audio API (requires user interaction)
+    function setupWebAudio() {
+        // Remove this event listener once executed
+        document.removeEventListener('click', setupWebAudio, true);
+        document.removeEventListener('keydown', setupWebAudio, true);
+        
+        // Initialize audio context if not already done
+        if (window.AudioPoolManager && (!AudioPoolManager.audioContext || 
+            AudioPoolManager.audioContext.state === 'suspended')) {
+            
+            console.log("Setting up Web Audio API after user interaction");
+            AudioPoolManager.initAudioContext();
+            
+            if (AudioPoolManager.audioContext) {
+                AudioPoolManager.audioContext.resume().then(() => {
+                    console.log("AudioContext started successfully");
+                }).catch(err => {
+                    console.warn("Failed to start AudioContext:", err);
+                });
+            }
+        }
+    }
+    
+    // Add event listeners for first interaction
+    document.addEventListener('click', setupWebAudio, true);
+    document.addEventListener('keydown', setupWebAudio, true);
+
+    // Enhanced Audio Pool Manager to handle sound effects efficiently with no stuttering
+    window.AudioPoolManager = {
+        pools: {}, // Will hold our audio pools for different sound types
+        audioContext: null, // Web Audio API context
+        masterGainNode: null, // Master volume control
+        
+        // Initialize the Audio Context for better performance
+        initAudioContext: function() {
+            if (this.audioContext) return this.audioContext;
+            
+            try {
+                // Create audio context with fallback
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContext();
+                
+                // Create master gain node for volume control
+                this.masterGainNode = this.audioContext.createGain();
+                this.masterGainNode.connect(this.audioContext.destination);
+                
+                console.log("Audio context initialized successfully");
+                return this.audioContext;
+            } catch (err) {
+                console.error("Failed to initialize audio context:", err);
+                return null;
+            }
+        },
+        
+        // Initialize a pool of audio buffer sources for a specific sound
+        initPool: function(soundType, path, size = 5) {
+            // If pool already exists, just return it
+            if (this.pools[soundType]) {
+                return this.pools[soundType];
+            }
+            
+            // Initialize audio context if needed
+            this.initAudioContext();
+            
+            // Create the pool structure
+            this.pools[soundType] = {
+                path: path,
+                buffer: null,
+                size: size,
+                isLoading: true,
+                loadError: null
+            };
+            
+            // Load the audio file as a buffer (more efficient than Audio elements)
+            fetch(path)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.arrayBuffer();
+                })
+                .then(arrayBuffer => this.audioContext.decodeAudioData(arrayBuffer))
+                .then(audioBuffer => {
+                    this.pools[soundType].buffer = audioBuffer;
+                    this.pools[soundType].isLoading = false;
+                    console.log(`Audio pool for ${soundType} loaded successfully`);
+                })
+                .catch(err => {
+                    this.pools[soundType].loadError = err;
+                    this.pools[soundType].isLoading = false;
+                    console.error(`Failed to load audio for ${soundType}:`, err);
+                    
+                    // Create a backup method using traditional Audio elements
+                    this.initFallbackPool(soundType, path, size);
+                });
+            
+            console.log(`Audio pool for ${soundType} initialized with buffer-based approach`);
+            return this.pools[soundType];
+        },
+        
+        // Fallback to traditional Audio elements if buffer loading fails
+        initFallbackPool: function(soundType, path, size) {
+            console.log(`Using fallback Audio elements for ${soundType}`);
+            
+            this.pools[soundType] = {
+                path: path,
+                available: [],
+                inUse: [],
+                size: size,
+                useFallback: true
+            };
+            
+            // Pre-create Audio elements
+            for (let i = 0; i < size; i++) {
+                const audio = new Audio(path);
+                audio.preload = 'auto';
+                this.pools[soundType].available.push(audio);
+            }
+        },
+        
+        // Play a sound with Web Audio API (more efficient)
+        playSound: function(soundType, path, volume = 0.5, customPlayFunction = null) {
+            // Check if sound should be played
+            if (window.soundSettings && !window.soundSettings.effectsEnabled && soundType !== 'typing') {
+                return null;
+            }
+            
+            if (soundType === 'typing' && window.soundSettings && !window.soundSettings.typingSoundEnabled) {
+                return null;
+            }
+            
+            // Initialize pool if it doesn't exist
+            if (!this.pools[soundType]) {
+                this.initPool(soundType, path, soundType === 'typing' ? 15 : 5);
+            }
+            
+            // Get the pool
+            const pool = this.pools[soundType];
+            
+            // Calculate appropriate volume
+            let adjustedVolume = volume;
+            if (window.soundSettings) {
+                if (soundType === 'typing') {
+                    adjustedVolume = window.soundSettings.typingVolume * window.soundSettings.masterVolume * volume;
+                } else {
+                    adjustedVolume = window.soundSettings.effectsVolume * window.soundSettings.masterVolume * volume;
+                }
+            }
+            
+            // If the buffer is loaded, use Web Audio API for better performance
+            if (pool.buffer && !pool.useFallback) {
+                try {
+                    // Create source node
+                    const source = this.audioContext.createBufferSource();
+                    source.buffer = pool.buffer;
+                    
+                    // Create gain node for this sound's volume
+                    const gainNode = this.audioContext.createGain();
+                    gainNode.gain.value = adjustedVolume;
+                    
+                    // Connect nodes: source → gain → master → output
+                    source.connect(gainNode);
+                    gainNode.connect(this.masterGainNode);
+                    
+                    // Handle custom play function for special cases like typing
+                    if (customPlayFunction) {
+                        customPlayFunction({
+                            play: () => source.start(0),
+                            stop: () => {
+                                try {
+                                    source.stop(0);
+                                } catch (e) {
+                                    // Ignore errors from stopping already stopped sources
+                                }
+                            },
+                            volume: adjustedVolume,
+                            // For typing sound random position
+                            setPosition: (time) => {
+                                source.start(0, time);
+                                // Auto-stop after a reasonable time to avoid memory leaks
+                                setTimeout(() => {
+                                    try {
+                                        if (source && source.context.state !== 'closed') {
+                                            source.stop(0);
+                                        }
+                                    } catch (e) {
+                                        // Ignore errors from stopping already stopped sources
+                                    }
+                                }, 300);
+                            }
+                        });
+                    } else {
+                        // Start immediately for normal sounds
+                        source.start(0);
+                    }
+                    
+                    return source;
+                } catch (err) {
+                    console.error(`Error playing ${soundType} with Web Audio API:`, err);
+                    // Fall back to Audio element approach
+                    pool.useFallback = true;
+                }
+            }
+            
+            // Fallback: Use Audio elements if buffer not loaded or there was an error
+            if (pool.useFallback) {
+                let audio;
+                
+                // Get available audio or reuse the oldest one
+                if (pool.available && pool.available.length > 0) {
+                    audio = pool.available.pop();
+                    pool.inUse.push(audio);
+                } else if (pool.inUse && pool.inUse.length > 0) {
+                    // Reuse the oldest sound
+                    audio = pool.inUse.shift();
+                    pool.inUse.push(audio);
+                    
+                    // Reset it
+                    audio.pause();
+                    audio.currentTime = 0;
+                } else {
+                    // Create new as last resort
+                    audio = new Audio(path);
+                }
+                
+                // Set volume
+                audio.volume = adjustedVolume;
+                
+                // Setup cleanup
+                const returnToPool = () => {
+                    if (pool.inUse) {
+                        const index = pool.inUse.indexOf(audio);
+                        if (index !== -1) {
+                            pool.inUse.splice(index, 1);
+                            if (pool.available) {
+                                pool.available.push(audio);
+                            }
+                        }
+                    }
+                    audio.removeEventListener('ended', returnToPool);
+                };
+                
+                audio.addEventListener('ended', returnToPool);
+                
+                // Play with custom function or directly
+                if (customPlayFunction) {
+                    customPlayFunction(audio);
+                } else {
+                    audio.play().catch(err => {
+                        console.error(`Error playing ${soundType} sound:`, err);
+                    });
+                }
+                
+                return audio;
+            }
+            
+            return null;
+        }
+    };
+
     // Initialize sound settings immediately at the beginning to ensure they're available
     window.soundSettings = {
-        masterVolume: 0.5,
-        musicVolume: 0.3,
+        masterVolume: 0.2,
+        musicVolume: 0.1,
         effectsVolume: 0.5,
         typingVolume: 0.5,
         musicEnabled: true,
@@ -13,8 +273,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Methods for managing sound
         updateMasterVolume: function(value) {
             this.masterVolume = value;
+            
+            // Update background music volume
             if (backgroundMusic) {
                 backgroundMusic.volume = this.musicVolume * this.masterVolume;
+            }
+            
+            // Update Web Audio API master volume if available
+            if (AudioPoolManager && AudioPoolManager.masterGainNode) {
+                AudioPoolManager.masterGainNode.gain.value = this.masterVolume;
             }
         },
         
@@ -179,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sound settings
     const soundSettings = {
         masterVolume: 0.5,
-        musicVolume: 0.3,
+        musicVolume: 0.1,
         effectsVolume: 0.5,
         typingVolume: 0.5,
         musicEnabled: true,
@@ -277,68 +544,113 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add keyboard typing sound path
     const typingSoundPath = "./audio/typing-keyboard-sound-254462.ogg";
     
-    // Pre-load audio objects for better performance
-    const errorSound = new Audio(sqlErrorSoundPath);
-    errorSound.volume = soundSettings.effectsVolume * soundSettings.masterVolume; // Volume based on settings
-    window.errorSound = errorSound; // Make it globally available
-
-    // Pre-load the typing sound for keyboard effect
-    const typingSound = new Audio(typingSoundPath);
+    // Initialize Web Audio API context first
+    AudioPoolManager.initAudioContext();
     
-    // Function to play random typing sound samples
-    function playRandomTypingSound() {
-        if (!soundSettings.typingSoundEnabled) return;
+    // Pre-initialize all audio pools for better performance
+    // Group sounds by priority and frequency of use
+    
+    // High priority/frequent sounds - load these first
+    AudioPoolManager.initPool('typing', typingSoundPath, 3);  // Reduced pool size since we're using buffer-based playback
+    AudioPoolManager.initPool('hover', hoverSoundPath, 2);
+    AudioPoolManager.initPool('click', './audio/766611__stavsounds__keyboard_clicky_15.ogg', 2);
+    
+    // Medium priority sounds
+    setTimeout(() => {
+        AudioPoolManager.initPool('error', sqlErrorSoundPath, 2);
+        AudioPoolManager.initPool('incorrectAnswer', './audio/619803__teh_bucket__error-fizzle.ogg', 2);
+    }, 500);
+    
+    // Lower priority sounds - load these last
+    setTimeout(() => {
+        AudioPoolManager.initPool('dbClick', './audio/button-202966.ogg', 2);
+        AudioPoolManager.initPool('missionComplete', missionCompleteSoundPath, 1);
+    }, 1000);
+    
+    // Create a compatibility wrapper for backward compatibility
+    window.errorSound = {
+        play: function() {
+            return AudioPoolManager.playSound('error', sqlErrorSoundPath, 1.0);
+        },
+        volume: soundSettings.effectsVolume * soundSettings.masterVolume
+    };
+    
+    console.log("Audio pool system initialized with appropriate pool sizes");
+    
+    // Function to play random typing sound samples using Web Audio API for better performance
+    // Use throttling to prevent excessive typing sounds that cause stuttering
+    const playRandomTypingSoundThrottled = (() => {
+        let lastTypingTime = 0;
+        const minInterval = 50; // Minimum 50ms between typing sounds
+        let typingSoundCounter = 0;
         
-        // Create a new audio element each time for overlapping sounds
-        const tempTypingSound = new Audio(typingSoundPath);
-        
-        // Set a random start time between 0 and max (minus 0.3 seconds to ensure we have enough audio)
-        tempTypingSound.addEventListener('loadedmetadata', () => {
-            // Create shorter, more natural key press sounds
-            // The original file has multiple key press sounds, so we'll sample small sections
-            const maxStartTime = Math.max(0, tempTypingSound.duration - 0.3);
-            const randomStartTime = Math.random() * maxStartTime;
+        return function() {
+            if (!soundSettings.typingSoundEnabled) return;
             
-            // Set the start time and volume
-            tempTypingSound.currentTime = randomStartTime;
-            tempTypingSound.volume = soundSettings.typingVolume * soundSettings.masterVolume;
+            const now = Date.now();
+            // Skip if we're typing too fast
+            if (now - lastTypingTime < minInterval) {
+                return;
+            }
             
-            // Apply a short fade out to prevent clicking at the end
-            tempTypingSound.addEventListener('timeupdate', function fadeOut() {
-                // Start fading out after 80ms
-                if (tempTypingSound.currentTime > randomStartTime + 0.08) {
-                    // Apply exponential fade out
-                    const timeRemaining = 0.12 - (tempTypingSound.currentTime - (randomStartTime + 0.08));
-                    if (timeRemaining > 0) {
-                        tempTypingSound.volume = Math.min(
-                            soundSettings.typingVolume * soundSettings.masterVolume * (timeRemaining / 0.12),
-                            tempTypingSound.volume
-                        );
-                    } else {
-                        // Stop sound and clean up
-                        tempTypingSound.pause();
-                        tempTypingSound.removeEventListener('timeupdate', fadeOut);
-                        tempTypingSound.src = '';
+            // We'll play sound for every other keystroke at most when typing very fast
+            typingSoundCounter++;
+            if (typingSoundCounter % 2 !== 0 && now - lastTypingTime < 100) {
+                return;
+            }
+            
+            lastTypingTime = now;
+            
+            // Use the enhanced audio pool with optimized buffer playback
+            AudioPoolManager.playSound('typing', typingSoundPath, 0.8, (sound) => {
+                // For buffer-based playback
+                if (sound.setPosition) {
+                    // Get a random position in the buffer for variety
+                    const typingSoundDuration = 2.0; // Approximate duration of typing sound in seconds
+                    const maxStartTime = Math.max(0, typingSoundDuration - 0.3);
+                    const randomStartTime = Math.random() * maxStartTime;
+                    
+                    try {
+                        // Play from random position with automatic cleanup
+                        sound.setPosition(randomStartTime);
+                    } catch (err) {
+                        console.error("Error setting position for typing sound:", err);
                     }
+                    return;
+                }
+                
+                // Fallback for Audio element-based playback
+                try {
+                    // Create shorter, more natural key press sounds
+                    if (sound.duration) {
+                        const maxStartTime = Math.max(0, sound.duration - 0.3);
+                        const randomStartTime = Math.random() * maxStartTime;
+                        
+                        // Set the start time
+                        sound.currentTime = randomStartTime;
+                    }
+                    
+                    // Apply short duration for typing sounds
+                    sound.play().catch(err => {
+                        console.error("Typing sound play failed:", err);
+                    });
+                    
+                    // Ensure sound stops after a shorter duration to prevent overlap
+                    setTimeout(() => {
+                        if (!sound.paused) {
+                            sound.pause();
+                        }
+                    }, 120); // Even shorter duration further reduces overlapping issues
+                } catch (err) {
+                    console.error("Error playing typing sound:", err);
                 }
             });
-            
-            // Play the sound
-            tempTypingSound.play().catch(err => {
-                console.error("Typing sound play failed:", err);
-            });
-            
-            // Stop after a natural key press duration (shorter than before)
-            setTimeout(() => {
-                // Ensure proper cleanup
-                if (!tempTypingSound.paused) {
-                    tempTypingSound.pause();
-                    tempTypingSound.src = '';
-                }
-            }, 200); // Still keep a safety timeout but the fade will normally finish first
-        });
-        
-        tempTypingSound.load();
+        };
+    })();
+    
+    // Original function now calls the throttled version
+    function playRandomTypingSound() {
+        playRandomTypingSoundThrottled();
     }
 
     function tryLoadAudio() {
@@ -366,66 +678,57 @@ document.addEventListener('DOMContentLoaded', () => {
         "./audio/mixkit-typewriter-soft-click-1125_r.wav"
     ];
     
-    // Add hover sound to all buttons
+    // Add hover sound to all buttons - optimized with buffer-based audio and throttling
     function setupButtonHoverSound() {
-        // Create a shared audio object for hover sounds
-        const hoverSound = new Audio(hoverSoundPath);
-        hoverSound.volume = soundSettings.effectsVolume * soundSettings.masterVolume;
+        // We'll use the already initialized audio pools
+        
+        // Add throttling to prevent too many sounds playing at once
+        const throttledHover = throttle(() => {
+            AudioPoolManager.playSound('hover', hoverSoundPath, 0.15);
+        }, 50); // Minimum 50ms between hover sounds
+        
+        const throttledClick = throttle(() => {
+            AudioPoolManager.playSound('click', './audio/766611__stavsounds__keyboard_clicky_15.ogg', 0.55);
+        }, 80); // Minimum 80ms between click sounds
         
         // Get all buttons in the document
         const buttons = document.querySelectorAll('button, .nav-button, .pixel-btn');
         
-        // Add hover event listeners to all buttons
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', () => {
-                if (!soundSettings.effectsEnabled) return;
-                
-                // Create a new instance each time to allow for rapid hovering
-                const tempHoverSound = new Audio(hoverSoundPath);
-                tempHoverSound.volume = 0.15 * soundSettings.effectsVolume * soundSettings.masterVolume;
-                // console.log(`Playing hover sound for button: ${button.textContent || button.className}`);
-                tempHoverSound.play().catch(err => { 
-                    console.error("Button hover audio play failed:", err);
-                });
-                tempHoverSound.onended = () => { tempHoverSound.src = ''; };
-            });
-            
-            // Add click sound to buttons
-            button.addEventListener('click', () => {
-                if (!soundSettings.effectsEnabled) return;
-                
-                const clickSound = new Audio('./audio/766611__stavsounds__keyboard_clicky_15.ogg');
-                clickSound.volume = 0.55 * soundSettings.effectsVolume * soundSettings.masterVolume;
-                clickSound.play().catch(err => {
-                    console.error("Button click audio play failed:", err);
-                });
-                clickSound.onended = () => { clickSound.src = ''; };
-            });
+        // Add hover event listeners to all buttons with improved event delegation
+        document.addEventListener('mouseover', (event) => {
+            // Check if the target or its parent is a button
+            const button = event.target.closest('button, .nav-button, .pixel-btn');
+            if (button) {
+                throttledHover();
+            }
         });
         
-        // console.log(`Hover sound added to ${buttons.length} buttons`);
+        // Add click sound with delegation to reduce event listeners
+        document.addEventListener('click', (event) => {
+            const button = event.target.closest('button, .nav-button, .pixel-btn');
+            if (button) {
+                throttledClick();
+            }
+        });
         
-        // Make the hover sound function globally accessible
-        window.playHoverSound = function() {
-            if (!soundSettings.effectsEnabled) return;
-            
-            const tempHoverSound = new Audio(hoverSoundPath);
-            tempHoverSound.volume = 0.15 * soundSettings.effectsVolume * soundSettings.masterVolume;
-            // console.log("Playing hover sound via global function");
-            tempHoverSound.play().catch(err => { 
-                console.error("Global hover sound failed:", err);
-            });
-        };
+        console.log(`Optimized hover and click sounds added using event delegation`);
         
-        // Make button click sound globally accessible
-        window.playButtonClickSound = function() {
-            if (!soundSettings.effectsEnabled) return;
-            
-            const clickSound = new Audio('./audio/766611__stavsounds__keyboard_clicky_15.ogg');
-            clickSound.volume = 0.55 * soundSettings.effectsVolume * soundSettings.masterVolume;
-            clickSound.play().catch(err => {
-                console.error("Global button click sound failed:", err);
-            });
+        // Make the hover sound function globally accessible with throttling
+        window.playHoverSound = throttledHover;
+        
+        // Make button click sound globally accessible with throttling
+        window.playButtonClickSound = throttledClick;
+    }
+    
+    // Throttle function to prevent too many sounds playing at once
+    function throttle(func, limit) {
+        let inThrottle = false;
+        return function() {
+            if (!inThrottle) {
+                func.apply(this, arguments);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
         };
     }
     
@@ -475,6 +778,16 @@ document.addEventListener('DOMContentLoaded', () => {
         updateScore(0);
         lastResults = null;
         showMapPlaceholder("No database mounted. Use DB REGISTRY."); // Schema map placeholder
+        
+        // Resume audio context if suspended (needed for browsers that require user interaction)
+        if (window.AudioPoolManager && AudioPoolManager.audioContext && 
+            AudioPoolManager.audioContext.state === 'suspended') {
+            AudioPoolManager.audioContext.resume().then(() => {
+                console.log("AudioContext resumed successfully");
+            }).catch(err => {
+                console.warn("Failed to resume AudioContext:", err);
+            });
+        }
         
         // Initialize the database system
         if (window.DatabaseEngine) {
@@ -613,11 +926,11 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("SQL Query Error:", error);
             showError(`SQL Error: ${error.message || error}`);
             
-            // Play error sound if available
-            if (window.errorSound && window.soundSettings.effectsEnabled) {
-                window.errorSound.play().catch(err => {
-                    console.error("Error sound failed to play:", err);
-                });
+            // Play error sound using the audio pool with throttling to prevent stuttering
+            // when multiple errors happen in quick succession
+            if (!window.lastErrorSoundTime || (Date.now() - window.lastErrorSoundTime) > 300) {
+                AudioPoolManager.playSound('error', sqlErrorSoundPath, 1.0);
+                window.lastErrorSoundTime = Date.now();
             }
             
             return [];
@@ -779,16 +1092,10 @@ document.addEventListener('DOMContentLoaded', () => {
         resultStatusContainer.appendChild(errorMsg); 
         
         // Play cancel sound when showing an error in the SQL console
-        try {
-            if (soundSettings.effectsEnabled) {
-                const cancelSound = new Audio('./audio/423167__plasterbrain__minimalist-sci-fi-ui-cancel.ogg');
-                cancelSound.volume = soundSettings.effectsVolume * soundSettings.masterVolume;
-                cancelSound.play().catch(err => {
-                    console.error("Cancel sound failed to play:", err);
-                });
-            }
-        } catch (err) {
-            console.error("Error creating cancel sound:", err);
+        // Throttle error sounds to prevent stuttering when many errors occur rapidly
+        if (!window.lastErrorUITime || (Date.now() - window.lastErrorUITime) > 200) {
+            AudioPoolManager.playSound('error', './audio/423167__plasterbrain__minimalist-sci-fi-ui-cancel.ogg', 0.8);
+            window.lastErrorUITime = Date.now();
         }
     }
     
@@ -1176,8 +1483,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         resetSettingsBtn.addEventListener('click', () => {
             // Reset to defaults
-            soundSettings.masterVolume = 0.5;
-            soundSettings.musicVolume = 0.3;
+            soundSettings.masterVolume = 0.2;
+            soundSettings.musicVolume = 0.1;
             soundSettings.effectsVolume = 0.5;
             soundSettings.typingVolume = 0.5;
             soundSettings.musicEnabled = true;
