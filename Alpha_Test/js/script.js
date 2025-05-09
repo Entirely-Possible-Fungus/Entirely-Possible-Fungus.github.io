@@ -1,13 +1,122 @@
 // Add randomized CRT flicker intensity
- document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize sound settings immediately at the beginning to ensure they're available
+    window.soundSettings = {
+        masterVolume: 0.5,
+        musicVolume: 0.3,
+        effectsVolume: 0.5,
+        typingVolume: 0.5,
+        musicEnabled: true,
+        effectsEnabled: true,
+        typingSoundEnabled: true,
+        
+        // Methods for managing sound
+        updateMasterVolume: function(value) {
+            this.masterVolume = value;
+            if (backgroundMusic) {
+                backgroundMusic.volume = this.musicVolume * this.masterVolume;
+            }
+        },
+        
+        updateMusicVolume: function(value) {
+            this.musicVolume = value;
+            if (backgroundMusic) {
+                backgroundMusic.volume = this.musicVolume * this.masterVolume;
+            }
+        },
+        
+        toggleMusic: function(enabled) {
+            this.musicEnabled = enabled;
+            if (backgroundMusic) {
+                if (enabled) {
+                    backgroundMusic.play().catch(err => {
+                        console.error("Background music failed to play:", err);
+                    });
+                } else {
+                    backgroundMusic.pause();
+                }
+            }
+        },
+        
+        toggleEffects: function(enabled) {
+            this.effectsEnabled = enabled;
+        },
+        
+        toggleTypingSound: function(enabled) {
+            this.typingSoundEnabled = enabled;
+        },
+        
+        // Save settings to localStorage
+        saveSettings: function() {
+            localStorage.setItem('sqlAdventureSoundSettings', JSON.stringify({
+                masterVolume: this.masterVolume,
+                musicVolume: this.musicVolume,
+                effectsVolume: this.effectsVolume,
+                typingVolume: this.typingVolume,
+                musicEnabled: this.musicEnabled,
+                effectsEnabled: this.effectsEnabled,
+                typingSoundEnabled: this.typingSoundEnabled
+            }));
+        },
+        
+        // Load settings from localStorage
+        loadSettings: function() {
+            const saved = localStorage.getItem('sqlAdventureSoundSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                this.masterVolume = settings.masterVolume;
+                this.musicVolume = settings.musicVolume;
+                this.effectsVolume = settings.effectsVolume;
+                this.typingVolume = settings.typingVolume;
+                this.musicEnabled = settings.musicEnabled;
+                this.effectsEnabled = settings.effectsEnabled;
+                this.typingSoundEnabled = settings.typingSoundEnabled;
+            }
+        }
+    };
+    
+    // Try to load settings from localStorage immediately
+    window.soundSettings.loadSettings();
+    
+    // console.log("Sound settings initialized early in page load");
+
+    // IMMEDIATE BUTTON SETUP - Run this even before splash screen code
+    const earlyButtonSetup = () => {
+        const completeMissionBtns = document.querySelectorAll('#complete-mission-btn');
+        const sqlConsole = document.getElementById('sql-console');
+        
+        if (completeMissionBtns.length > 0 && sqlConsole) {
+            // console.log("EARLY BUTTON SETUP - Setting initial visibility");
+            // Set both buttons to visible initially, but they'll be disabled until mission is solved
+            completeMissionBtns.forEach(btn => {
+                btn.style.display = 'block';
+                btn.style.visibility = 'visible';
+                btn.disabled = true; // Disabled by default until mission is solved
+            });
+            
+            sqlConsole.style.visibility = 'visible';
+            sqlConsole.style.display = 'flex';
+        } else {
+            // console.log("EARLY BUTTON SETUP - Elements not found");
+        }
+    };
+    
+    earlyButtonSetup();
+    
     // Splash screen handling
     const splashScreen = document.getElementById('splash-screen');
     const gameContainer = document.querySelector('.game-container');
     let gameInitialized = false;
     
-    // Hide game content until splash screen is dismissed
+    // Hide game content until splash screen is dismissed, BUT preserve SQL console visibility
     if (gameContainer) {
         gameContainer.style.visibility = 'hidden';
+        
+        // Ensure SQL console stays visible
+        const sqlConsole = document.getElementById('sql-console');
+        if (sqlConsole) {
+            sqlConsole.style.visibility = 'visible';
+        }
     }
     
     // Function to handle splash screen click and start the game
@@ -183,25 +292,50 @@
         // Create a new audio element each time for overlapping sounds
         const tempTypingSound = new Audio(typingSoundPath);
         
-        // Set a random start time between 0 and max (minus 2 seconds to ensure we have enough audio)
+        // Set a random start time between 0 and max (minus 0.3 seconds to ensure we have enough audio)
         tempTypingSound.addEventListener('loadedmetadata', () => {
-            const maxStartTime = Math.max(0, tempTypingSound.duration - 2);
+            // Create shorter, more natural key press sounds
+            // The original file has multiple key press sounds, so we'll sample small sections
+            const maxStartTime = Math.max(0, tempTypingSound.duration - 0.3);
             const randomStartTime = Math.random() * maxStartTime;
             
             // Set the start time and volume
             tempTypingSound.currentTime = randomStartTime;
             tempTypingSound.volume = soundSettings.typingVolume * soundSettings.masterVolume;
             
-            // Play the sound for a short duration
+            // Apply a short fade out to prevent clicking at the end
+            tempTypingSound.addEventListener('timeupdate', function fadeOut() {
+                // Start fading out after 80ms
+                if (tempTypingSound.currentTime > randomStartTime + 0.08) {
+                    // Apply exponential fade out
+                    const timeRemaining = 0.12 - (tempTypingSound.currentTime - (randomStartTime + 0.08));
+                    if (timeRemaining > 0) {
+                        tempTypingSound.volume = Math.min(
+                            soundSettings.typingVolume * soundSettings.masterVolume * (timeRemaining / 0.12),
+                            tempTypingSound.volume
+                        );
+                    } else {
+                        // Stop sound and clean up
+                        tempTypingSound.pause();
+                        tempTypingSound.removeEventListener('timeupdate', fadeOut);
+                        tempTypingSound.src = '';
+                    }
+                }
+            });
+            
+            // Play the sound
             tempTypingSound.play().catch(err => {
                 console.error("Typing sound play failed:", err);
             });
             
-            // Stop after ~0.5 seconds to get a quick tap sound
+            // Stop after a natural key press duration (shorter than before)
             setTimeout(() => {
-                tempTypingSound.pause();
-                tempTypingSound.src = '';
-            }, 200);
+                // Ensure proper cleanup
+                if (!tempTypingSound.paused) {
+                    tempTypingSound.pause();
+                    tempTypingSound.src = '';
+                }
+            }, 200); // Still keep a safety timeout but the fade will normally finish first
         });
         
         tempTypingSound.load();
@@ -214,7 +348,7 @@
                 console.error("All audio paths failed to load"); return;
             }
             const path = possiblePaths[currentPathIndex];
-            console.log(`Attempting to load audio from: ${path}`);
+            // console.log(`Attempting to load audio from: ${path}`);
             clickSound.src = path;
             clickSound.load();
             clickSound.onerror = () => {
@@ -226,7 +360,7 @@
         tryNextPath();
     }
     tryLoadAudio();
-    console.log("Audio element found:", clickSound !== null);
+    // console.log("Audio element found:", clickSound !== null);
 
     const typewriterSoundPaths = [
         "./audio/mixkit-typewriter-soft-click-1125_r.wav"
@@ -249,6 +383,7 @@
                 // Create a new instance each time to allow for rapid hovering
                 const tempHoverSound = new Audio(hoverSoundPath);
                 tempHoverSound.volume = 0.15 * soundSettings.effectsVolume * soundSettings.masterVolume;
+                // console.log(`Playing hover sound for button: ${button.textContent || button.className}`);
                 tempHoverSound.play().catch(err => { 
                     console.error("Button hover audio play failed:", err);
                 });
@@ -268,70 +403,46 @@
             });
         });
         
-        console.log(`Hover sound added to ${buttons.length} buttons`);
+        // console.log(`Hover sound added to ${buttons.length} buttons`);
+        
+        // Make the hover sound function globally accessible
+        window.playHoverSound = function() {
+            if (!soundSettings.effectsEnabled) return;
+            
+            const tempHoverSound = new Audio(hoverSoundPath);
+            tempHoverSound.volume = 0.15 * soundSettings.effectsVolume * soundSettings.masterVolume;
+            // console.log("Playing hover sound via global function");
+            tempHoverSound.play().catch(err => { 
+                console.error("Global hover sound failed:", err);
+            });
+        };
+        
+        // Make button click sound globally accessible
+        window.playButtonClickSound = function() {
+            if (!soundSettings.effectsEnabled) return;
+            
+            const clickSound = new Audio('./audio/766611__stavsounds__keyboard_clicky_15.ogg');
+            clickSound.volume = 0.55 * soundSettings.effectsVolume * soundSettings.masterVolume;
+            clickSound.play().catch(err => {
+                console.error("Global button click sound failed:", err);
+            });
+        };
     }
     
     // Call the setup function to add hover sounds
     setupButtonHoverSound();
 
     // --- Main Game Logic ---
-    console.log("Pixel SQL Adventure - Initializing...");
+    // console.log("ETL - Initializing...");
 
     // --- Game State ---
     let score = 0;
     let lastResults = null;
+    let liveQueryEnabled = true; // Default to enabled for live query updates
 
     // --- Game Data (Databases) ---
-    const gameData = {
-        databases: {
-            mission_control: {
-                missions: {
-                    columns: { id: 'INT PRIMARY KEY', title: 'STRING', difficulty: 'INT', points: 'INT', dbAlias: 'STRING' },
-                    data: [ 
-                        { id: 0, title: "Alien Tutorial: SQL Basics", difficulty: 1, points: 25, dbAlias: "mission_control" },
-                        { id: 1, title: "Find Planets", difficulty: 1, points: 50, dbAlias: "galaxy1" }, 
-                        { id: 2, title: "Valuable Resources", difficulty: 2, points: 75, dbAlias: "galaxy1" }, 
-                        { id: 3, title: "Sort by Power", difficulty: 2, points: 75, dbAlias: "galaxy1" }, 
-                        { id: 4, title: "Planet & Species Report", difficulty: 3, points: 100, dbAlias: "galaxy1" }, 
-                        { id: 7, title: "Paris With Love", difficulty: 1, points: 50, dbAlias: "france" },
-                        { id: 101, title: "SDG Tutorial: Education Access Data", difficulty: 1, points: 40, dbAlias: "sdg_education" }, 
-                        { id: 102, title: "SDG Tutorial: Education Access Filtering", difficulty: 2, points: 60, dbAlias: "sdg_education" }, 
-                    ]
-                },
-            },
-            galaxy1: {
-                planets: { columns: { id: 'INT PRIMARY KEY', name: 'STRING', type: 'STRING', atmosphere: 'STRING', distance_from_sun: 'INT' }, data: [ { id: 1, name: 'Terra Prime', type: 'Terrestrial', atmosphere: 'Nitrogen', distance_from_sun: 100 }, { id: 2, name: 'Xylos', type: 'Jungle', atmosphere: 'Oxygen Rich', distance_from_sun: 150 }, { id: 3, name: 'Cryonia', type: 'Ice Giant', atmosphere: 'Methane', distance_from_sun: 400 }, { id: 4, name: 'Vulcanis', type: 'Volcanic', atmosphere: 'Sulfur', distance_from_sun: 80 }, { id: 5, name: 'Aetheria', type: 'Gas Giant', atmosphere: 'Hydrogen', distance_from_sun: 600 } ] },
-                species: { columns: { id: 'INT PRIMARY KEY', name: 'STRING', home_planet_id: 'INT', intelligence_level: 'INT', temperament: 'STRING' }, data: [ { id: 101, name: 'Humans', home_planet_id: 1, intelligence_level: 7, temperament: 'Neutral' }, { id: 102, name: 'Grox', home_planet_id: 4, intelligence_level: 8, temperament: 'Aggressive' }, { id: 103, name: 'Florans', home_planet_id: 2, intelligence_level: 5, temperament: 'Peaceful' }, { id: 104, name: 'Cryonians', home_planet_id: 3, intelligence_level: 9, temperament: 'Neutral' }, { id: 105, name: 'Void Spawn', home_planet_id: null, intelligence_level: 10, temperament: 'Aggressive'} ] },
-                ships: { columns: { id: 'INT PRIMARY KEY', name: 'STRING', '`class`': 'STRING', captain_species_id: 'INT', cargo_capacity: 'INT' }, data: [ { id: 501, name: 'Stardust', '`class`': 'Freighter', captain_species_id: 101, cargo_capacity: 5000 }, { id: 502, name: 'Void Ripper', '`class`': 'Fighter', captain_species_id: 102, cargo_capacity: 50 }, { id: 503, name: 'Leaf on the Wind', '`class`': 'Frigate', captain_species_id: 103, cargo_capacity: 1000 }, { id: 504, name: 'Nebula Voyager', '`class`': 'Freighter', captain_species_id: 101, cargo_capacity: 7500 }, { id: 505, name: 'Icebreaker', '`class`': 'Frigate', captain_species_id: 104, cargo_capacity: 1200 } ] },
-                resources: { columns: { id: 'INT PRIMARY KEY', name: 'STRING', planet_id: 'INT', rarity: 'STRING', market_value: 'INT' }, data: [ { id: 801, name: 'Iron Ore', planet_id: 1, rarity: 'Common', market_value: 10 }, { id: 802, name: 'Bio-Lumber', planet_id: 2, rarity: 'Common', market_value: 15 }, { id: 803, name: 'Helium-3', planet_id: 5, rarity: 'Uncommon', market_value: 50 }, { id: 804, name: 'Magma Crystals', planet_id: 4, rarity: 'Rare', market_value: 250 }, { id: 805, name: 'Zero-Point Ice', planet_id: 3, rarity: 'Exotic', market_value: 1000 }, { id: 806, name: 'Adamantium', planet_id: 4, rarity: 'Rare', market_value: 500 }, ] }
-            },
-            sdg_education: {
-               education_metrics: { columns: { country_name: 'STRING', region: 'STRING', primary_enrollment_rate: 'FLOAT', secondary_enrollment_rate: 'FLOAT' }, data: [ { country_name: 'South Sudan', region: 'Sub-Saharan Africa', primary_enrollment_rate: 32.1, secondary_enrollment_rate: 10.3 }, { country_name: 'Niger', region: 'Sub-Saharan Africa', primary_enrollment_rate: 38.4, secondary_enrollment_rate: 12.8 }, { country_name: 'Chad', region: 'Sub-Saharan Africa', primary_enrollment_rate: 43.8, secondary_enrollment_rate: 22.6 }, { country_name: 'Mali', region: 'Sub-Saharan Africa', primary_enrollment_rate: 58.7, secondary_enrollment_rate: 33.9 }, { country_name: 'Burkina Faso', region: 'Sub-Saharan Africa', primary_enrollment_rate: 62.3, secondary_enrollment_rate: 29.5 }, { country_name: 'Guinea', region: 'Sub-Saharan Africa', primary_enrollment_rate: 65.1, secondary_enrollment_rate: 38.9 }, { country_name: 'Senegal', region: 'Sub-Saharan Africa', primary_enrollment_rate: 68.7, secondary_enrollment_rate: 41.2 } ] }
-           },
-           france: {
-                paris_metrics: { 
-                    columns: { 
-                        year: 'INT', 
-                        metric: 'STRING', 
-                        value: 'FLOAT', 
-                        target_2030: 'FLOAT', 
-                        status: 'STRING' 
-                    }, 
-                    data: [ 
-                        { year: 2022, metric: 'Carbon Emissions (MT)', value: 12.5, target_2030: 6.0, status: 'Behind Target' },
-                        { year: 2022, metric: 'Green Space (% of city)', value: 9.5, target_2030: 15.0, status: 'Progress Needed' },
-                        { year: 2022, metric: 'Renewable Energy (%)', value: 21.3, target_2030: 60.0, status: 'Progress Needed' },
-                        { year: 2022, metric: 'Public Transit Usage (%)', value: 68.2, target_2030: 80.0, status: 'On Track' },
-                        { year: 2022, metric: 'Waste Recycled (%)', value: 31.7, target_2030: 65.0, status: 'Behind Target' }
-                    ] 
-                }
-            },
-           maps: { // Added for map command functionality
-                earth: { columns: { id: 'NUMBER', name: 'STRING', type: 'STRING' }, data: [{ id: 1, name: 'Earth', type: 'Planet' }] }
-            },
-            // Add other database structures here...
-            health_metrics: { /* Placeholder */ }, climate_data: { /* Placeholder */ }, economic_indicators: { /* Placeholder */ }, infrastructure: { /* Placeholder */ }, biodiversity_critical: { /* Placeholder */ }, conflict_zones: { /* Placeholder */ }
-        }
+    let gameData = {
+        databases: {}  // Will hold loaded database schemas
     };
 
     // --- DOM Elements ---
@@ -378,6 +489,12 @@
         if (openMapBtn) {
             openMapBtn.style.display = 'none';
         }
+        
+        // Make panels resizable
+        initializeResizablePanels();
+        
+        // Setup the central multidirectional resize handle
+        window.centralHandleController = setupCentralResizeHandle();
         
         // Mission data is now directly loaded from mission_control.json schema
         // through the schemaLoader.js file, no need to load it separately
@@ -430,68 +547,97 @@
 
     // --- SQL Query Execution ---
     function executeQueryAndVisualize() {
-        const query = sqlInput.value.trim();
-        clearResults();
-        if (!query) return;
-
-        const lowerQuery = query.toLowerCase().trim();
+        let query = sqlInput.value.trim();
         
-        // Map Command Handling
-        if (lowerQuery === 'select earth from maps;') {
-            if (typeof window.MapIntegration === 'undefined') { 
-                showError("Map integration module not available."); 
-                return; 
-            }
-            window.MapIntegration.show(); // Show the overlay
-            displayMessage("Displaying Interactive World Map Overlay...", "status-success");
-            resultsDiv.innerHTML = '<p style="padding: 10px; color: #aaa;">Map controls active. Use map overlay or type `HIDE MAP;`</p>';
-            return;
-        } else if (lowerQuery === 'hide map;') {
-            if (typeof window.MapIntegration === 'undefined') { 
-                showError("Map integration module not available."); 
-                return; 
-            }
-            window.MapIntegration.hide(); // Hide the overlay
-            displayMessage("Interactive World Map overlay hidden.", "status-success");
+        if (query.length === 0) {
             return;
         }
+        
+        // Attempt to execute the query on each active database
+        let results = executeQueryOnActiveDatabases(query);
+        
+        // Store results globally for graph visualization
+        window.lastResults = results;
+        // console.log("Set window.lastResults:", window.lastResults);
+        
+        // Update the schema visualization
+        updateSchemaVisualization(query);
+        
+        // If GraphModule is available, also update the visualization there
+        if (window.GraphModule && window.GraphModule.visualizeData) {
+            // console.log("Updating graph visualization with query results");
+            window.GraphModule.visualizeData(results);
+        }
+    }
 
-        // Execute the query using DatabaseEngine
-        if (window.DatabaseEngine) {
-            const results = DatabaseEngine.executeQuery(query);
+    /**
+     * Execute a SQL query on all active databases
+     * @param {string} query - The SQL query to execute
+     * @returns {Array|number} - Query results array or rows affected count
+     */
+    function executeQueryOnActiveDatabases(query) {
+        if (!window.DatabaseEngine) {
+            showError("Database engine is not available.");
+            return [];
+        }
+        
+        // Clear errors first
+        errorDiv.textContent = '';
+        errorDiv.style.display = 'none';
+        
+        try {
+            // Execute the query
+            // console.log("Executing query on active databases:", query);
+            const results = window.DatabaseEngine.executeQuery(query);
             
-            if (results !== null) {
-                lastResults = results;
-                displayResults(results, resultsDiv);
-                
-                // Check if mission is solved
-                if (window.MissionSystem && 
-                    MissionSystem.currentMissionId !== null && 
-                    MissionSystem.currentMissionData && 
-                    Array.isArray(results)) {
-                    
-                    MissionSystem.isMissionSolved = false;
-                    completeMissionBtn.style.display = 'none';
-                    
-                    if (MissionSystem.validate(query, results, MissionSystem.currentMissionData.validationCriteria)) {
-                        MissionSystem.isMissionSolved = true;
-                        completeMissionBtn.style.display = 'block';
-                        displayMessage("Validation successful! Ready to complete mission.", "status-success");
-                    }
-                }
-                
-                // Update visualization
-                if (window.DatabaseEngine) {
-                    const parsedInfo = DatabaseEngine.parseQueryForVis(query);
-                    DatabaseEngine.updateVisualization(parsedInfo, mapCanvas, svgContainer);
+            // Display the results
+            displayResults(results, resultsDiv);
+            
+            // If the mission system is available, check if this solves the mission
+            if (window.MissionSystem && window.MissionSystem.currentMissionId !== null) {
+                // Check if the checkSolution function exists before calling it
+                if (typeof window.MissionSystem.checkSolution === 'function') {
+                    window.MissionSystem.checkSolution(query, results);
+                } else {
+                    console.log("Mission system detected but checkSolution function is not defined");
                 }
             }
-        } else {
-            showError("Database system not available.");
-            completeMissionBtn.style.display = 'none';
-            if (window.MissionSystem) {
-                MissionSystem.isMissionSolved = false;
+            
+            // Process for map visualization if map is open
+            processMapQueryResults(query, results);
+            
+            // Return the results for further processing
+            return results;
+        } catch (error) {
+            // Handle SQL errors
+            console.error("SQL Query Error:", error);
+            showError(`SQL Error: ${error.message || error}`);
+            
+            // Play error sound if available
+            if (window.errorSound && window.soundSettings.effectsEnabled) {
+                window.errorSound.play().catch(err => {
+                    console.error("Error sound failed to play:", err);
+                });
             }
+            
+            return [];
+        }
+    }
+
+    // Function to update schema visualization based on the query
+    function updateSchemaVisualization(query) {
+        if (!window.DatabaseEngine) return;
+        
+        try {
+            // Parse the query to determine which tables and columns are involved
+            const queryInfo = window.DatabaseEngine.parseQueryForVis(query);
+            
+            // Update the schema visualization
+            window.DatabaseEngine.updateVisualization(queryInfo, mapCanvas, svgContainer);
+        } catch (error) {
+            console.warn("Error updating schema visualization:", error);
+            // Just reset the visualization but don't show an error
+            window.DatabaseEngine.updateVisualization(null, mapCanvas, svgContainer);
         }
     }
 
@@ -538,6 +684,9 @@
             table.classList.add('missions-table'); 
         }
         
+        // Keep track of hidden mission count for notification
+        let hiddenMissionCount = 0;
+        
         data.forEach(rowData => { 
             const tr = document.createElement('tr'); 
             
@@ -549,7 +698,18 @@
                     tr.style.textDecoration = 'line-through'; 
                     tr.style.color = '#888'; 
                     tr.style.cursor = 'default'; 
-                } else { 
+                } else {
+                    // Check if this mission should be hidden (map-only mission)
+                    const shouldHideMapMission = rowData.mapDetails && 
+                                                rowData.mapDetails.showOnMap === true && 
+                                                rowData.id > 7; // Only hide missions after Mission 7
+                    
+                    if (shouldHideMapMission) {
+                        // Skip adding this row to the table
+                        hiddenMissionCount++;
+                        return; // Skip to next iteration
+                    }
+                    
                     tr.onclick = () => window.MissionSystem.load(rowData.id); 
                 } 
             } 
@@ -589,6 +749,22 @@
                 statusText += " These are main story missions. Click a mission row to begin your investigation.";
             } else {
                 statusText += " Click an available mission row to load the tutorial mission.";
+            }
+            
+            // Add notification about map-based missions if any were hidden
+            if (hiddenMissionCount > 0) {
+                const mapNote = document.createElement('div');
+                mapNote.className = 'map-mission-note';
+                mapNote.innerHTML = `<strong>Note:</strong> ${hiddenMissionCount} additional mission${hiddenMissionCount > 1 ? 's are' : ' is'} available through the MAP interface. Complete Mission 7 to learn how to access them.`;
+                
+                // Style the note
+                mapNote.style.marginTop = '10px';
+                mapNote.style.padding = '8px';
+                mapNote.style.backgroundColor = 'rgba(39, 215, 251, 0.2)';
+                mapNote.style.borderLeft = '4px solid #27d7fb';
+                mapNote.style.borderRadius = '3px';
+                
+                container.appendChild(mapNote);
             }
         }
         
@@ -700,6 +876,131 @@
         } 
     }
     
+    // --- Panel Resizing Logic ---
+    function setupResizablePanels() {
+        // Mission panel resize
+        const missionPanel = document.getElementById('mission-area');
+        const missionResizeHandle = document.getElementById('mission-resize-handle');
+        
+        // Results panel resize
+        const resultsPanel = document.querySelector('.results-area');
+        const resultsResizeHandle = document.getElementById('results-resize-handle');
+        
+        // Schema panel resize
+        const schemaPanel = document.getElementById('db-map-container');
+        const schemaResizeHandle = document.getElementById('schema-resize-handle');
+        
+        // Set initial heights
+        let initialMissionHeight = parseInt(getComputedStyle(missionPanel).height);
+        let initialResultsHeight = parseInt(getComputedStyle(resultsPanel).height);
+        
+        // Define resizeTimer variable
+        let resizeTimer = null;
+        
+        // Mission panel resize handler
+        if (missionResizeHandle && missionPanel) {
+            makeResizable(missionResizeHandle, missionPanel, 'vertical');
+        }
+        
+        // Results panel resize handler
+        if (resultsResizeHandle && resultsPanel) {
+            makeResizable(resultsResizeHandle, resultsPanel, 'vertical');
+        }
+        
+        // Schema panel resize handler
+        if (schemaResizeHandle && schemaPanel) {
+            makeResizable(schemaResizeHandle, schemaPanel, 'horizontal');
+        }
+        
+        // Generic function to make an element resizable
+        function makeResizable(handle, panel, direction) {
+            let startPos = 0;
+            let startSize = 0;
+            
+            handle.addEventListener('mousedown', function(e) {
+                startPos = direction === 'vertical' ? e.clientY : e.clientX;
+                startSize = direction === 'vertical' ? panel.offsetHeight : panel.offsetWidth;
+                
+                document.body.classList.add(direction === 'vertical' ? 'resizing-vertical' : 'resizing');
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResize);
+                
+                e.preventDefault(); // Prevent text selection during resize
+            });
+            
+            function resize(e) {
+                if (direction === 'vertical') {
+                    const newHeight = startSize + (e.clientY - startPos);
+                    
+                    // Set minimum and maximum heights
+                    if (newHeight >= 100 && newHeight <= window.innerHeight * 0.8) {
+                        panel.style.height = newHeight + 'px';
+                        
+                        // If this is the mission panel, adjust map lines
+                        if (panel.id === 'mission-area' && window.DatabaseEngine) {
+                            window.DatabaseEngine.updateAllJoinLines(document.getElementById('map-canvas'));
+                        }
+                    }
+                } else {
+                    // Horizontal resize for schema panel
+                    const parentWidth = panel.parentElement.offsetWidth;
+                    const deltaX = e.clientX - startPos;
+                    // For schema panel we need to convert size to percentage
+                    const currentWidth = panel.offsetWidth;
+                    const newWidth = startSize - deltaX;
+                    
+                    // Calculate percentage of parent width
+                    const newWidthPercent = (newWidth / parentWidth) * 100;
+                    
+                    // Set minimum and maximum widths in percentage
+                    if (newWidthPercent >= 10 && newWidthPercent <= 80) {
+                        panel.style.width = newWidthPercent + '%';
+                        
+                        // Update DB map lines after resize
+                        if (window.DatabaseEngine) {
+                            window.DatabaseEngine.updateAllJoinLines(document.getElementById('map-canvas'));
+                        }
+                    }
+                }
+            }
+            
+            function stopResize() {
+                document.removeEventListener('mousemove', resize);
+                document.body.classList.remove('resizing', 'resizing-vertical');
+                
+                // Save the panel sizes to localStorage to preserve user preferences
+                localStorage.setItem('missionPanelHeight', missionPanel.offsetHeight);
+                localStorage.setItem('resultsPanelHeight', resultsPanel.offsetHeight);
+                localStorage.setItem('schemaPanelWidth', schemaPanel.offsetWidth);
+            }
+        }
+        
+        // Load saved sizes from localStorage if available
+        function loadSavedPanelSizes() {
+            const savedMissionHeight = localStorage.getItem('missionPanelHeight');
+            const savedResultsHeight = localStorage.getItem('resultsPanelHeight');
+            const savedSchemaWidth = localStorage.getItem('schemaPanelWidth');
+            
+            if (savedMissionHeight && missionPanel) {
+                missionPanel.style.height = savedMissionHeight + 'px';
+            }
+            
+            if (savedResultsHeight && resultsPanel) {
+                resultsPanel.style.height = savedResultsHeight + 'px';
+            }
+            
+            if (savedSchemaWidth && schemaPanel) {
+                // Calculate width as percentage of parent width
+                const parentWidth = schemaPanel.parentElement.offsetWidth;
+                const widthPercent = (savedSchemaWidth / parentWidth) * 100;
+                schemaPanel.style.width = widthPercent + '%';
+            }
+        }
+        
+        // Try to load saved sizes
+        loadSavedPanelSizes();
+    }
+
     // --- Helper Functions ---
     function debounce(func, delay) { 
         let debounceTimer; 
@@ -722,6 +1023,36 @@
             }
         });
         
+        // Live Query toggle functionality
+        const liveQueryToggle = document.getElementById('live-query-toggle');
+        if (liveQueryToggle) {
+            // Set initial state from the variable
+            liveQueryToggle.checked = liveQueryEnabled;
+            
+            // Add change event listener
+            liveQueryToggle.addEventListener('change', (e) => {
+                liveQueryEnabled = e.target.checked;
+                // Save preference in localStorage
+                localStorage.setItem('liveQueryEnabled', liveQueryEnabled);
+                
+                // Show visual feedback
+                displayMessage(
+                    liveQueryEnabled ? 
+                    "Live Query mode enabled - results update as you type" : 
+                    "Live Query mode disabled - use Ctrl+Enter or the Execute button to run queries", 
+                    "status-success", 
+                    3000
+                );
+            });
+            
+            // Load preference from localStorage on startup
+            const savedPreference = localStorage.getItem('liveQueryEnabled');
+            if (savedPreference !== null) {
+                liveQueryEnabled = savedPreference === 'true';
+                liveQueryToggle.checked = liveQueryEnabled;
+            }
+        }
+        
         // DB Registry button event listener - FIXED
         const dbRegistryBtn = document.getElementById('open-db-browser-header-btn');
         if (dbRegistryBtn) {
@@ -734,7 +1065,7 @@
                 if (dbBrowser) dbBrowser.style.display = 'flex';
                 if (dbBackdrop) dbBackdrop.style.display = 'block';
             });
-            console.log('DB Registry button listener attached');
+            // console.log('DB Registry button listener attached');
         } else {
             console.error('DB Registry button not found!');
         }
@@ -877,12 +1208,36 @@
         
         // ...existing event listeners for SQL console and other components...
         sqlInput.addEventListener('keydown', (e) => { 
-            if (e.key === 'Enter' && !e.shiftKey) { 
-                e.preventDefault(); 
-                executeQueryAndVisualize(); 
-            } 
+            if (e.key === 'Enter') {
+                if (e.ctrlKey || e.metaKey) {
+                    // Ctrl+Enter or Command+Enter executes the query
+                    e.preventDefault();
+                    executeQueryAndVisualize();
+                } else {
+                    // Normal Enter adds a newline
+                    // Default behavior, no need to do anything
+                }
+            }
         });
         
+        // Create live SQL query execution handler - executes queries as you type
+        const liveQueryExecutor = debounce(() => {
+            if (!liveQueryEnabled) return;
+            
+            const currentQuery = sqlInput.value.trim();
+            if (currentQuery && currentQuery.length > 10) { // Only execute if query is substantial
+                executeQueryAndVisualize();
+            }
+        }, 800); // Longer debounce time for query execution (800ms)
+        
+        // Add live query execution to input event
+        sqlInput.addEventListener('input', () => {
+            if (liveQueryEnabled) {
+                liveQueryExecutor();
+            }
+        });
+        
+        // Regular visualization update (separate from execution)
         sqlInput.addEventListener('input', debounce(() => { 
             const currentQuery = sqlInput.value.trim(); 
             if (currentQuery && window.DatabaseEngine) { 
@@ -1030,6 +1385,33 @@
                 });
             });
         }
+
+        // Graph toggle button functionality
+        const graphToggleBtn = document.getElementById('toggle-graph-btn');
+        if (graphToggleBtn) {
+            graphToggleBtn.addEventListener('click', function() {
+                const mapCanvas = document.getElementById('map-canvas');
+                
+                // Toggle graph mode class
+                mapCanvas.classList.toggle('graph-mode');
+                
+                // Update button text based on mode
+                if (mapCanvas.classList.contains('graph-mode')) {
+                    graphToggleBtn.textContent = 'SCHEMA';
+                    graphToggleBtn.classList.add('active');
+                    // Here you would activate your graphing functionality
+                    // console.log('Graph mode activated');
+                } else {
+                    graphToggleBtn.textContent = 'GRAPH';
+                    graphToggleBtn.classList.remove('active');
+                    // Here you would revert to schema display
+                    // console.log('Schema mode activated');
+                }
+                
+                // Play a sound if available
+                playClickSound();
+            });
+        }
     }
 
     // --- Make functions available globally ---
@@ -1040,11 +1422,1607 @@
         showMapPlaceholder,
         hideMapPlaceholder,
         updateScore,
-        get gameData() { return gameData; }
+        gameData: gameData  // Direct reference instead of getter to avoid circular reference
     };
 
     // --- Start Game ---
     initializeGame();
     
     
-}); // End DOMContentLoaded
+    // --- Resizable Panel Functionality ---
+    function initializeResizablePanels() {
+        // Panel elements
+        const missionPanel = document.querySelector('.mission-display');
+        const resultsPanel = document.querySelector('.results-area');
+        const schemaPanel = document.getElementById('db-map-container');
+        const mainContent = document.querySelector('.main-content');
+        const contentArea = document.querySelector('.content-area');
+        
+        // Resize handles
+        const missionResizeHandle = document.getElementById('mission-resize-handle');
+        const resultsResizeHandle = document.getElementById('results-resize-handle');
+        const schemaResizeHandle = document.getElementById('schema-resize-handle');
+        
+        // Store initial sizes from localStorage or defaults
+        const savedSizes = JSON.parse(localStorage.getItem('panelSizes') || '{}');
+        
+        if (savedSizes.missionHeight) {
+            missionPanel.style.height = savedSizes.missionHeight + 'px';
+        }
+        
+        if (savedSizes.schemaWidth) {
+            schemaPanel.style.width = savedSizes.schemaWidth + 'px';
+        }
+        
+        // Variables to track resize state
+        let isResizing = false;
+        let currentPanel = null;
+        let initialSize = 0;
+        let initialMousePos = 0;
+        let resizeTimer = null;
+        
+        // Additional variables needed for handleResize function
+        let startX = 0;
+        let startY = 0;
+        let startMainWidth = 0;
+        let startSchemaWidth = 0;
+        let startMissionHeight = 0;
+        let contentWidth = 0;
+        
+        // Mission panel resizing - now the handle is in a separate container
+        if (missionResizeHandle) {
+            missionResizeHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startResize(e, missionPanel, 'height');
+            });
+        }
+        
+        // Results panel resizing
+        if (resultsResizeHandle) {
+            resultsResizeHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startResize(e, resultsPanel, 'height');
+            });
+        }
+        
+        // Schema panel resizing
+        if (schemaResizeHandle) {
+            schemaResizeHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startResize(e, schemaPanel, 'width');
+            });
+        }
+        
+        function startResize(e, panel, dimension) {
+            isResizing = true;
+            currentPanel = panel;
+            initialSize = dimension === 'height' ? panel.offsetHeight : panel.offsetWidth;
+            initialMousePos = dimension === 'height' ? e.clientY : e.clientX;
+            
+            // Set variables needed for handleResize
+            startX = e.clientX;
+            startY = e.clientY;
+            startMainWidth = mainContent.offsetWidth;
+            startSchemaWidth = schemaPanel.offsetWidth;
+            startMissionHeight = missionPanel.offsetHeight;
+            contentWidth = contentArea ? contentArea.offsetWidth : document.body.offsetWidth;
+            
+            // Add resizing class to body
+            document.body.classList.add(dimension === 'height' ? 'resizing-vertical' : 'resizing');
+            
+            // Set up mouse move and mouse up events
+            document.addEventListener('mousemove', handleResize);
+            document.addEventListener('mouseup', stopResize);
+        }
+        
+        // Control update frequency
+        let lastUpdateTime = 0;
+        const minUpdateInterval = 16; // ~60fps
+        
+        function handleResize(e) {
+            if (!isResizing) return;
+            
+            // Throttle updates
+            const now = Date.now();
+            if (now - lastUpdateTime < minUpdateInterval) return;
+            lastUpdateTime = now;
+            
+            // Calculate delta movements
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            // Horizontal resize - adjust main content and schema widths
+            if (Math.abs(deltaX) > 3) {
+                const newMainWidth = startMainWidth + deltaX;
+                const newSchemaWidth = contentWidth - newMainWidth;
+                
+                // Apply constraints
+                if (newMainWidth >= 250 && newSchemaWidth >= 100) {
+                    const mainPercent = (newMainWidth / contentWidth) * 100;
+                    const schemaPercent = 100 - mainPercent;
+                    
+                    mainContent.style.flexBasis = `${mainPercent}%`;
+                    schemaPanel.style.width = `${schemaPercent}%`;
+                    
+                    // Save sizes
+                    localStorage.setItem('mainContentWidth', mainPercent);
+                    localStorage.setItem('schemaPanelWidth', schemaPercent);
+                }
+            }
+            
+            // Vertical resize - adjust mission panel height
+            if (Math.abs(deltaY) > 3) {
+                const mainHeight = mainContent.offsetHeight;
+                const newMissionHeight = startMissionHeight + deltaY;
+                
+                // Apply constraints
+                if (newMissionHeight >= 100 && newMissionHeight <= mainHeight * 0.7) {
+                    missionPanel.style.height = `${newMissionHeight}px`;
+                    
+                    // Save size
+                    localStorage.setItem('missionPanelHeight', newMissionHeight);
+                }
+            }
+            
+            // Update schema join lines with the smoothest possible performance
+            if (window.DatabaseEngine) {
+                requestAnimationFrame(() => {
+                    // Use updateVisualization instead of updateAllJoinLines
+                    if (window.DatabaseEngine.updateVisualization) {
+                        window.DatabaseEngine.updateVisualization(null, mapCanvas, svgContainer);
+                    }
+                });
+            }
+        }
+        
+        function stopResize() {
+            isResizing = false;
+            currentPanel = null;
+            
+            // Clear any pending timer
+            if (resizeTimer) {
+                clearTimeout(resizeTimer);
+                resizeTimer = null;
+            }
+            
+            // Remove resizing classes from body
+            document.body.classList.remove('resizing', 'resizing-vertical');
+            
+            // Remove event listeners
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+            
+            // Final update of schema join lines
+            if (window.DatabaseEngine && window.DatabaseEngine.updateVisualization) {
+                window.DatabaseEngine.updateVisualization(null, mapCanvas, svgContainer);
+            }
+        }
+        
+        function saveSize(key, value) {
+            // Load current saved sizes
+            const currentSizes = JSON.parse(localStorage.getItem('panelSizes') || '{}');
+            // Update the specified size
+            currentSizes[key] = value;
+            // Save back to localStorage
+            localStorage.setItem('panelSizes', JSON.stringify(currentSizes));
+        }
+    }
+    
+    // Position the central handle at the fixed bottom of the main content area
+    function repositionCentralHandle() {
+        if (!centralHandle || !mainContent || !schemaPanel) return;
+        
+        // Calculate position based on current panel layout
+        const contentRect = contentArea.getBoundingClientRect();
+        const mainRect = mainContent.getBoundingClientRect();
+        const schemaRect = schemaPanel.getBoundingClientRect();
+        
+        // Position at the intersection of main content and schema panel horizontally
+        const xPosition = mainRect.right;
+        
+        // Position at the bottom of the main content container (not tied to mission panel)
+        // This ensures it stays at the bottom even when mission content scrolls
+        const yPosition = mainRect.bottom - 20; // 20px from the bottom for better visibility
+        
+        // Position relative to the content area
+        centralHandle.style.left = (xPosition - contentRect.left) + 'px';
+        centralHandle.style.top = (yPosition - contentRect.top) + 'px';
+    }
+    
+    // --- Multidirectional Central Resize Handle Logic ---
+    function setupCentralResizeHandle() {
+        const centralHandle = document.getElementById('central-resize-handle');
+        const contentArea = document.querySelector('.content-area');
+        const mainContent = document.querySelector('.main-content');
+        const schemaPanel = document.getElementById('db-map-container');
+        const missionPanel = document.querySelector('.mission-display');
+        const resultsPanel = document.querySelector('.results-area');
+        
+        if (!centralHandle || !contentArea || !mainContent || !schemaPanel) {
+            console.error('Central resize handle or required elements not found');
+            return;
+        }
+        
+        // Variables for resize state
+        let isResizing = false;
+        let startX = 0;
+        let startY = 0;
+        let startMainWidth = 0;
+        let startSchemaWidth = 0;
+        let startMissionHeight = 0;
+        let currentPanel = null;
+        let resizeTimer = null;
+        let contentWidth = 0;
+        
+        // Handle mouse events
+        centralHandle.addEventListener('mousedown', startResize);
+        
+        function startResize(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            isResizing = true;
+            centralHandle.classList.add('dragging');
+            document.body.style.cursor = 'move';
+            
+            // Get the starting position of pointer
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            // Measure initial sizes
+            startMainWidth = mainContent.offsetWidth;
+            startSchemaWidth = schemaPanel.offsetWidth;
+            startMissionHeight = missionPanel.offsetHeight;
+            
+            // Get current content area width
+            contentWidth = contentArea.offsetWidth;
+            
+            // Add event listeners for resize
+            document.addEventListener('mousemove', handleResize);
+            document.addEventListener('mouseup', stopResize);
+        }
+        
+        // Control update frequency
+        let lastUpdateTime = 0;
+        const minUpdateInterval = 16; // ~60fps
+        
+        function handleResize(e) {
+            if (!isResizing) return;
+            
+            // Throttle updates
+            const now = Date.now();
+            if (now - lastUpdateTime < minUpdateInterval) return;
+            lastUpdateTime = now;
+            
+            // Calculate delta movements
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            // Horizontal resize - adjust main content and schema widths
+            if (Math.abs(deltaX) > 3) {
+                const newMainWidth = startMainWidth + deltaX;
+                const newSchemaWidth = contentWidth - newMainWidth;
+                
+                // Apply constraints
+                if (newMainWidth >= 250 && newSchemaWidth >= 100) {
+                    const mainPercent = (newMainWidth / contentWidth) * 100;
+                    const schemaPercent = 100 - mainPercent;
+                    
+                    mainContent.style.flexBasis = `${mainPercent}%`;
+                    schemaPanel.style.width = `${schemaPercent}%`;
+                    
+                    // Save sizes
+                    localStorage.setItem('mainContentWidth', mainPercent);
+                    localStorage.setItem('schemaPanelWidth', schemaPercent);
+                }
+            }
+            
+            // Vertical resize - adjust mission panel height
+            if (Math.abs(deltaY) > 3) {
+                const mainHeight = mainContent.offsetHeight;
+                const newMissionHeight = startMissionHeight + deltaY;
+                
+                // Apply constraints
+                if (newMissionHeight >= 100 && newMissionHeight <= mainHeight * 0.7) {
+                    missionPanel.style.height = `${newMissionHeight}px`;
+                    
+                    // Save size
+                    localStorage.setItem('missionPanelHeight', newMissionHeight);
+                }
+            }
+            
+            // Update schema join lines with the smoothest possible performance
+            if (window.DatabaseEngine) {
+                requestAnimationFrame(() => {
+                    // Use updateVisualization instead of updateAllJoinLines
+                    if (window.DatabaseEngine.updateVisualization) {
+                        window.DatabaseEngine.updateVisualization(null, mapCanvas, svgContainer);
+                    }
+                });
+            }
+        }
+        
+        function stopResize() {
+            isResizing = false;
+            centralHandle.classList.remove('dragging');
+            document.body.style.cursor = '';
+            
+            // Clear any pending timer
+            if (resizeTimer) {
+                clearTimeout(resizeTimer);
+                resizeTimer = null;
+            }
+            
+            // Remove resizing classes from body
+            document.body.classList.remove('resizing', 'resizing-vertical');
+            
+            // Remove event listeners
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+            
+            // Final update of schema join lines
+            if (window.DatabaseEngine && window.DatabaseEngine.updateVisualization) {
+                window.DatabaseEngine.updateVisualization(null, mapCanvas, svgContainer);
+            }
+        }
+        
+        // Load saved sizes if available
+        function loadSavedSizes() {
+            const mainPercent = localStorage.getItem('mainContentWidth');
+            const schemaPercent = localStorage.getItem('schemaPanelWidth');
+            const missionHeight = localStorage.getItem('missionPanelHeight');
+            
+            if (mainPercent && schemaPercent) {
+                mainContent.style.flexBasis = `${mainPercent}%`;
+                schemaPanel.style.width = `${schemaPercent}%`;
+            }
+            
+            if (missionHeight) {
+                missionPanel.style.height = `${missionHeight}px`;
+            }
+        }
+        
+        // Initialize with saved sizes
+        loadSavedSizes();
+        
+        // Handle window resize events to ensure handle stays in position
+        window.addEventListener('resize', debounce(() => {
+            // No need to reposition, CSS handles this
+        }, 100));
+    }
+    
+    // Initialize the live query toggle event listener
+    const liveQueryToggle = document.getElementById('live-query-toggle');
+    if (liveQueryToggle) {
+        // Load previous setting if available
+        const savedLiveQueryPref = localStorage.getItem('sqlLiveQueryEnabled');
+        if (savedLiveQueryPref !== null) {
+            liveQueryEnabled = savedLiveQueryPref === 'true';
+            liveQueryToggle.checked = liveQueryEnabled;
+        }
+        
+        // Handle toggle changes
+        liveQueryToggle.addEventListener('change', (e) => {
+            liveQueryEnabled = e.target.checked;
+            localStorage.setItem('sqlLiveQueryEnabled', liveQueryEnabled);
+            
+            // Play button click sound for feedback
+            if (window.playButtonClickSound) {
+                window.playButtonClickSound();
+            }
+        });
+    }
+    
+    // Connect mission system event handlers
+});
+
+// Add graph toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // ...existing code...
+    
+    // Initialize graph visualization functionality
+    initializeGraphModule();
+    
+    // ...existing code...
+});
+
+// Graph Visualization Module
+function initializeGraphModule() {
+    // DOM Elements
+    const graphToggleBtn = document.getElementById('toggle-graph-btn');
+    const graphContainer = document.getElementById('graph-container');
+    const mapCanvas = document.getElementById('map-canvas');
+    const chartTypeButtons = document.querySelectorAll('.chart-type-btn');
+    const noDataMessage = document.getElementById('no-data-message');
+    
+    // Chart.js instance
+    let chartInstance = null;
+    let currentChartType = 'bar'; // Default chart type
+    let lastQueryResults = null; // Store query results for reuse when changing chart types
+    
+    // Theme colors for charts
+    const chartColors = {
+        background: [
+            'rgba(39, 215, 251, 0.7)',
+            'rgba(255, 204, 0, 0.7)',
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 99, 255, 0.7)',
+            'rgba(111, 210, 111, 0.7)',
+            'rgba(200, 150, 100, 0.7)'
+        ],
+        border: [
+            'rgba(39, 215, 251, 1)',
+            'rgba(255, 204, 0, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 99, 255, 1)',
+            'rgba(111, 210, 111, 1)',
+            'rgba(200, 150, 100, 1)'
+        ]
+    };
+    
+    // Chart options - shared styles across chart types
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#e0e0e0',
+                    font: {
+                        family: "'Share Tech Mono', monospace",
+                        size: 14
+                    }
+                }
+            },
+            title: {
+                display: true,
+                text: 'SQL Query Visualization',
+                color: '#27d7fb',
+                font: {
+                    family: "'Share Tech Mono', monospace",
+                    size: 18,
+                    weight: 'normal'
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(6, 16, 25, 0.8)',
+                titleColor: '#27d7fb',
+                bodyColor: '#e0e0e0',
+                borderColor: '#27d7fb',
+                borderWidth: 1,
+                titleFont: {
+                    family: "'Share Tech Mono', monospace",
+                    size: 14
+                },
+                bodyFont: {
+                    family: "'Share Tech Mono', monospace",
+                    size: 12
+                },
+                displayColors: true
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                },
+                ticks: {
+                    color: '#e0e0e0',
+                    font: {
+                        family: "'Share Tech Mono', monospace"
+                    }
+                }
+            },
+            y: {
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                },
+                ticks: {
+                    color: '#e0e0e0',
+                    font: {
+                        family: "'Share Tech Mono', monospace"
+                    }
+                }
+            }
+        }
+    };
+    
+    // Graph toggle button click handler
+    if (graphToggleBtn) {
+        graphToggleBtn.addEventListener('click', function() {
+            // Toggle between schema and graph views
+            if (mapCanvas.style.display !== 'none') {
+                // Switch to graph view
+                mapCanvas.style.display = 'none';
+                graphContainer.style.display = 'flex';
+                graphToggleBtn.textContent = 'SCHEMA';
+                graphToggleBtn.classList.add('active');
+                
+                // Show axis selectors when switching to graph mode
+                const axisSelectors = document.getElementById('axis-selectors');
+                if (axisSelectors) {
+                    // console.log("Making axis selectors visible");
+                    axisSelectors.style.display = 'flex';
+                }
+                
+                // Try to visualize data if we have results
+                if (window.lastResults) {
+                    visualizeData(window.lastResults);
+                }
+            } else {
+                // Switch back to schema view
+                mapCanvas.style.display = 'block';
+                graphContainer.style.display = 'none';
+                graphToggleBtn.textContent = 'GRAPH';
+                graphToggleBtn.classList.remove('active');
+            }
+            
+            // Play click sound
+            if (window.playButtonClickSound) {
+                window.playButtonClickSound();
+            }
+        });
+    }
+    
+    // Chart type button click handlers
+    chartTypeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            chartTypeButtons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Update current chart type
+            currentChartType = this.dataset.type;
+            
+            // Re-visualize data with new chart type
+            if (lastQueryResults) {
+                visualizeData(lastQueryResults);
+            }
+            
+            // Play click sound
+            if (window.playButtonClickSound) {
+                window.playButtonClickSound();
+            }
+        });
+    });
+    
+    // Main function to visualize data from query results
+    function visualizeData(results) {
+        // console.log("visualizeData called with:", results);
+        
+        if (!results || !Array.isArray(results) || results.length === 0) {
+            // console.log("No results to visualize");
+            noDataMessage.style.display = 'block';
+            destroyChart();
+            return;
+        }
+        
+        // Hide no data message
+        noDataMessage.style.display = 'none';
+        
+        // Store results for reuse when changing chart types
+        lastQueryResults = results;
+        
+        // Destroy previous chart if it exists
+        destroyChart();
+
+        // Get select elements
+        const xAxisSelect = document.getElementById('x-axis-selector');
+        const yAxisSelect = document.getElementById('y-axis-selector');
+        const valueSelect = document.getElementById('value-selector');
+        
+        // Debug check if elements exist
+        // console.log("Axis selectors found:", {
+        //     xAxisSelect: !!xAxisSelect,
+        //     yAxisSelect: !!yAxisSelect, 
+        //     valueSelect: !!valueSelect
+        // });
+
+        // Populate dropdowns with available columns
+        if (xAxisSelect && yAxisSelect && valueSelect) {
+            // Get columns from results
+            const columns = Object.keys(results[0]);
+            // console.log("Available columns for chart:", columns);
+            
+            // Clear existing options
+            xAxisSelect.innerHTML = '';
+            yAxisSelect.innerHTML = '';
+            valueSelect.innerHTML = '';
+            
+            // Identify numeric and non-numeric columns for better defaults
+            const numericColumns = columns.filter(col => {
+                return results.some(row => typeof row[col] === 'number' || !isNaN(Number(row[col])));
+            });
+            
+            const nonNumericColumns = columns.filter(col => !numericColumns.includes(col));
+            
+            // console.log("Column types detected:", {
+            //     numeric: numericColumns,
+            //     nonNumeric: nonNumericColumns
+            // });
+            
+            // Add options to dropdowns
+            columns.forEach(column => {
+                // X-axis (prefer non-numeric for labels)
+                const xOption = document.createElement('option');
+                xOption.value = column;
+                xOption.textContent = column;
+                if (column === nonNumericColumns[0]) xOption.selected = true;
+                xAxisSelect.appendChild(xOption);
+                
+                // Y-axis (prefer numeric)
+                const yOption = document.createElement('option');
+                yOption.value = column;
+                yOption.textContent = column;
+                if (column === numericColumns[0]) yOption.selected = true;
+                yAxisSelect.appendChild(yOption);
+                
+                // Value column (for pie charts, etc.)
+                const vOption = document.createElement('option');
+                vOption.value = column;
+                vOption.textContent = column;
+                if (column === numericColumns[0]) vOption.selected = true;
+                valueSelect.appendChild(vOption);
+            });
+            
+            // Add change event listeners if not already added
+            if (!xAxisSelect.hasAttribute('data-listener-added')) {
+                xAxisSelect.addEventListener('change', () => {
+                    // console.log("X-axis changed to:", xAxisSelect.value);
+                    if (lastQueryResults) visualizeData(lastQueryResults);
+                });
+                xAxisSelect.setAttribute('data-listener-added', 'true');
+            }
+            
+            if (!yAxisSelect.hasAttribute('data-listener-added')) {
+                yAxisSelect.addEventListener('change', () => {
+                    // console.log("Y-axis changed to:", yAxisSelect.value);
+                    if (lastQueryResults) visualizeData(lastQueryResults);
+                });
+                yAxisSelect.setAttribute('data-listener-added', 'true');
+            }
+            
+            if (!valueSelect.hasAttribute('data-listener-added')) {
+                valueSelect.addEventListener('change', () => {
+                    // console.log("Value column changed to:", valueSelect.value);
+                    if (lastQueryResults) visualizeData(lastQueryResults);
+                });
+                valueSelect.setAttribute('data-listener-added', 'true');
+            }
+        }
+        
+        // Get chart data and options based on the selected chart type
+        const chartData = prepareChartData(results, currentChartType, xAxisSelect?.value, yAxisSelect?.value, valueSelect?.value);
+        // console.log("Chart data prepared:", chartData);
+        const options = { ...chartOptions };
+        
+        // Special configurations for different chart types
+        switch (currentChartType) {
+            case 'pie':
+            case 'doughnut':
+                // Remove scales for pie/doughnut charts
+                delete options.scales;
+                break;
+                
+            case 'histogram':
+                // Set bin options for histogram
+                options.scales.x.title = { 
+                    display: true, 
+                    text: 'Values',
+                    color: '#e0e0e0'
+                };
+                options.scales.y.title = { 
+                    display: true, 
+                    text: 'Frequency',
+                    color: '#e0e0e0'
+                };
+                break;
+                
+            case 'scatter':
+                options.scales.x.title = { 
+                    display: true, 
+                    text: chartData.datasets[0].label.split(' vs ')[0],
+                    color: '#e0e0e0'
+                };
+                options.scales.y.title = { 
+                    display: true, 
+                    text: chartData.datasets[0].label.split(' vs ')[1],
+                    color: '#e0e0e0'
+                };
+                break;
+                
+            case 'treemap':
+                // Treemap does not use standard scales
+                delete options.scales;
+                break;
+                
+            default:
+                // For bar and line charts
+                options.scales.x.title = { 
+                    display: true, 
+                    text: 'Categories',
+                    color: '#e0e0e0'
+                };
+                options.scales.y.title = { 
+                    display: true, 
+                    text: 'Values',
+                    color: '#e0e0e0'
+                };
+        }
+        
+        // Create chart based on the type
+        const ctx = document.getElementById('data-chart').getContext('2d');
+        
+        // For treemap we use a different approach since Chart.js core doesn't support it
+        if (currentChartType === 'treemap') {
+            // console.log("Using treemap visualization");
+            displaySimulatedTreemap(results);
+            return;
+        }
+        
+        // Create the chart
+        chartInstance = new Chart(ctx, {
+            type: currentChartType === 'histogram' ? 'bar' : currentChartType, // Histogram is a specialized bar chart
+            data: chartData,
+            options: options
+        });
+    }
+    
+    // Prepare data for charting based on the type
+    function prepareChartData(results, chartType, xAxis, yAxis, valueColumn) {
+        const columns = Object.keys(results[0]);
+        
+        // Skip columns that are clearly not numeric for value columns (except for labels)
+        const numericColumns = columns.filter(col => {
+            // Check if at least 50% of the values in this column are numbers
+            const numericCount = results.reduce((count, row) => {
+                const val = row[col];
+                return (typeof val === 'number' || !isNaN(Number(val))) ? count + 1 : count;
+            }, 0);
+            
+            return numericCount >= results.length * 0.5;
+        });
+        
+        // Best guess for label column: first non-numeric column or first column
+        const labelColumn = columns.find(col => !numericColumns.includes(col)) || columns[0];
+        
+        // Best guess for value column: first numeric column after label column or second column
+        const valueColumns = numericColumns.length > 0 ? 
+            numericColumns : 
+            columns.filter(col => col !== labelColumn);
+        
+        // Special handling for different chart types
+        switch (chartType) {
+            case 'pie':
+            case 'doughnut':
+                return preparePieData(results, labelColumn, valueColumns[0] || columns[1]);
+                
+            case 'histogram':
+                return prepareHistogramData(results, valueColumns[0] || columns[1]);
+                
+            case 'scatter':
+                // We need two numeric columns for scatter plot
+                if (numericColumns.length >= 2) {
+                    return prepareScatterData(results, numericColumns[0], numericColumns[1]);
+                } else {
+                    // Fallback: use column index pairs for all rows
+                    return prepareScatterData(results, columns[0], columns[1]);
+                }
+                
+            case 'treemap':
+                // Handled separately
+                return {};
+                
+            case 'line':
+                return prepareLineData(results, labelColumn, valueColumns);
+                
+            case 'bar':
+            default:
+                return prepareBarData(results, labelColumn, valueColumns);
+        }
+    }
+    
+    // Bar chart data preparation
+    function prepareBarData(results, labelColumn, valueColumns) {
+        const labels = results.map(row => row[labelColumn]?.toString() || 'null');
+        
+        const datasets = valueColumns.map((column, index) => {
+            return {
+                label: column,
+                data: results.map(row => {
+                    const val = row[column];
+                    return typeof val === 'number' ? val : Number(val) || 0;
+                }),
+                backgroundColor: chartColors.background[index % chartColors.background.length],
+                borderColor: chartColors.border[index % chartColors.border.length],
+                borderWidth: 1
+            };
+        });
+        
+        return { labels, datasets };
+    }
+    
+    // Line chart data preparation
+    function prepareLineData(results, labelColumn, valueColumns) {
+        const labels = results.map(row => row[labelColumn]?.toString() || 'null');
+        
+        const datasets = valueColumns.map((column, index) => {
+            return {
+                label: column,
+                data: results.map(row => {
+                    const val = row[column];
+                    return typeof val === 'number' ? val : Number(val) || 0;
+                }),
+                borderColor: chartColors.border[index % chartColors.border.length],
+                backgroundColor: chartColors.background[index % chartColors.background.length],
+                fill: false,
+                tension: 0.2,
+                pointBackgroundColor: chartColors.border[index % chartColors.border.length],
+                pointBorderColor: '#fff',
+                pointRadius: 4
+            };
+        });
+        
+        return { labels, datasets };
+    }
+    
+    // Pie chart data preparation
+    function preparePieData(results, labelColumn, valueColumn) {
+        const labels = results.map(row => row[labelColumn]?.toString() || 'null');
+        
+        const data = results.map(row => {
+            const val = row[valueColumn];
+            return typeof val === 'number' ? val : Number(val) || 0;
+        });
+        
+        // Ensure all values are positive for pie charts
+        const positiveData = data.map(val => Math.abs(val));
+        
+        const backgroundColors = chartColors.background.slice(0, labels.length);
+        const borderColors = chartColors.border.slice(0, labels.length);
+        
+        const datasets = [{
+            label: valueColumn,
+            data: positiveData,
+            backgroundColor: backgroundColors,
+            borderColor: borderColors,
+            borderWidth: 1
+        }];
+        
+        return { labels, datasets };
+    }
+    
+    // Histogram data preparation (specialized bar chart with binning)
+    function prepareHistogramData(results, valueColumn) {
+        // Extract numerical values
+        const rawValues = results.map(row => {
+            const val = row[valueColumn];
+            return typeof val === 'number' ? val : Number(val) || 0;
+        });
+        
+        // Simple binning algorithm
+        const min = Math.min(...rawValues);
+        const max = Math.max(...rawValues);
+        
+        // Determine bin count (Sturges' formula)
+        const binCount = Math.ceil(1 + 3.322 * Math.log10(rawValues.length));
+        const binWidth = (max - min) / binCount;
+        
+        // Create bins
+        const bins = Array.from({ length: binCount }, (_, i) => ({
+            start: min + i * binWidth,
+            end: min + (i + 1) * binWidth,
+            count: 0,
+            label: `${(min + i * binWidth).toFixed(1)} - ${(min + (i + 1) * binWidth).toFixed(1)}`
+        }));
+        
+        // Count values in bins
+        rawValues.forEach(value => {
+            if (value === max) {
+                // Edge case: max value should go in the last bin
+                bins[bins.length - 1].count++;
+            } else {
+                const binIndex = Math.floor((value - min) / binWidth);
+                bins[binIndex].count++;
+            }
+        });
+        
+        // Prepare dataset
+        const labels = bins.map(bin => bin.label);
+        const data = bins.map(bin => bin.count);
+        
+        const datasets = [{
+            label: `Distribution of ${valueColumn}`,
+            data: data,
+            backgroundColor: chartColors.background[0],
+            borderColor: chartColors.border[0],
+            borderWidth: 1
+        }];
+        
+        return { labels, datasets };
+    }
+    
+    // Scatter plot data preparation
+    function prepareScatterData(results, xColumn, yColumn) {
+        const data = results.map(row => ({
+            x: typeof row[xColumn] === 'number' ? row[xColumn] : Number(row[xColumn]) || 0,
+            y: typeof row[yColumn] === 'number' ? row[yColumn] : Number(row[yColumn]) || 0
+        }));
+        
+        const datasets = [{
+            label: `${xColumn} vs ${yColumn}`,
+            data: data,
+            backgroundColor: chartColors.background[0],
+            borderColor: chartColors.border[0],
+            pointRadius: 6,
+            pointHoverRadius: 8
+        }];
+        
+        return { datasets };
+    }
+    
+    // Display a treemap visualization
+    function displaySimulatedTreemap(results) {
+        const canvas = document.getElementById('data-chart');
+        const ctx = canvas.getContext('2d');
+        
+        // Add treemap-mode class to the container
+        document.querySelector('.chart-canvas-container').classList.add('treemap-mode');
+        
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Set background
+        ctx.fillStyle = '#061019';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw title
+        ctx.fillStyle = '#27d7fb';
+        ctx.font = '18px "Share Tech Mono"';
+        ctx.textAlign = 'center';
+        ctx.fillText('SQL Query Treemap Visualization', canvas.width / 2, 30);
+        
+        if (!results || !results.length) {
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fillText('No data available for visualization', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+        
+        // Try to find a numeric column for size values
+        const columns = Object.keys(results[0]);
+        const numericColumns = columns.filter(col => {
+            return results.some(row => typeof row[col] === 'number' || !isNaN(Number(row[col])));
+        });
+        
+        const numericColumn = numericColumns[0] || columns[0];
+        
+        // Label column (non-numeric if possible)
+        const labelColumn = columns.find(col => !numericColumns.includes(col)) || columns[0];
+        
+        // Get values and ensure they're all positive (treemap requires positive values)
+        const items = results.map(row => {
+            const val = row[numericColumn];
+            const numericVal = typeof val === 'number' ? val : Number(val) || 1; // Default to 1 if not numeric
+            return {
+                value: Math.abs(numericVal), // Ensure positive value
+                label: row[labelColumn]?.toString() || 'Unnamed',
+                color: null // Will be assigned later
+            };
+        });
+        
+        // Sort by value (largest first) to improve treemap layout
+        items.sort((a, b) => b.value - a.value);
+        
+        // Assign colors
+        items.forEach((item, index) => {
+            item.color = chartColors.background[index % chartColors.background.length];
+            item.borderColor = chartColors.border[index % chartColors.border.length];
+        });
+        
+        // Calculate total area
+        const totalValue = items.reduce((sum, item) => sum + item.value, 0);
+        
+        // Draw the treemap using squarified treemap algorithm
+        const padding = 50; // Padding from edges
+        const treemapArea = {
+            x: padding,
+            y: padding + 30, // Extra space for title
+            width: canvas.width - padding * 2,
+            height: canvas.height - padding * 2 - 50 // Extra space for legend
+        };
+        
+        // Draw treemap using the squarified algorithm (simplified version)
+        drawSquarifiedTreemap(ctx, items, treemapArea, totalValue);
+        
+        // Add legend
+        const legendY = canvas.height - 25;
+        ctx.fillStyle = '#e0e0e0';
+        ctx.font = '14px "Share Tech Mono"';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Size represents: ${numericColumn}`, padding, legendY);
+        
+        // Add note about data issues if needed
+        if (items.some(item => item.value === 0)) {
+            ctx.fillStyle = '#ff9f40';
+            ctx.textAlign = 'right';
+            ctx.fillText('Note: Zero values may not be visible', canvas.width - padding, legendY);
+        }
+    }
+    
+    // Helper function to draw treemap using squarified algorithm
+    function drawSquarifiedTreemap(ctx, items, area, totalValue) {
+        // Base case: no items to draw
+        if (!items.length) return;
+        
+        // Base case: only one item - draw it and return
+        if (items.length === 1) {
+            drawTreemapItem(ctx, items[0], area);
+            return;
+        }
+        
+        const { x, y, width, height } = area;
+        
+        // Determine layout direction (horizontal or vertical)
+        const isWide = width > height;
+        
+        // Calculate available area
+        const shortEdge = isWide ? height : width;
+        
+        // Find best split to maintain aspect ratios close to 1
+        let bestSplit = 1;
+        let bestRatio = Infinity;
+        let currentSum = 0;
+        
+        // Try different splits to find optimal one
+        for (let i = 0; i < items.length; i++) {
+            currentSum += items[i].value;
+            const remainingSum = totalValue - currentSum;
+            
+            if (remainingSum <= 0) break; // Avoid division by zero
+            
+            // Calculate aspect ratios
+            const currentArea = (currentSum / totalValue) * (isWide ? width * height : width * height);
+            const maxItem = Math.max(...items.slice(0, i + 1).map(item => item.value));
+            
+            // Calculate aspect ratio of current worst rectangle
+            let ratio;
+            if (isWide) {
+                const currentWidth = width * (currentSum / totalValue);
+                ratio = Math.max(
+                    (shortEdge * shortEdge * maxItem) / (currentArea * currentSum),
+                    (currentArea * currentSum) / (shortEdge * shortEdge * maxItem)
+                );
+            } else {
+                const currentHeight = height * (currentSum / totalValue);
+                ratio = Math.max(
+                    (shortEdge * shortEdge * maxItem) / (currentArea * currentSum),
+                    (currentArea * currentSum) / (shortEdge * shortEdge * maxItem)
+                );
+            }
+            
+            // Update best split if this one is better
+            if (ratio < bestRatio) {
+                bestRatio = ratio;
+                bestSplit = i + 1;
+            }
+        }
+        
+        // Calculate area for current group
+        const currentGroup = items.slice(0, bestSplit);
+        const currentGroupValue = currentGroup.reduce((sum, item) => sum + item.value, 0);
+        const currentProportion = currentGroupValue / totalValue;
+        
+        // Calculate layout for current group
+        let currentArea, remainingArea;
+        
+        if (isWide) {
+            // Horizontal split
+            const currentWidth = width * currentProportion;
+            
+            currentArea = {
+                x,
+                y,
+                width: currentWidth,
+                height
+            };
+            
+            remainingArea = {
+                x: x + currentWidth,
+                y,
+                width: width - currentWidth,
+                height
+            };
+            
+            // Layout current group (vertical layout within horizontal slice)
+            layoutRow(ctx, currentGroup, currentArea, currentGroupValue);
+        } else {
+            // Vertical split
+            const currentHeight = height * currentProportion;
+            
+            currentArea = {
+                x,
+                y,
+                width,
+                height: currentHeight
+            };
+            
+            remainingArea = {
+                x,
+                y: y + currentHeight,
+                width,
+                height: height - currentHeight
+            };
+            
+            // Layout current group (horizontal layout within vertical slice)
+            layoutRow(ctx, currentGroup, currentArea, currentGroupValue);
+        }
+        
+        // Recursively process remaining items
+        const remainingItems = items.slice(bestSplit);
+        const remainingValue = totalValue - currentGroupValue;
+        
+        if (remainingItems.length > 0 && remainingArea.width > 1 && remainingArea.height > 1) {
+            drawSquarifiedTreemap(ctx, remainingItems, remainingArea, remainingValue);
+        }
+    }
+    
+    // Helper function to layout a row of treemap items
+    function layoutRow(ctx, items, area, totalValue) {
+        if (!items.length) return;
+        
+        const { x, y, width, height } = area;
+        const isWide = width > height;
+        
+        let currentX = x;
+        let currentY = y;
+        
+        if (isWide) {
+            // Horizontal row, items stacked vertically
+            items.forEach(item => {
+                const itemHeight = (item.value / totalValue) * height;
+                
+                drawTreemapItem(ctx, item, {
+                    x: currentX,
+                    y: currentY,
+                    width: width,
+                    height: itemHeight
+                });
+                
+                currentY += itemHeight;
+            });
+        } else {
+            // Vertical row, items stacked horizontally
+            items.forEach(item => {
+                const itemWidth = (item.value / totalValue) * width;
+                
+                drawTreemapItem(ctx, item, {
+                    x: currentX,
+                    y: currentY,
+                    width: itemWidth,
+                    height: height
+                });
+                
+                currentX += itemWidth;
+            });
+        }
+    }
+    
+    // Helper function to draw a single treemap item
+    function drawTreemapItem(ctx, item, area) {
+        const { x, y, width, height } = area;
+        
+        // Only draw if the area is meaningful
+        if (width < 1 || height < 1) return;
+        
+        // Draw rectangle
+        ctx.fillStyle = item.color || 'rgba(39, 215, 251, 0.7)';
+        ctx.strokeStyle = item.borderColor || '#061019';
+        ctx.lineWidth = 2;
+        
+        ctx.beginPath();
+        ctx.rect(x, y, width, height);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Only draw text if rectangle is big enough
+        if (width > 40 && height > 30) {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '14px "Share Tech Mono"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Draw label
+            let label = item.label;
+            if (label.length > 10 && width < 100) {
+                label = label.substring(0, 8) + '...';
+            }
+            
+            // Position text in center of rectangle
+            const centerX = x + width / 2;
+            const centerY = y + height / 2;
+            
+            // Draw label and value if there's enough space
+            if (height > 50) {
+                ctx.fillText(label, centerX, centerY - 10);
+                ctx.fillText(item.value.toString(), centerX, centerY + 15);
+            } else {
+                // Just draw label if space is limited
+                ctx.fillText(label, centerX, centerY);
+            }
+        }
+    }
+    
+    // Clean up previous chart
+    function destroyChart() {
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
+        }
+    }
+    
+    // Function to be called when new query results are available
+    window.visualizeQueryResults = function(results) {
+        if (graphContainer.style.display !== 'none') {
+            visualizeData(results);
+        }
+        
+        // Store the results for visualization when switching to graph mode
+        lastQueryResults = results;
+    };
+    
+    // Make the API public to allow other modules to use it
+    window.GraphModule = {
+        visualizeData,
+        setChartType: function(type) {
+            if (['bar', 'line', 'pie', 'histogram', 'treemap', 'scatter'].includes(type)) {
+                currentChartType = type;
+                
+                // Update active class on button
+                chartTypeButtons.forEach(btn => {
+                    if (btn.dataset.type === type) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Re-visualize if there's data
+                if (lastQueryResults) {
+                    visualizeData(lastQueryResults);
+                }
+            }
+        },
+        toggleView: function() {
+            graphToggleBtn.click();
+        },
+        getCurrentChartType: function() {
+            return currentChartType;
+        }
+    };
+}
+
+// Helper function to play a click sound
+function playClickSound() {
+    if (window.playButtonClickSound) {
+        window.playButtonClickSound();
+    }
+}
+
+// This code needs to be added where the document.addEventListener('DOMContentLoaded', ...) function is defined
+document.addEventListener('DOMContentLoaded', function() {
+    // ...existing code...
+    
+    // Special fix for Mission 1 - check when page is fully loaded
+    // This ensures that Tutorial: First Query mission can be completed even if the query was run previously
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            // Check if we're currently on Mission 1
+            if (window.MissionSystem && window.MissionSystem.currentMissionId === 1) {
+                // console.log("FIRST QUERY MISSION FIX: Detected Mission 1 active, applying special fix");
+                
+                // Force enable the complete mission button
+                const completeBtn = document.getElementById('complete-mission-btn');
+                if (completeBtn) {
+                    completeBtn.disabled = false;
+                    completeBtn.style.display = 'block';
+                    completeBtn.classList.add('mission-solved');
+                    
+                    // Also update the mission state
+                    if (window.MissionSystem) {
+                        window.MissionSystem.isMissionSolved = true;
+                    }
+                    
+                    if (window.GameSystem && window.GameSystem.displayMessage) {
+                        window.GameSystem.displayMessage("You can now complete this mission. Click the 'Complete Mission' button.", "status-success");
+                    }
+                }
+            }
+        }, 1500); // Small delay to ensure everything is loaded
+    });
+});
+
+// Add map integration functionality for SQL queries
+function processMapQueryResults(query, results) {
+    // Only process if map integration is available and the map is visible
+    if (!window.MapIntegration || !window.MapIntegration.isVisible()) {
+        return;
+    }
+
+    // console.log("Processing query results for map integration");
+    
+    // If no results, nothing to highlight
+    if (!results || !Array.isArray(results) || results.length === 0) {
+        return;
+    }
+    
+    // Try to extract ISO3 country codes first - this is the most accurate method
+    let countryCodes = [];
+    
+    if (window.DatabaseEngine && typeof window.DatabaseEngine.getCountryCodesFromSqlResults === 'function') {
+        // Convert results to format expected by getCountryCodesFromSqlResults
+        const formattedResults = {
+            columns: Object.keys(results[0]),
+            rows: results
+        };
+        
+        // Extract country codes
+        countryCodes = window.DatabaseEngine.getCountryCodesFromSqlResults(formattedResults);
+        // console.log(`Found ${countryCodes.length} ISO3 codes in query results:`, countryCodes);
+    }
+    
+    // If we found country codes, highlight them on the map
+    if (countryCodes.length > 0) {
+        // console.log(`Highlighting ${countryCodes.length} countries by ISO3 code:`, countryCodes);
+        window.MapIntegration.highlightCountriesByCode(countryCodes);
+        return;
+    }
+    
+    // Fallback: Extract country names, regions, or continents from results
+    const countryNames = [];
+    const regionNames = [];
+    const continentNames = [];
+    
+    // Check if results contain relevant geographic columns
+    if (Array.isArray(results) && results.length > 0) {
+        const firstRow = results[0];
+        const columnKeys = Object.keys(firstRow).map(key => key.toLowerCase());
+        
+        // Check for country columns
+        const hasCountryColumn = columnKeys.some(key => 
+            key === 'country' || key === 'admin' || key === 'name'
+        );
+        
+        // Check for region columns
+        const hasRegionColumn = columnKeys.some(key =>
+            key === 'region' || key === 'region_wb'
+        );
+        
+        // Check for continent columns
+        const hasContinentColumn = columnKeys.some(key =>
+            key === 'continent'
+        );
+        
+        // Process each row to extract geographic information
+        results.forEach(row => {
+            // Extract country information
+            if (hasCountryColumn) {
+                const countryValue = extractValueByPattern(row, ['country', 'admin', 'name']);
+                if (countryValue) countryNames.push(countryValue);
+            }
+            
+            // Extract region information
+            if (hasRegionColumn) {
+                const regionValue = extractValueByPattern(row, ['region', 'region_wb']);
+                if (regionValue) regionNames.push(regionValue);
+            }
+            
+            // Extract continent information
+            if (hasContinentColumn) {
+                const continentValue = extractValueByPattern(row, ['continent']);
+                if (continentValue) continentNames.push(continentValue);
+            }
+        });
+    }
+    
+    // Helper function to extract values by looking for different column name patterns
+    function extractValueByPattern(row, patterns) {
+        for (const pattern of patterns) {
+            for (const key of Object.keys(row)) {
+                if (key.toLowerCase() === pattern || key.toLowerCase().includes(pattern)) {
+                    const value = row[key];
+                    if (value && typeof value === 'string' && value.trim() !== '') {
+                        return value.trim();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    // First try countries (most specific)
+    if (countryNames.length > 0) {
+        // console.log(`Highlighting ${countryNames.length} countries by name:`, countryNames);
+        window.MapIntegration.highlightCountries(countryNames);
+        return;
+    }
+    
+    // Then try regions (middle level)
+    if (regionNames.length > 0) {
+        // console.log(`Highlighting ${regionNames.length} regions:`, regionNames);
+        window.MapIntegration.highlightRegions(regionNames);
+        return;
+    }
+    
+    // Finally try continents (most general)
+    if (continentNames.length > 0) {
+        // console.log(`Highlighting ${continentNames.length} continents:`, continentNames);
+        window.MapIntegration.highlightContinents(continentNames);
+        return;
+    }
+}
+
+// Override the execute button click handler to include map functionality
+function executeQuery() {
+    const sqlInput = document.getElementById('sql-input');
+    const query = sqlInput.value.trim();
+
+    if (!query) {
+        displayMessage("Please enter a SQL query.", "status-error");
+        return;
+    }
+
+    try {
+        // Execute the query using DatabaseEngine
+        const results = window.DatabaseEngine.execute(query);
+        
+        // Process for map visualization if map is open
+        processMapQueryResults(query, results);
+        
+        // Continue with existing query result handling...
+        displayResults(results);
+        
+        // Validate mission if applicable
+        if (window.MissionSystem) {
+            window.MissionSystem.checkSolution(query, results);
+        }
+        
+        // Store results for later reference
+        window.lastResults = results;
+        
+        playSuccessSound();
+        
+    } catch (error) {
+        console.error("Query execution error:", error);
+        displayError(error.message || "Error executing query.");
+        playErrorSound();
+    }
+}
+
+// Add a map toggle button to the SQL console for easier access
+function addMapToggleButton() {
+    const consoleHeader = document.querySelector('.sql-console-window .console-header');
+    if (!consoleHeader) return;
+    
+    // Check if button already exists
+    if (consoleHeader.querySelector('#toggle-map-btn')) return;
+    
+    const toggleMapBtn = document.createElement('button');
+    toggleMapBtn.id = 'toggle-map-btn';
+    toggleMapBtn.className = 'pixel-btn';
+    toggleMapBtn.textContent = 'MAP';
+    toggleMapBtn.title = 'Toggle Map View';
+    
+    toggleMapBtn.addEventListener('click', function() {
+        // Toggle map visibility
+        if (window.MapIntegration) {
+            if (window.MapIntegration.isVisible()) {
+                window.MapIntegration.hide();
+            } else {
+                window.MapIntegration.show();
+            }
+        }
+    });
+    
+    // Add it to the console header
+    const consoleTitle = consoleHeader.querySelector('.pixel-h2');
+    if (consoleTitle) {
+        consoleHeader.insertBefore(toggleMapBtn, consoleTitle.nextSibling);
+    } else {
+        consoleHeader.appendChild(toggleMapBtn);
+    }
+}
+
+// Initialize map integration when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+
+    // Add Map toggle button to SQL console
+    addMapToggleButton();
+    
+    // Override the execute button click handler
+    const executeBtn = document.getElementById('execute-btn');
+    if (executeBtn) {
+        executeBtn.removeEventListener('click', window.executeQuery);
+        executeBtn.addEventListener('click', executeQuery);
+    }
+    
+    // Also update the SQL input keypress handler for Enter key
+    const sqlInput = document.getElementById('sql-input');
+    if (sqlInput) {
+        sqlInput.removeEventListener('keypress', window.sqlInputKeyPressHandler);
+        sqlInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                executeQuery();
+            }
+        });
+    }
+});
+
+// Z-index Debugger - Helpful for troubleshooting overlay issues
+function debugZIndex() {
+    const elementsToDebug = [
+        {selector: '#sql-console', name: 'SQL Console'},
+        {selector: '#interactive-map-area', name: 'Map Area'},
+        {selector: '.map-overlay-backdrop', name: 'Map Backdrop'}
+    ];
+    
+    elementsToDebug.forEach(item => {
+        const element = document.querySelector(item.selector);
+        if (!element) return;
+        
+        // Get computed z-index
+        const zIndex = window.getComputedStyle(element).zIndex;
+        
+        // Create or update debug label
+        let debugLabel = element.querySelector('.z-debug');
+        if (!debugLabel) {
+            debugLabel = document.createElement('div');
+            debugLabel.className = 'z-debug';
+            debugLabel.style.position = 'absolute';
+            debugLabel.style.top = '0';
+            debugLabel.style.left = '0';
+            debugLabel.style.padding = '2px 5px';
+            debugLabel.style.background = 'red';
+            debugLabel.style.color = 'white';
+            debugLabel.style.fontSize = '10px';
+            debugLabel.style.fontFamily = 'monospace';
+            debugLabel.style.zIndex = '9999'; // Always on top
+            element.appendChild(debugLabel);
+        }
+        
+        debugLabel.textContent = `${item.name} z:${zIndex}`;
+        
+        // Also check if SQL console has over-map class when appropriate
+        if (item.selector === '#sql-console') {
+            const hasOverMapClass = element.classList.contains('over-map');
+            debugLabel.textContent += ` class:${hasOverMapClass ? 'over-map' : 'normal'}`;
+        }
+    });
+    
+    // console.log('Z-index debug labels applied');
+}
+
+// Add keyboard shortcut to toggle the debug display (Press Ctrl+Alt+Z)
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.altKey && e.key === 'z') {
+        debugZIndex();
+    }
+});
+
+// Finally, create a global button for mobile testing
+window.toggleZDebug = function() {
+    debugZIndex();
+};

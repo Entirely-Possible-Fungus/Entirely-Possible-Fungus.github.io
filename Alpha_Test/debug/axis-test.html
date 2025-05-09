@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axis Selectors Debug</title>
+    <style>
+        body {
+            background-color: #061019;
+            color: #e0e0e0;
+            font-family: 'Share Tech Mono', monospace;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(6, 16, 25, 0.8);
+            border: 1px solid #27d7fb;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            color: #27d7fb;
+            text-align: center;
+        }
+        button {
+            background-color: #27d7fb;
+            color: #061019;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #1cb5d8;
+        }
+        .axis-selector-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: rgba(6, 16, 25, 0.7);
+            border: 1px solid #27d7fb;
+        }
+        .axis-selector {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+        }
+        .axis-selector label {
+            margin-right: 5px;
+            color: #e0e0e0;
+        }
+        .axis-selector select {
+            background-color: #0a1622;
+            color: #e0e0e0;
+            border: 1px solid #27d7fb;
+            padding: 3px;
+        }
+        pre {
+            background-color: rgba(0,0,0,0.3);
+            padding: 10px;
+            overflow: auto;
+            border: 1px solid #333;
+            margin-top: 20px;
+        }
+        .chart-canvas-container {
+            width: 100%;
+            height: 400px;
+            background-color: rgba(6, 16, 25, 0.5);
+            border: 1px solid #27d7fb;
+            margin-top: 20px;
+        }
+        #log-output {
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Axis Selectors Debug</h1>
+        
+        <div class="test-actions">
+            <button id="load-test-data">Load Test Data</button>
+            <button id="populate-selectors">Populate Axis Selectors</button>
+            <button id="clear-log">Clear Log</button>
+        </div>
+        
+        <h2>Axis Selectors</h2>
+        <div class="axis-selector-container" id="axis-selectors">
+            <div class="axis-selector">
+                <label for="x-axis-selector">X Axis:</label>
+                <select id="x-axis-selector"></select>
+            </div>
+            <div class="axis-selector">
+                <label for="y-axis-selector">Y Axis:</label>
+                <select id="y-axis-selector"></select>
+            </div>
+            <div class="axis-selector">
+                <label for="value-selector">Value:</label>
+                <select id="value-selector"></select>
+            </div>
+        </div>
+        
+        <h2>Test Data</h2>
+        <pre id="data-display"></pre>
+        
+        <h2>Debug Log</h2>
+        <div id="log-output"></div>
+    </div>
+    
+    <script>
+    // Mock data for testing
+    const testData = [
+        { name: "Earth", total_value: 500 },
+        { name: "Mars", total_value: 350 },
+        { name: "Venus", total_value: 425 },
+        { name: "Jupiter", total_value: 800 },
+        { name: "Saturn", total_value: 650 }
+    ];
+    
+    // Debug logging function
+    function log(message) {
+        const logOutput = document.getElementById('log-output');
+        const timestamp = new Date().toLocaleTimeString();
+        logOutput.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        logOutput.scrollTop = logOutput.scrollHeight;
+    }
+    
+    // Display data function
+    function displayData(data) {
+        const dataDisplay = document.getElementById('data-display');
+        dataDisplay.textContent = JSON.stringify(data, null, 2);
+    }
+    
+    // Main function to populate axis selectors
+    function populateAxisSelectors(results) {
+        log("Starting to populate axis selectors with results");
+        
+        if (!results || results.length === 0) {
+            log("WARNING: Cannot populate selectors - no data");
+            return;
+        }
+        
+        // Get column names from the first result
+        const columns = Object.keys(results[0]);
+        log(`Found columns: ${columns.join(', ')}`);
+        
+        // Identify numeric columns for value and Y axis
+        const numericColumns = columns.filter(col => {
+            // Consider a column numeric if at least one value is a number
+            return results.some(row => {
+                const val = row[col];
+                return (typeof val === 'number' || 
+                       (typeof val === 'string' && !isNaN(Number(val)) && 
+                        val !== '' && val !== null && val.trim() !== ''));
+            });
+        });
+        log(`Identified numeric columns: ${numericColumns.join(', ')}`);
+        
+        // Get select elements
+        const xAxisSelect = document.getElementById('x-axis-selector');
+        const yAxisSelect = document.getElementById('y-axis-selector');
+        const valueSelect = document.getElementById('value-selector');
+        
+        if (!xAxisSelect || !yAxisSelect || !valueSelect) {
+            log("ERROR: Could not find all selector elements!");
+            return;
+        }
+        
+        log("Found all selector elements, clearing previous options");
+        
+        // Clear existing options
+        xAxisSelect.innerHTML = '';
+        yAxisSelect.innerHTML = '';
+        valueSelect.innerHTML = '';
+        
+        log("Adding options to X Axis selector");
+        // Add options for X axis (can be any column)
+        columns.forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            xAxisSelect.appendChild(option);
+            log(`Added option "${col}" to X Axis selector`);
+        });
+        
+        log("Adding options to Y Axis selector");
+        // Add options for Y axis (prefer numeric columns)
+        numericColumns.forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            yAxisSelect.appendChild(option);
+            log(`Added numeric option "${col}" to Y Axis selector`);
+        });
+        
+        // Add non-numeric columns at the end of Y axis options
+        columns.filter(col => !numericColumns.includes(col)).forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            yAxisSelect.appendChild(option);
+            log(`Added non-numeric option "${col}" to Y Axis selector`);
+        });
+        
+        log("Adding options to Value selector");
+        // Add all columns to value selector (prioritize numeric)
+        numericColumns.forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            valueSelect.appendChild(option);
+            log(`Added numeric option "${col}" to Value selector`);
+        });
+        
+        columns.filter(col => !numericColumns.includes(col)).forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            valueSelect.appendChild(option);
+            log(`Added non-numeric option "${col}" to Value selector`);
+        });
+        
+        // Set default selections based on best guesses
+        // Prefer non-numeric/text columns for labels/categories
+        const labelColumn = columns.find(col => !numericColumns.includes(col)) || columns[0];
+        
+        // Use first numeric column for values
+        const valueColumn = numericColumns[0] || columns[0];
+        
+        log(`Setting default selections - X: ${labelColumn}, Y/Value: ${valueColumn}`);
+        
+        // Set initial selections
+        if (xAxisSelect.options.length > 0) {
+            xAxisSelect.value = labelColumn;
+            log(`Set X Axis default to "${labelColumn}"`);
+        }
+        
+        if (yAxisSelect.options.length > 0) {
+            yAxisSelect.value = valueColumn;
+            log(`Set Y Axis default to "${valueColumn}"`);
+        }
+        
+        if (valueSelect.options.length > 0) {
+            valueSelect.value = valueColumn;
+            log(`Set Value selector default to "${valueColumn}"`);
+        }
+        
+        // Add event listeners
+        xAxisSelect.addEventListener('change', () => {
+            log(`X Axis selection changed to: ${xAxisSelect.value}`);
+        });
+        
+        yAxisSelect.addEventListener('change', () => {
+            log(`Y Axis selection changed to: ${yAxisSelect.value}`);
+        });
+        
+        valueSelect.addEventListener('change', () => {
+            log(`Value selection changed to: ${valueSelect.value}`);
+        });
+        
+        log("Axis selector population complete");
+        
+        // Log current selector state after population
+        logSelectorState();
+    }
+    
+    // Function to log the current state of the selectors
+    function logSelectorState() {
+        const xAxisSelect = document.getElementById('x-axis-selector');
+        const yAxisSelect = document.getElementById('y-axis-selector');
+        const valueSelect = document.getElementById('value-selector');
+        
+        log(`SELECTOR STATE - X Axis: ${xAxisSelect.options.length} options, selected: ${xAxisSelect.value}`);
+        log(`SELECTOR STATE - Y Axis: ${yAxisSelect.options.length} options, selected: ${yAxisSelect.value}`);
+        log(`SELECTOR STATE - Value: ${valueSelect.options.length} options, selected: ${valueSelect.value}`);
+    }
+    
+    // Set up event listeners
+    document.getElementById('load-test-data').addEventListener('click', () => {
+        displayData(testData);
+        log("Loaded test data");
+    });
+    
+    document.getElementById('populate-selectors').addEventListener('click', () => {
+        populateAxisSelectors(testData);
+    });
+    
+    document.getElementById('clear-log').addEventListener('click', () => {
+        document.getElementById('log-output').innerHTML = '';
+        log("Log cleared");
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        log("Test page loaded");
+    });
+    </script>
+</body>
+</html>

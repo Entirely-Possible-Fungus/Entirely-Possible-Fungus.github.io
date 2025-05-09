@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/crt.css">
     <link rel="stylesheet" href="css/styles.css"> 
     <link rel="stylesheet" href="css/db-browser.css">
+    <link rel="stylesheet" href="css/graph.css"> <!-- Added dedicated graph CSS -->
 
     <!-- OpenLayers Map Library -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
@@ -19,6 +20,9 @@
     <!-- Google Fonts - Share Tech Mono (for map styling) -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Audio element for button click sound with absolute path -->
     <audio id="click-sound" preload="auto"></audio>
@@ -51,28 +55,31 @@
             <!-- <div class="company-logo">ALIEN CORP©</div> -->
             <div class="title-container">
                 <div class="tagline">
-                    <span class="letter glitch-effect">E</span>XTRA 
-                    <span class="letter glitch-effect">T</span>ERRESTRIAL 
-                    <span class="letter glitch-effect">L</span>OADER
+                    <span class="letter glitch-effect">The</span>
+                    <span class="letter glitch-effect">SQL</span>
+                    <span class="letter glitch-effect">SAGA:</span>
+                    <!-- <span class="letter glitch-effect">ETL</span> -->
+                    <br>
+                    <span><span class="letter glitch-effect">E</span>xtra,<span class="letter glitch-effect">t</span>errestrial,</span><span class="letter glitch-effect">L</span>oader<span class="letter glitch-effect">;</span>
                 </div>
                 <!-- <div class="version-tag">v2.5.0</div> -->
             </div>
             <div class="system-controls">
-                <div class="system-status"><span class="status-dot"></span>SYSTEM STANDBY</div>
+                <!-- <div class="system-status"><span class="status-dot"></span>SYSTEM STANDBY</div> -->
                 <div class="boot-message">CLICK TO INITIALIZE SYSTEM</div>
             </div>
             <div class="loading-container">
-                <div class="loading-bar">
-                    <div class="loading-progress"></div>
+                <!-- <div class="loading-bar">
+                    <div class="loading-progress"></div> -->
                 </div>
-                <div class="loading-text">READY</div>
+                <!-- <div class="loading-text">READY</div> -->
             </div>
         </div>
     </div>
 
     <div class="game-container pixel-border">
         <header class="game-header">
-            <h1 class="pixel-h1">ETL</h1>
+            <h1 class="pixel-h1">SQL SAGA: ETL</h1>
             <!-- Sound Settings Button -->
             <button id="open-settings-btn" class="db-header-button">SETTINGS</button>
             <!-- Red Review Button -->
@@ -95,6 +102,16 @@
                     </div>
                     <p id="mission-description">Mount the <code class="pixel-inline-code">mission_control</code> database from the <strong>DB Registry</strong>. Then query <code class="pixel-inline-code">SELECT * FROM missions;</code> and click a mission row to load it.</p>
                     
+                    <!-- New mission answer form -->
+                    <div id="mission-answer-form" class="mission-answer-form" style="display: none;">
+                        <label for="mission-answer-input">Answer:</label>
+                        <div class="answer-input-container">
+                            <input type="text" id="mission-answer-input" placeholder="Type your answer here...">
+                            <button id="submit-answer-btn" class="pixel-btn">Submit</button>
+                        </div>
+                        <div id="answer-feedback" class="answer-feedback"></div>
+                    </div>
+                    
                     <div class="mission-controls-row">
                         <div class="mission-help-sections">
                             <div class="hint-section" style="display: none;"> <!-- Hide initially -->
@@ -106,15 +123,29 @@
                                 <div id="solution-content">No solution available.</div>
                             </div>
                         </div>
-                        <button id="complete-mission-btn" class="pixel-btn">Complete Mission</button>
                     </div>
+                </div>
+
+                <!-- Mission resize handle - now positioned outside mission container but still within main content -->
+                <div id="mission-resize-handle-container">
+                    <div id="mission-resize-handle" class="resize-handle vertical"></div>
                 </div>
 
                  <!-- Results Area -->
                  <div class="results-area">
-                     <h3 class="pixel-h3">Query Results</h3>
+                     <div class="results-header">
+                        <h3 class="pixel-h3">Query Results</h3>
+                        <!-- Graph toggle button -->
+                        <button id="toggle-graph-btn" class="pixel-btn">GRAPH</button>
+                        <!-- Multidirectional resize handle positioned inside results area -->
+                        <div id="central-resize-handle" class="central-resize-handle">
+                            <div class="central-grip"></div>
+                        </div>
+                     </div>
                      <div id="query-results"></div>
                      <div id="result-status-container"></div> <!-- Container for status messages -->
+                     <!-- Results resize handle -->
+                     <!-- <div id="results-resize-handle" class="resize-handle vertical"></div> -->
                 </div>
                 <div id="error-message" class="error"></div> <!-- General JS errors -->
 
@@ -123,25 +154,64 @@
              </main>
 
             <aside id="db-map-container">
+                 <!-- Schema panel resize handle -->
+                 <div id="schema-resize-handle" class="resize-handle horizontal"></div>
                  <button id="toggle-map-btn" class="pixel-btn pixel-btn-secondary"><</button> <!-- Panel Toggle -->
                 <div id="map-canvas">
                      <svg id="line-svg-container"> <defs> <marker id="arrowhead-active-cyan" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z"></path></marker> <marker id="arrowhead-inactive" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z"></path></marker> </defs> </svg>
                     <!-- DB Schema Tables Rendered Here by JS -->
                 </div>
+                
+                <!-- Graph visualization container -->
+                <div id="graph-container" style="display: none;">
+                    <!-- Chart type selection -->
+                    <div class="chart-controls">
+                        <div class="chart-type-selector">
+                            <button class="chart-type-btn active" data-type="bar">Bar</button>
+                            <button class="chart-type-btn" data-type="line">Line</button>
+                            <button class="chart-type-btn" data-type="pie">Pie</button>
+                            <button class="chart-type-btn" data-type="histogram">Histogram</button>
+                            <button class="chart-type-btn" data-type="treemap">Treemap</button>
+                            <button class="chart-type-btn" data-type="scatter">Scatter</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart canvas -->
+                    <div class="chart-canvas-container">
+                        <canvas id="data-chart"></canvas>
+                    </div>
+                    
+                    <!-- No data message -->
+                    <div id="no-data-message">
+                        Run a SQL query to display data visualization
+                    </div>
+                </div>
+                
+                <!-- Graph Button moved to main body rather than being part of the sidebar -->
             </aside>
+            
         </div>
 
         <!-- Hovering SQL Console Window -->
         <div id="sql-console" class="sql-console-window">
-             <div class="console-header" id="console-drag-handle"> <h2 class="pixel-h2">SQL Console *drag me*</h2> </div>
-             <div class="sql-controls">
-                 <textarea id="sql-input" placeholder="Enter your SQL query here..."></textarea>
-                 <div class="button-group">
-                     <button id="submit-query" class="pixel-btn">Execute</button>
-                     <button id="clear-query" class="pixel-btn pixel-btn-secondary">Clear</button>
-                 </div>
-             </div>
-         </div>
+            <div class="console-header" id="console-drag-handle">
+                <h2 class="pixel-h2">SQL Console</h2>
+                <div class="console-actions">
+                    <label class="live-query-toggle">
+                        <input type="checkbox" id="live-query-toggle" checked>
+                        <span class="toggle-label">Live Query</span>
+                    </label>
+                </div>
+            </div>
+            <div class="sql-controls">
+                <textarea id="sql-input" placeholder="Type your SQL query here..." rows="3"></textarea>
+                <div class="button-group">
+                    <button id="submit-query" class="pixel-btn">Execute</button>
+                    <button id="clear-query" class="pixel-btn pixel-btn-secondary">Clear</button>
+                    <button id="complete-mission-btn" class="pixel-btn">Complete Mission</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Mission Complete Popup -->
         <div id="mission-complete" class="pixel-border">
@@ -253,7 +323,7 @@
                     </label>
                 </div>
                 <div class="slider-container">
-                    <input type="range" id="music-volume" min="0" max="1" step="0.1" value="0.3">
+                    <input type ="range" id="music-volume" min="0" max="1" step="0.1" value="0.3">
                     <span class="volume-value">30%</span>
                 </div>
                 <div class="music-info">
@@ -351,6 +421,7 @@
     <script src="js/databaseEngine.js"></script>
     <script src="js/missions.js"></script>
     <script src="js/script.js"></script>
+    <script src="js/graphModule.js"></script> <!-- Added reference to graph module -->
     <script src="js/map-integration.js"></script>
 </body>
 </html>

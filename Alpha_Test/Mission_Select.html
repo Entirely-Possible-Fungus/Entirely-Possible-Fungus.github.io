@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Map & SQL Explorer (Interactive Viz)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <style>
+        /* --- Base & General --- */
+        body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Share Tech Mono', monospace; font-size: 18px; line-height: 1.6; margin: 0; padding: 0; font-smooth: never; -webkit-font-smoothing: none; image-rendering: pixelated; image-rendering: crisp-edges; overflow: hidden; }
+        .pixel-font { font-family: 'Silkscreen', sans-serif; }
+        .pixel-h1, .pixel-h2, .pixel-h3 { font-family: 'Silkscreen', sans-serif; color: #00ffee; margin-top: 0; margin-bottom: 10px; text-shadow: 0 0 5px rgba(0, 255, 235, 0.7); }
+        .pixel-h1 { font-size: 1.0em; } .pixel-h2 { font-size: 1.6em; } .pixel-h3 { font-size: 1.3em; color: #f0f0f0; text-shadow: 1px 1px 0px #333;}
+        .pixel-border { border: 4px solid #555; box-shadow: 4px 4px 0px #333; }
+        .pixel-btn { font-family: inherit; font-size: 13px; padding: 8px 12px; border: 2px solid #555; background-color: #00dfcc; color: #1a1a1a; cursor: pointer; text-transform: uppercase; box-shadow: 2px 2px 0px #0d7377; transition: background-color 0.1s, box-shadow 0.1s, transform 0.1s; user-select: none; text-shadow: 0 0 5px rgba(0, 255, 235, 0.5); } .pixel-btn:hover { background-color: #33ffee; } .pixel-btn:active { box-shadow: 0px 0px 0px #0d7377; transform: translate(2px, 2px); } .pixel-btn:disabled { background-color: #777; color: #aaa; cursor: not-allowed; box-shadow: 1px 1px 0px #555;}
+        .pixel-btn-secondary { background-color: #ff6b6b; box-shadow: 2px 2px 0px #a34242; } .pixel-btn-secondary:hover { background-color: #ff8f8f; } .pixel-btn-secondary:active { box-shadow: 0px 0px 0px #a34242; }
+        .pixel-inline-code { background-color: #444; padding: 2px 4px; border: 1px solid #666; color: #99ff99; }
+
+        /* --- Layout --- */
+        .game-container { display: flex; flex-direction: column; height: 100vh; margin: 10px; background-color: #1c1c1c; box-shadow: 0 0 20px rgba(0, 255, 235, 0.2); }
+        .game-header { padding: 5px 23px; border-bottom: 4px solid #555; text-align: center; flex-shrink: 0; display: flex; justify-content: center; align-items: center; position: relative; }
+        .game-header .pixel-h1 { margin: 0; }
+        .content-area { display: flex; flex-grow: 1; overflow: hidden; border-top: 4px solid #555; }
+        #map-container-left { flex-grow: 1; height: 100%; position: relative; border-right: 4px solid #555; background-color: #111; cursor: grab; }
+        #map-container-left.ol-grabbing { cursor: grabbing; }
+
+        /* --- Right Panel: Schema + Clause Controls --- */
+        #db-map-container { flex-shrink: 0; width: 40%; max-width: 450px; position: relative; background-color: #2b2b2b; overflow-y: auto; overflow-x: hidden; font-family: inherit; font-size: 10px; color: #e0e0e0; padding: 10px; box-sizing: border-box; transition: width 0.3s ease, padding 0.3s ease; display: flex; flex-direction: column; }
+        #db-map-container.collapsed { width: 30px; padding: 10px 0; cursor: pointer; }
+        #db-map-container.collapsed #map-canvas, #db-map-container.collapsed #clause-controls { display: none; }
+        #db-map-container.collapsed #toggle-map-btn { writing-mode: vertical-rl; top: 10px; left: 5px; right: auto; }
+        #map-canvas { width: 100%; height: 60%; position: relative; flex-shrink: 0; margin-bottom: 10px; border-bottom: 2px dashed #555;}
+
+        /* --- Clause Controls (Bottom Right) --- */
+        #clause-controls { width: 100%; padding-top: 10px; flex-grow: 1; display: flex; flex-direction: column; gap: 15px; }
+        .clause-section { border: 2px solid #444; padding: 8px; }
+        .clause-section h3 { font-family: 'Silkscreen', sans-serif; color: #ffcc00; text-shadow: 1px 1px 0px #806600; font-size: 1.1em; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #555; padding-bottom: 4px; }
+        .clause-section .button-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .clause-section .pixel-btn, .clause-section .pixel-btn-secondary { font-size: 13px; padding: 4px 8px; }
+        .clause-section .info-text { font-size: 10px; color: #aaa; margin-bottom: 5px; }
+        #order-by-options { display: none; margin-left: 10px; }
+        #order-by-options .pixel-btn { background-color: #666; color: #eee; }
+        .where-logic-btn { background-color: #555; color: #ccc; box-shadow: 1px 1px 0px #333; text-shadow: none; font-size: 13px; }
+         .where-logic-btn.active-logic { background-color: #ff6b6b; color: #1a1a1a; box-shadow: 2px 2px 0px #a34242; }
+         .clause-action-btn.waiting-for-column { background-color: #ffcc00; color: #1a1a1a; box-shadow: 2px 2px 0px #806600; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+
+
+        /* --- Limit Control (In Console) --- */
+        .limit-control { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; border-bottom: 1px solid #555; padding-bottom: 8px; }
+        .limit-control label { color: #aaa; font-size: 13px;}
+        .limit-control input[type="number"] { font-family: inherit; font-size: 13px; padding: 3px 5px; width: 50px; background-color: #1e1e1e; border: 1px solid #555; color: #f0f0f0; box-shadow: inset 1px 1px 0px #000; text-align: right; -moz-appearance: textfield; }
+        .limit-control input[type=number]::-webkit-inner-spin-button,
+        .limit-control input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+
+        /* --- SQL Visualizer Table/Column/Line Styles --- */
+        .db-table-vis { position: absolute; border: 2px solid #666; background-color: #3a3a3a; padding: 6px; border-radius: 0; font-size: 14px; min-width: 120px; transition: border-color 0.3s, box-shadow 0.3s; box-shadow: 3px 3px 0px #1a1a1a; z-index: 10; cursor: grab; color: #e0e0e0; } .db-table-vis:active { cursor: grabbing; } .table-header-vis { font-weight: normal; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #555; display: flex; justify-content: space-between; align-items: center; user-select: none; color: #ffcc00; font-size: 14px; text-shadow: 1px 1px 0px #806600; } .table-sequence-number { display: inline-block; background-color: #00ffcc; color: #1a1a1a; border-radius: 0; width: 14px; height: 14px; font-size: 0.8em; text-align: center; line-height: 14px; margin-left: 4px; opacity: 0; transition: opacity 0.3s; user-select: none; border: 1px solid #0d7377; } .column-list-vis { list-style: none; padding: 0; margin: 0; user-select: none; font-size: 14px; } .column-item-vis { padding: 1px 3px; border-bottom: 1px dotted #555; transition: background-color 0.3s, font-weight 0.3s, color 0.2s; white-space: nowrap; user-select: none; position: relative; margin: 1px 0; color: #c0c0c0; } .column-item-vis:last-child { border-bottom: none; } .highlight-table { border-color: #00ffcc; box-shadow: 0 0 8px rgba(0, 255, 204, 0.4), 3px 3px 0px #0d7377; } .highlight-table .table-sequence-number { opacity: 1; } .highlight-column { background-color: rgba(0, 255, 204, 0.15); font-weight: normal; color: #ffffff; }
+        #line-svg-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; } .join-line-vis { stroke: #888; stroke-width: 1.5; opacity: 0; transition: opacity 0.5s, stroke 0.3s, stroke-width 0.3s; marker-end: url(#arrowhead-inactive-vis); stroke-dasharray: none; } .join-line-vis.active { opacity: 1; stroke: #00ffcc; stroke-width: 2; marker-end: url(#arrowhead-active-cyan-vis); stroke-dasharray: 3, 3; } #arrowhead-active-cyan-vis path { stroke: none; fill: #00ffcc; } #arrowhead-inactive-vis path { stroke: none; fill: #888; }
+        .clickable-schema { cursor: pointer !important; }
+        .clickable-schema:hover { text-decoration: underline; color: #33ffee !important; }
+        .schema-item-selected { background-color: rgba(0, 255, 204, 0.25) !important; color: #ffffff !important; font-weight: bold; outline: 1px dashed #00ffcc; outline-offset: 0px; }
+        .schema-item-target-for-clause { outline: 2px solid #ffcc00 !important; box-shadow: 0 0 8px rgba(255, 204, 0, 0.6); outline-offset: 1px; }
+        .key-icon { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: middle; background-size: contain; background-repeat: no-repeat; background-position: center; pointer-events: none; }
+        .primary-key-icon { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="gold"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>'); }
+        .foreign-key-icon { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2300ffcc"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>'); }
+        .join-notification { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background-color: #4d2525; border: 2px solid #a34242; color: #ff8f8f; padding: 10px 15px; border-radius: 0; font-family: 'Share Tech Mono', monospace; font-size: 12px; z-index: 2000; box-shadow: 3px 3px 0px #1a1a1a; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .join-notification.show { opacity: 1; }
+
+        /* --- SQL Console --- */
+        .sql-console-window { position: fixed; bottom: 15px; left: calc(50% - 225px); width: 450px; background-color: #3a3a3a; border: 4px solid #555; box-shadow: 6px 6px 0px #1a1a1a; padding: 0; display: flex; flex-direction: column; z-index: 1010; font-family: inherit; font-size: 10px; color: #e0e0e0; }
+        .console-header { padding: 8px 12px; background-color: #4a4a4a; border-bottom: 2px solid #555; cursor: grab; user-select: none; flex-shrink: 0; }
+        .console-header .pixel-h2 { font-size: 1.2em; margin: 0; color: #ffcc00; text-shadow: 1px 1px 0px #806600;}
+        .sql-console-window:active .console-header { cursor: grabbing; }
+        .sql-controls { padding: 12px; flex-shrink: 0; }
+        textarea#sql-input { width: calc(100% - 12px); background-color: #1e1e1e; border: 2px solid #555; color: #f0f0f0; font-family: inherit; font-size: 14px; padding: 8px; margin-bottom: 10px; resize: none; box-shadow: inset 2px 2px 0px #000; height: 120px; line-height: 1.5; }
+        .button-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+        #sql-console-results { padding: 8px 12px; margin-top: 10px; border-top: 2px solid #555; max-height: 150px; overflow-y: auto; background-color: #1e1e1e; font-size: 14px; color: #f0f0f0; }
+        #sql-console-results table { width: 100%; border-collapse: collapse; table-layout: auto; font-size: inherit; }
+        #sql-console-results th, #sql-console-results td { border: 1px solid #444; padding: 3px 5px; text-align: left; white-space: nowrap; }
+        #sql-console-results th { background-color: #333; color: #00ffcc; font-weight: normal; }
+        #sql-console-results td { color: #d0d0d0; cursor: pointer; }
+        #sql-console-results td:hover { background-color: rgba(0, 255, 204, 0.1); }
+        #sql-console-results td.cell-selected-for-where { background-color: rgba(255, 107, 107, 0.3) !important; outline: 1px solid #ff6b6b; }
+        #sql-console-results .null-value { font-style: italic; color: #777;}
+        .console-status { padding: 5px; margin-top: 5px; border: 1px solid; text-align: center; font-size: 0.9em; }
+        .console-status.status-success { background-color: #2a4a2a; border-color: #5a8a5a; color: #aaf0aa; }
+        .console-status.status-error { background-color: #4d2525; border-color: #a34242; color: #ff8f8f; }
+        .error { color: #ff6b6b; border: 2px solid #a34242; background-color: #4d2525; padding: 10px; margin-top: 5px; font-weight: bold; display: none; }
+        #loading-indicator { font-style: italic; color: #ffcc00; display: none; margin-left: 10px; }
+
+        /* --- Right Panel Toggle --- */
+        #toggle-map-btn { position: absolute; top: 10px; right: 10px; z-index: 15; padding: 4px 8px; font-size: 1em; min-width: auto; }
+
+        /* --- CRT Effects --- */
+        .crt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; } .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(255,255,255,0.03) 50%, rgba(0,0,0,0.05) 50%); background-size: 100% 4px; pointer-events: none; z-index: 9997; } .monitor-frame { position: fixed; top: 0; left: 0; width: 100%; height: 100%; box-shadow: inset 0 0 100px rgba(0,0,0,0.9); pointer-events: none; z-index: 9998; } .color-distortion { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(120,0,255,0.02); mix-blend-mode: hard-light; pointer-events: none; z-index: 9996; } .glitch { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; opacity: 0; pointer-events: none; z-index: 9995; } .vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.6) 100%); pointer-events: none; z-index: 9994; } .flicker { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; opacity: 0; pointer-events: none; z-index: 9993; } .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QkcFAM2XZl06gAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAJEklEQVRo3u2ae1BU1/nHv+fcXXZhWVjuVmORewSCXEQxIhYUo22jaDUlEmdiOtOZdqxNmqajMeNoG9s0iTedSZNMm8RGjYloakh0FDUomNAAURQQVGARkLtc5LLLLnvP74/sosCCLmZM/+jz13Lue5/z3c/5nnvOed+F4P89tP9FAwaDAUwmk0GSpKTJcGQwGlrtDEZ6gMHQmE1NTZINm80GQRBQWFg4KY7effddbDYajd+9MzWHYay3xuxZcRGb5s6J4cx8v5AZXl5epIeH58Tp06ezUqk0zmKx3HJSIqzUiGxAQJiSxE9JSOMVlxS4Ao/HI9q9ShTboqIi04TFsNlsMYhikKuxG/NN1hO5+flX7ty965ImNptNvXDhgpjP+nIyJpMpmrm1i6kAhEIh1Wq1gkSApotxfn5+P1s2MTExZGZmJpIkiaWlpePKQbRarSCKYrBarTaO1VkUzcbm5mZErF9HpF65Au/X/WC7tEXZ9IlXshMPALMI8QeAKyBIEr/XKkXv7vvLqk/37+cAwI0bN+5YLBawtVo09fRAZ7OMenMf5YryshiG4CRBlAZ/K91HyulToJpZXH38ALa6GmwAwPqBEwm4tnwZRdCJHaXKcCBuLsAAwKezAWzLXTlGjx6PLiE+nUHXH+eSHT3W1jC/sqoam5f/GLT+XuD/OYLe1+4IPU4Dca8DBNTJCfjI24ex/xvFvJ5Oo8c8qG4ZD48KCefP467qrw4OqgcAs9k8tKgQUl48cfTscXR4MIHgz0+CiI7qJ8OKc8xgZutAF3vldQC9F85AHhSE+qZGOF5YPFoQnuwOsDSBcfIj0JEDulxrcw3GlZKKEoWioLrsPL766sRgxw5JSbj3yYdlGJrINrcdnZ1WnPnvubIX/m3+oPXGR6X75XGr16WXnj7pEKg0nO7WYtXGnSuAf9hvUX3BYLCSaN+zf+PRo0dLB8YfOnCgaM3GzaLu1hG7+7R3o16vB4PJ5J89c7bx5MdH8MvXMrcA+MopIqIoTtN9cm5zxpv/ygCAldHRbz39m+3JS3/2i5jCE8fsDPZMeuTl4wC222aWaiziMgAB6H/mEDALD/XmR+uwZtOmNwBkt7U54gf2yQFw8uRJ0evb7cem9cuWLKi71YYbpyt2A3hk0B4Fg8GwKn6y2QDOjIyMxx7X6fF/mF6SucYBV3bc3JtoYmzd9/ZnZ/Jsvj4+uHvnDptGpeb5+/vLQ0JCqKmpqXMLCwtPo7uiKO/e/TJaQLBtwFpFp9Mplvv4PK6y2A7TEbPXbty46aqc+/v27cvfujX9BACSpq6Ou9l45fd/2PV89q5dGzRaLVrb2tDW3gm2TG7fvH17WXl5OQmA0Wg07U1LS3lQXx/5unebH5yuQex/Mj4DcDN5q3zei+s3vmq12V91SUxlZaXsxRdf9FcqlXq9XgfO/aY6heK4r7dXVsrKlQvn+TIoUeERnOkLF0YpFQo/v8Dg2U2NjXWvv/7G9wCAYM9kp6TMMZQXFrYAqM3cvRs/O/JFFoCmcYvR6/UXP/zww8dIffrMzs7uQLyLi4s5ACAL8T6QFhf70st/3Pmb99///ZkI/wAuTxB4/oFT2PFz45BfUFBgtNlspXXfXkv9ODc3r7GpCTwOF3Vt7YhK3vIngiBCxyXm2LFjytWrV3eTJDnw8nJ5kDsrxOcd39wSjO6B+b9z7d27t3jbC7/KaGhoWP/Mun/kNrS0kG4MBppbWrH/4MFbbFZfTa1WCwaDgV9aWurwyOanvxvxI6HQlPvJF7A5HJD2ZpDRk8Fcv25EpwwGY8rdCqVfQf5RLXqy3NvbG+vnztWzzXo5ADDYEswGw4qSq+UZAP4A4JArJCQidVoqx3wl/cLFZ+4g0n8KPGk0WLHYge12CNPmAkByZ+e9+k8/f/18aUnpETabbaqvb6aZz2QrygqLsOjfW7WikAo/+WHN4nfLRotbW1vLGxsbhalTp2L27NnguFGw+5V3Fu85fvyDmJkzA9Wo4gHAPD0CxIw5IBUKkMYmgN8fIWNrNBgaXnbLasdtrDD96XQLXzDNGDMtHmSSs0km7WZdTVSXrbyfi6A3ujNZnuNDSTUaLcxmsxpwrn1GSYl5+ulX4Dfg+UjkvsVOfQqiaqo9n4QhkJAJOJ0AhGD0rqXdj6duligl4u1CVGQuxMKnoTGbIDVUjX4nUbeDNDfePZO58sKc+fN9NVotKquqMP+RZSmLE+Lzvrd2UbPsWA4HCBfLwwME83QuZYrEkKO8EI947YLVvnsP8OE34MdOR+iOHodORfzoDvHVhxf/knXgnYrL5+EVGgpVVxeeFcTYvRcv8jVbLODxubj4bR52/fOfJJnC32pB4j+he8d2cL+uxlglBi+pzCE5z6hXYX5iAUnVzSPAYsKTz3J4tqubQuT1bjuMu+XlTnnixSWhe9P8l5XOi+CxBrrkpUT2fjAYo97N7giYjXwBDwKxid5Bl6aaMz5NYYcyP1ryyZ8PfZu7UWaMjsKQxbT4xNvzKaYNdN+ob9LCc+dAdnsBMdEA002PMaT6bmlZPnnmq0Xv2dlMnb9Sgcuz5oLs7gYA8McgBQD0ut7HP5w9fTY9Pj6OTFAU09LSQkZ60aZJdp1/ZCxCgQGQy0GqJOfxHBAzbSqyAcQLJZK/r16VIsh48eVlAHDk4EHwJgEbUv/4roAiCRGpHYsUcLd28fTzgzh3rj0pfAyAd8YvhiRJT4IgVrvDe+79ffiXVIKdtlOh4eFBBwDuTDcers4+xtXxFFM2qwWEuw397ZvUMoCYNlGjZDAaK7lcbqOrfW5eKEVXRQWOpKamJUqWnnWdjY3Yt5IETdF2GWw1J5JB9LfvmUxQM8LwSWnpNwC6JmzRSKfT6UlR1LoqREIQWPPLbamRLOPxts5udIXEQJ0wC/SKuwiFl+O9sq/NnGedETALovIGsNts9mmzZ6wZMMmQDCbTZjQa2WOlyQjDHG/Whp2btbEvLV/01D78YMuS/Jyc3kqNRvK0SwpGbDSIH+aDnx8yJohsrsXWLYpCbG68Ef/Co+LnF4WNeTUWiwVq6nSeLugxmv4imGwWWb//I4vBYHj/r/Po/wBVNzLBrJaHbQAAAABJRU5ErkJggg=="); opacity: 0.03; pointer-events: none; z-index: 9992; }
+
+        /* --- OpenLayers Styling (Unchanged) --- */
+        .ol-control button { background-color: rgba(58, 58, 58, 0.8) !important; color: #00ffcc !important; border: 1px solid #555 !important; text-shadow: 1px 1px 0px #0d7377 !important; border-radius: 0 !important; font-family: 'Share Tech Mono', monospace !important; font-size: 14px !important; width: 24px; height: 24px; line-height: 22px; } .ol-control button:hover { background-color: rgba(74, 74, 74, 0.9) !important; color: #33ffee !important; } .ol-zoom { top: 10px; left: 10px; } .ol-attribution { background: rgba(0,0,0,0.5) !important; color: #aaa !important; text-shadow: 1px 1px 0px #000 !important; font-size: 10px !important; padding: 2px 5px !important; border-radius: 0 !important; max-width: calc(100% - 30px) !important; } .ol-scale-line { background: rgba(0,0,0,0.5) !important; border-radius: 0 !important; padding: 2px 5px !important; bottom: 25px; } .ol-scale-line-inner { border: 1px solid #aaa !important; border-top: none !important; color: #aaa !important; font-size: 10px !important; } .ol-tooltip { position: relative; background: rgba(43, 43, 43, 0.9); color: #e0e0e0; border-radius: 0; border: 1px solid #555; padding: 3px 6px; font-size: 11px; white-space: nowrap; box-shadow: 2px 2px 0px #1a1a1a; }
+
+
+        /* --- NEW: Flashing Animation --- */
+        @keyframes flash-red-anim {
+            0%, 100% { background-color: #4a4a4a; color: #ffcc00; box-shadow: 1px 1px 0px #333; }
+            50% { background-color: #ff6b6b; color: #1a1a1a; box-shadow: 2px 2px 0px #a34242; }
+        }
+
+        .flash-red {
+            animation: flash-red-anim 0.8s infinite;
+        }
+
+        /* --- Tutorial Styles --- */
+        #tutorial-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.65); z-index: 1990; display: none; }
+        #tutorial-highlight-box { position: absolute; border: 3px dashed #00ffcc; box-shadow: 0 0 15px rgba(0, 255, 204, 0.6); border-radius: 3px; pointer-events: none; transition: top 0.3s ease-out, left 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out; z-index: 1995; display: none; /* Hide initially */}
+        #tutorial-tooltip { position: absolute; background-color: #3a3a3a; border: 2px solid #888; box-shadow: 4px 4px 0px #1a1a1a; padding: 15px; max-width: 300px; min-width: 200px; z-index: 2000; color: #e0e0e0; font-size: 13px; border-radius: 2px; transition: top 0.3s ease-out, left 0.3s ease-out; display: none; /* Hide initially */}
+        #tutorial-tooltip h4 { font-family: 'Silkscreen', sans-serif; color: #00ffcc; margin-top: 0; margin-bottom: 10px; font-size: 1.1em; border-bottom: 1px solid #555; padding-bottom: 5px; }
+        #tutorial-tooltip p { margin-bottom: 15px; line-height: 1.5; }
+        .tutorial-nav { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #555; padding-top: 10px; margin-top: 10px; }
+        .tutorial-nav .pixel-btn { font-size: 11px; padding: 5px 10px; }
+         #start-tutorial-btn {
+            position: absolute;
+            top: 8px;
+            right: 20px;
+            font-size: 10px;
+            padding: 4px 8px;
+            background-color: #4a4a4a;
+            color: #ffcc00;
+            box-shadow: 1px 1px 0px #333;
+            border-color: #555;
+            transition: background-color 0.2s, box-shadow 0.2s;
+         }
+         #start-tutorial-btn:hover { background-color: #5a5a5a; }
+    </style>
+</head>
+<body>
+    <!-- CRT Monitor Effects Overlay -->
+    <div class="crt-overlay"></div> <div class="scanlines"></div> <div class="color-distortion"></div> <div class="glitch"></div> <div class="vignette"></div> <div class="flicker"></div> <div class="noise"></div> <div class="monitor-frame"></div>
+
+    <div class="game-container pixel-border">
+        <header class="game-header">
+            <h1 class="pixel-h1">Time Machine Alien</h1>
+            <span id="loading-indicator">Initializing...</span>
+            <button id="start-tutorial-btn" class="pixel-btn">?</button>
+        </header>
+        <div class="content-area" id="main-content-area">
+            <main id="map-container-left"> <!-- OpenLayers map --> </main>
+            <aside id="db-map-container"> <!-- SQL Visualizer + Clause Controls -->
+                 <button id="toggle-map-btn" class="pixel-btn pixel-btn-secondary"><</button>
+                 <div id="map-canvas"> <svg id="line-svg-container"> <defs> <marker id="arrowhead-active-cyan-vis" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z" fill="#00ffcc" stroke="none"></path></marker> <marker id="arrowhead-inactive-vis" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z" fill="#888" stroke="none"></path></marker> </defs> </svg> </div>
+                 <div id="clause-controls">
+                    <div class="clause-section" id="where-clause-section">
+                        <h3>WHERE Clause Builder</h3> <p class="info-text">Click a cell in the results table below. Conditions added with:</p>
+                        <div class="button-row" style="margin-bottom: 5px;"> <span style="color:#aaa; font-size:0.9em">Combine with:</span> <button id="where-mode-and" class="pixel-btn where-logic-btn active-logic" data-logic="AND">AND</button> <button id="where-mode-or" class="pixel-btn where-logic-btn" data-logic="OR">OR</button> <button id="clear-where" class="pixel-btn pixel-btn-secondary" title="Clear all WHERE conditions" style="margin-left: auto;">Clear WHERE</button> </div>
+                         <div id="where-conditions-display" style="margin-top: 8px; font-size: 14px; max-height: 50px; overflow-y: auto;"></div>
+                    </div>
+                    <div class="clause-section" id="sorters-clause-section">
+                         <h3>Sorters</h3> <p class="info-text" id="sorter-instruction">Click GROUP BY or ORDER BY, then click a schema column.</p>
+                         <div class="button-row"> <button id="add-groupby" class="pixel-btn clause-action-btn" data-clause="groupby" title="Activate GROUP BY mode - click a schema column next">GROUP BY</button> <button id="add-orderby" class="pixel-btn clause-action-btn" data-clause="orderby" title="Activate ORDER BY mode - click a schema column next">ORDER BY</button>
+                             <div id="order-by-options"> <button id="orderby-asc" class="pixel-btn">ASC</button> <button id="orderby-desc" class="pixel-btn">DESC</button> </div>
+                             <button id="clear-groupby" class="pixel-btn pixel-btn-secondary" title="Clear GROUP BY clause" style="margin-left: auto;">Clear GROUP BY</button> <button id="clear-orderby" class="pixel-btn pixel-btn-secondary" title="Clear ORDER BY clause">Clear ORDER BY</button>
+                         </div> <div id="sorters-display" style="margin-top: 8px; font-size: 14px;"></div>
+                    </div>
+                 </div>
+            </aside>
+        </div>
+
+        <!-- SQL Console Window -->
+        <div id="sql-console" class="sql-console-window">
+             <div class="console-header" id="console-drag-handle"> <h2 class="pixel-h2">SQL Console *drag me*</h2> </div>
+             <div class="sql-controls">
+                 <textarea id="sql-input" placeholder="Click schema elements or results cells to build query..."></textarea>
+                 <div class="limit-control"> <label for="limit-input">LIMIT:</label> <input type="number" id="limit-input" value="10" min="1" max="1000"> </div>
+                 <div id="sql-console-results"></div>
+                 <div class="button-group"> <button id="submit-query" class="pixel-btn" disabled>Execute</button> <button id="clear-query" class="pixel-btn pixel-btn-secondary">Clear All</button> </div>
+                 <div id="error-message" class="error"></div>
+             </div>
+         </div>
+         <!-- Notification element -->
+         <div id="join-notification" class="join-notification"></div>
+        <!-- Tutorial Overlay Elements -->
+        <div id="tutorial-overlay">
+            <div id="tutorial-highlight-box"></div>
+            <div id="tutorial-tooltip">
+                <h4 id="tutorial-title">Tutorial Title</h4> <p id="tutorial-text">Tutorial description goes here.</p>
+                <div class="tutorial-nav"> <button id="tutorial-exit" class="pixel-btn pixel-btn-secondary">Exit</button> <div> <button id="tutorial-prev" class="pixel-btn">< Prev</button> <button id="tutorial-next" class="pixel-btn">Next ></button> </div> </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CRT flicker
+        document.addEventListener('DOMContentLoaded', () => { setInterval(() => { const f = document.querySelector('.flicker'); if(f && Math.random() > 0.97) { f.style.background = 'rgba(0,0,0,0.1)'; setTimeout(()=>f.style.background='transparent',100); } }, 500); });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("World Map & SQL Explorer (Interactive Viz) Initializing...");
+
+            // --- Config ---
+            const SQL_WASM_PATH = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js";
+            const DB_FILE_PATH = "data/world_map.db"; // Updated path
+            const GEOJSON_CODE_PROPERTY = 'iso3';
+
+            // --- State ---
+            let sqlDb = null, dbReady = false;
+            let worldMap = null, countriesLayer = null, countrySource = null, countryGeoData = null;
+            let lastParsedInfoVis = null;
+            const ARROWHEAD_ADJUSTMENT = 5;
+
+            // --- Builder State ---
+            let selectedSchemaColumns = [];
+            let whereConditions = [];
+            let groupByColumns = [];
+            let orderByColumns = [];
+            let currentLimit = 10;
+            let nextClauseAction = null;
+            let currentWhereLogic = 'AND';
+
+            // --- Tutorial State ---
+            let currentTutorialStep = 0;
+            const tutorialSteps = [
+                 { elementId: 'map-container-left', title: 'World Map', text: 'This area displays the world map. Countries resulting from your SQL query will be highlighted here.', position: 'right' },
+                 { elementId: 'map-canvas', title: 'Database Schema', text: 'Visualize your database tables and relationships. Click table names to select all columns, or individual columns to add them to your SELECT clause.', position: 'bottom' },
+                 { elementId: 'clause-controls', title: 'Clause Builders', text: 'Use these sections to add WHERE, GROUP BY, and ORDER BY clauses to your query.', position: 'top' },
+                 { elementId: 'where-clause-section', title: 'WHERE Builder', text: 'Click cells in the results table below to automatically create WHERE conditions based on that data. Use AND/OR to combine them.', position: 'top' },
+                 { elementId: 'sorters-clause-section', title: 'Sorters', text: 'Click GROUP BY or ORDER BY, then click a column in the schema diagram above to apply sorting or grouping.', position: 'top' },
+                 { elementId: 'sql-console', title: 'SQL Console', text: 'This window shows the generated SQL, allows manual editing, displays results, and lets you execute the query. You can drag this window around.', position: 'top' },
+                 { elementId: 'sql-input', title: 'SQL Query Input', text: 'The generated SQL appears here. You can edit it directly before executing.', position: 'bottom' },
+                 { elementId: 'limit-control', title: 'LIMIT Control', text: 'Set the maximum number of rows to return.', position: 'bottom' }, // Target by ID
+                 { elementId: 'sql-console-results', title: 'Query Results', text: 'Results from your executed query appear here. Click cells to use their values in the WHERE clause builder.', position: 'top' },
+                 { elementId: 'submit-query', title: 'Execute Query', text: 'Click this button to run the SQL query in the input area.', position: 'top' },
+            ];
+
+
+            // --- DOM Elements ---
+            const sqlInput = document.getElementById('sql-input');
+            const submitBtn = document.getElementById('submit-query');
+            const clearBtn = document.getElementById('clear-query');
+            const mapContainerLeft = document.getElementById('map-container-left');
+            const sqlConsoleWindow = document.getElementById('sql-console');
+            const consoleDragHandle = document.getElementById('console-drag-handle');
+            const sqlConsoleResultsDiv = document.getElementById('sql-console-results');
+            const errorDiv = document.getElementById('error-message');
+            const dbMapContainer = document.getElementById('db-map-container');
+            const toggleMapBtn = document.getElementById('toggle-map-btn');
+            const mapCanvas = document.getElementById('map-canvas');
+            const svgContainer = document.getElementById('line-svg-container');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const mainContentArea = document.getElementById('main-content-area');
+            const joinNotification = document.getElementById('join-notification');
+            const clauseControls = document.getElementById('clause-controls');
+            const whereConditionsDisplay = document.getElementById('where-conditions-display');
+            const sortersDisplay = document.getElementById('sorters-display');
+            const clearWhereBtn = document.getElementById('clear-where');
+            const addGroupbyBtn = document.getElementById('add-groupby');
+            const addOrderbyBtn = document.getElementById('add-orderby');
+            const clearGroupbyBtn = document.getElementById('clear-groupby');
+            const clearOrderbyBtn = document.getElementById('clear-orderby');
+            const orderByOptionsDiv = document.getElementById('order-by-options');
+            const orderbyAscBtn = document.getElementById('orderby-asc');
+            const orderbyDescBtn = document.getElementById('orderby-desc');
+            const limitInput = document.getElementById('limit-input');
+            const whereLogicAndBtn = document.getElementById('where-mode-and');
+            const whereLogicOrBtn = document.getElementById('where-mode-or');
+            const sorterInstruction = document.getElementById('sorter-instruction');
+            const clauseActionButtons = document.querySelectorAll('.clause-action-btn');
+            const startTutorialBtn = document.getElementById('start-tutorial-btn');
+            const tutorialOverlay = document.getElementById('tutorial-overlay');
+            const tutorialHighlightBox = document.getElementById('tutorial-highlight-box');
+            const tutorialTooltip = document.getElementById('tutorial-tooltip');
+            const tutorialTitle = document.getElementById('tutorial-title');
+            const tutorialText = document.getElementById('tutorial-text');
+            const tutorialExitBtn = document.getElementById('tutorial-exit');
+            const tutorialPrevBtn = document.getElementById('tutorial-prev');
+            const tutorialNextBtn = document.getElementById('tutorial-next');
+
+
+            // --- OpenLayers Styling (Unchanged) ---
+            const defaultStyle = new ol.style.Style({ fill: new ol.style.Fill({ color: 'rgba(85, 85, 85, 0.6)' }), stroke: new ol.style.Stroke({ color: '#888', width: 1 }) });
+            const highlightStyle = new ol.style.Style({ fill: new ol.style.Fill({ color: 'rgba(0, 255, 238, 0.6)' }), stroke: new ol.style.Stroke({ color: '#00ffcc', width: 2.5 }) });
+            const countryStyleFunction = (feature) => feature.get('highlighted') ? highlightStyle : defaultStyle;
+
+            // --- Schema Metadata (Unchanged) ---
+            dbMetadataVis = { tables: { 'countries': { columns: ['iso3', 'name', 'continent', 'region'], position: { top: 20, left: 20 } }, 'geojson': { columns: ['iso3', 'data'], position: { top: 180, left: 20 } }, 'sales': { columns: ['sale_id', 'product', 'amount', 'sale_date', 'country_code'], position: { top: 20, left: 240 } } }, relationships: [ { from: 'sales.country_code', to: 'countries.iso3' }, { from: 'geojson.iso3', to: 'countries.iso3' } ] };
+
+            // --- Initialization ---
+            async function initializeInterface() {
+                setLoadingState(true, "Initializing...");
+                dbReady = false; lastParsedInfoVis = null;
+                clearBuilderState();
+                limitInput.value = currentLimit;
+                sqlInput.value = "-- Query with SQL or click the schema to the right --";
+                try {
+                    await loadSqlJsDatabase(DB_FILE_PATH);
+                    await extractGeoJsonData();
+                    initializeOpenLayersMap();
+                    if (countryGeoData) addGeoJsonLayerToMap();
+                    generateVisualizerDisplay();
+                    makeConsoleDraggable(sqlConsoleWindow, consoleDragHandle);
+                    setupEventListeners();
+                    submitBtn.disabled = !dbReady;
+                    if (dbReady) {
+                        displayConsoleMessage("Ready.", "status-success", 5000);
+                        // --- START Flashing Button Logic ---
+                        if (startTutorialBtn) {
+                            console.log("Applying flash effect to tutorial button.");
+                            startTutorialBtn.classList.add('flash-red');
+                            setTimeout(() => {
+                                console.log("Removing flash effect.");
+                                startTutorialBtn.classList.remove('flash-red');
+                            }, 10000); // 10 seconds
+                        }
+                        // --- END Flashing Button Logic ---
+                    } else {
+                        displayConsoleMessage("Database failed to load.", "status-error");
+                    }
+                } catch (error) {
+                    console.error("Init Error:", error); displayConsoleMessage(`Init failed: ${error.message}`, "status-error"); submitBtn.disabled = true;
+                } finally { setLoadingState(false); }
+            }
+
+            // --- Core Data/Map Loading (Unchanged) ---
+            async function loadSqlJsDatabase(dbPath) { try { const SQL = await initSqlJs({ locateFile: file => SQL_WASM_PATH.replace('sql-wasm.js', file) }); const r = await fetch(dbPath); if (!r.ok) throw new Error(`Fetch DB failed: ${r.statusText}`); const aB = await r.arrayBuffer(); sqlDb = new SQL.Database(new Uint8Array(aB)); dbReady = true; } catch (e) { dbReady = false; throw e; } }
+            async function extractGeoJsonData() { if (!dbReady) return; try { const c = sqlDb.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='geojson';"); if (c.length === 0 || !c[0].values || c[0].values.length === 0) { countryGeoData = null; return; } const res = sqlDb.exec("SELECT data FROM geojson LIMIT 1"); if (res.length > 0 && res[0].values?.length > 0 && res[0].values[0][0]) { countryGeoData = JSON.parse(res[0].values[0][0]); } else { countryGeoData = null; } } catch (e) { countryGeoData = null; throw new Error(`GeoJSON Failed: ${e.message}`); } }
+            function initializeOpenLayersMap() { try { const wE = ol.proj.transformExtent([-180, -85, 180, 85], 'EPSG:4326', 'EPSG:3857'); worldMap = new ol.Map({ target: mapContainerLeft, layers: [ new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://{a-c}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attributions: '© OSM contributors © CARTO', attributionsCollapsible: false }) }) ], view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, minZoom: 2, maxZoom: 18, extent: wE, constrainOnlyCenter: true, }), controls: [ new ol.control.Zoom(), new ol.control.Attribution({ collapsible: false }), new ol.control.ScaleLine({ units: 'metric' }) ], }); } catch (e) { throw e; } }
+            function addGeoJsonLayerToMap() { if (!worldMap || !countryGeoData) return; try { countrySource = new ol.source.Vector({ features: new ol.format.GeoJSON().readFeatures(countryGeoData, { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }), wrapX: false }); countriesLayer = new ol.layer.Vector({ source: countrySource, style: countryStyleFunction, declutter: true }); worldMap.addLayer(countriesLayer); } catch (e) { console.error("Add GeoJSON Layer Error:", e); } }
+
+            // --- SQL Execution & Result Display ---
+            function executeQueryAndVisualize() {
+                clearConsoleResults();
+                if (!dbReady || !sqlDb) { displayConsoleMessage("DB not ready.", "status-error"); return; }
+                const query = sqlInput.value.trim();
+                if (!query || query.startsWith('--')) { displayConsoleMessage("Query empty/placeholder.", "status-info"); return; }
+                if (query.includes(' = ?') || query.includes(' LIKE ?')) { displayConsoleMessage("Query contains placeholders ('?'). Replace manually.", "status-error"); return; }
+                setLoadingState(true, "Executing SQL...");
+                console.log("Executing Query:", query);
+                setTimeout(() => {
+                    let results = null; let countryCodes = [];
+                    try {
+                        const parsedInfo = parseQueryForVis(query); updateVisualization(parsedInfo);
+                        results = sqlDb.exec(query); console.log("sql.js Result:", results);
+                        if (results.length > 0) { displaySqlJsResults(results); countryCodes = getCountryCodesFromSqlJsResults(results[0]); }
+                        else { displaySqlJsResults(results); }
+                        updateMapFromSQL_OL(countryCodes);
+                    } catch (e) { console.error("SQL Error:", e); displayConsoleMessage(`SQL Error: ${e.message}`, "status-error"); try { updateVisualization(parseQueryForVis(query)); } catch { updateVisualization(null); } updateMapFromSQL_OL([]); }
+                    finally { setLoadingState(false); }
+                }, 10);
+            }
+
+            function displaySqlJsResults(sqlJsResults) {
+                sqlConsoleResultsDiv.innerHTML = ''; let statusMsg = "", statusType = "status-success", hasTable = false;
+                if (!Array.isArray(sqlJsResults)) { statusMsg = "Query unexpected format."; statusType = "status-error"; }
+                else if (sqlJsResults.length === 0) { statusMsg = "Query OK. No data returned."; }
+                else {
+                    const data = sqlJsResults[0];
+                    // ** Robustness Check **
+                    if (!data || !data.columns || !data.values) {
+                         statusMsg = "Query OK, but result structure invalid."; statusType = "status-error";
+                         console.error("Invalid sql.js result structure:", data);
+                    } else {
+                        const columns = data.columns; const values = data.values;
+                        if (values.length === 0) { statusMsg = "Query OK. 0 rows returned."; }
+                        else {
+                            hasTable = true; const table=document.createElement('table'); const thead=document.createElement('thead'); const tbody=document.createElement('tbody'); const headerRow=document.createElement('tr');
+                            columns.forEach((col,idx)=>{ const th=document.createElement('th'); th.textContent=col; th.dataset.columnIndex=idx; headerRow.appendChild(th); });
+                            thead.appendChild(headerRow);
+                            values.forEach(rowData=>{ const tr=document.createElement('tr'); columns.forEach((col,idx)=>{ const td=document.createElement('td'); let v=rowData[idx]; if(v===null||typeof v==='undefined'){td.textContent='NULL';td.classList.add('null-value');}else{td.textContent=String(v);} td.dataset.columnIndex=idx; td.dataset.columnName=columns[idx]; td.dataset.value=String(v); td.title=`Click to add WHERE ${columns[idx]} = '${String(v)}'`; tr.appendChild(td); }); tbody.appendChild(tr); });
+                            table.appendChild(thead); table.appendChild(tbody); sqlConsoleResultsDiv.appendChild(table); statusMsg = `Query OK. ${values.length} row(s) returned.`;
+                        }
+                    }
+                }
+                const msgDiv=document.createElement('div'); msgDiv.className=`console-status ${statusType}`; msgDiv.textContent=statusMsg; sqlConsoleResultsDiv.insertBefore(msgDiv,sqlConsoleResultsDiv.firstChild);
+                if(hasTable){ const iDiv=document.createElement('div'); iDiv.textContent="Click table cells to add WHERE conditions."; iDiv.style.fontSize="0.9em"; iDiv.style.color="#aaa"; iDiv.style.marginTop="5px"; sqlConsoleResultsDiv.appendChild(iDiv); }
+            }
+
+             function getCountryCodesFromSqlJsResults(sqlJsResultData) {
+                 if (!sqlJsResultData?.columns || !sqlJsResultData.values?.length) { console.log("(Map) getCountryCodes: No columns or values found."); return []; }
+                 const originalColumns = sqlJsResultData.columns; const lowerCaseColumns = originalColumns.map(c => c.toLowerCase()); const resultValues = sqlJsResultData.values;
+                 const codes = new Set(); let codeIndex = -1; const exactMatchPriority = ['iso3', 'country_code', 'code']; const aliasPatterns = ['_iso3', '_country_code'];
+                 for (const pC of exactMatchPriority) { codeIndex = lowerCaseColumns.indexOf(pC); if (codeIndex !== -1) { console.log(`(Map) Found exact code col: "${originalColumns[codeIndex]}"`); break; } }
+                 if (codeIndex === -1) { for (let i = 0; i < lowerCaseColumns.length; i++) { const lcC = lowerCaseColumns[i]; for (const p of aliasPatterns) { if (lcC.endsWith(p)) { codeIndex = i; console.log(`(Map) Found code col by alias pattern ("${p}"): "${originalColumns[codeIndex]}"`); break; } } if (codeIndex !== -1) break; } }
+                 if (codeIndex !== -1) { const cN = originalColumns[codeIndex]; console.log(`(Map) Extracting codes from: "${cN}"`); resultValues.forEach(r => { const c = r[codeIndex]; if (c && typeof c === 'string' && c.trim()) { codes.add(c.trim().toUpperCase()); } }); console.log(`(Map) Extracted ${codes.size} codes.`); }
+                 else { console.log(`(Map) No suitable code column. Looked for [${exactMatchPriority.join(',')}] or ending [${aliasPatterns.join(',')}]. Found: [${originalColumns.join(',')}]`); }
+                 return Array.from(codes);
+             }
+
+            function updateMapFromSQL_OL(countryCodes) { if (!worldMap || !countrySource) return; let hC = 0; let cNF = new Set(countryCodes); countrySource.getFeatures().forEach(f => { const p = f.get(GEOJSON_CODE_PROPERTY); let iH = false; if (p) { const c = String(p).toUpperCase(); if (countryCodes.includes(c)) { iH = true; hC++; cNF.delete(c); } } f.set('highlighted', iH); }); if (cNF.size > 0) console.warn(`(Map) Features not found: ${Array.from(cNF).join(', ')}`); if (hC > 0) { const hF = countrySource.getFeatures().filter(f => f.get('highlighted')); if (hF.length > 0) { const cE = ol.extent.createEmpty(); hF.forEach(f => { const g = f.getGeometry(); if (g) ol.extent.extend(cE, g.getExtent()); }); if (!ol.extent.isEmpty(cE)) worldMap.getView().fit(cE, { padding: [50, 50, 50, 50], duration: 600, maxZoom: 10 }); } } }
+
+            // --- UI Functions ---
+            function displayConsoleMessage(message, type = "status-success", clearAfterMs = 0) { const eS = sqlConsoleResultsDiv.querySelector('.console-status'); if (eS) eS.remove(); const mD = document.createElement('div'); mD.className = `console-status ${type}`; mD.textContent = message; sqlConsoleResultsDiv.insertBefore(mD, sqlConsoleResultsDiv.firstChild); if (clearAfterMs > 0) setTimeout(() => { if (mD.parentNode === sqlConsoleResultsDiv && mD.textContent === message) mD.remove(); }, clearAfterMs); }
+            function clearConsoleResults() { sqlConsoleResultsDiv.innerHTML = ''; errorDiv.textContent = ''; errorDiv.style.display = 'none'; }
+            function setLoadingState(isLoading, message = "Loading...") { if (isLoading) { loadingIndicator.textContent = message; loadingIndicator.style.display = 'inline'; submitBtn.disabled = true; } else { loadingIndicator.style.display = 'none'; submitBtn.disabled = !dbReady; } }
+            function showJoinNotification(message) { if (!joinNotification) return; joinNotification.textContent = message || 'Notification'; joinNotification.classList.add('show'); setTimeout(() => { joinNotification.classList.remove('show'); }, 4000); }
+
+            // --- SQL Visualizer Display & Interaction (Schema Part) ---
+            function generateVisualizerDisplay() { if(!mapCanvas)return; mapCanvas.querySelectorAll('.db-table-vis').forEach(e=>e.remove()); if(svgContainer)svgContainer.innerHTML=''; setupSvgDefs(); if(!dbMetadataVis?.tables||Object.keys(dbMetadataVis.tables).length===0)return; const r=dbMetadataVis.relationships||[];const pK=new Set();const fK=new Map();r.forEach(l=>{if(!l.from||!l.to||!l.from.includes('.')||!l.to.includes('.'))return;const[fT,fC]=l.from.split('.');const[tT,tC]=l.to.split('.');pK.add(`${tT}.${tC}`);fK.set(`${fT}.${fC}`,`${tT}.${tC}`);}); Object.entries(dbMetadataVis.tables).forEach(([tN,tD])=>{if(!tD||!tD.columns||!tD.position)return; const tE=document.createElement('div');tE.className='db-table-vis';tE.id=`vis-table-${tN}`;tE.style.top=`${tD.position.top}px`;tE.style.left=`${tD.position.left}px`;tE.dataset.tableName=tN; const hE=document.createElement('div');hE.className='table-header-vis'; const nS=document.createElement('span');nS.textContent=tN;nS.classList.add('clickable-schema');nS.title=`Click to SELECT all from ${tN}`;nS.dataset.tableName=tN;nS.addEventListener('click',handleTableClick); const sS=document.createElement('span');sS.className='table-sequence-number';sS.id=`seq-${tN}`; hE.appendChild(nS);hE.appendChild(sS);tE.appendChild(hE); const cL=document.createElement('ul');cL.className='column-list-vis'; tD.columns.forEach(cN=>{const clN=cN.replace(/`/g,'');const cI=document.createElement('li');cI.className='column-item-vis clickable-schema';cI.id=`vis-col-${tN}-${clN}`;cI.title=`Click to add/remove ${tN}.${clN} from SELECT`;cI.dataset.tableName=tN;cI.dataset.columnName=clN;const cF=`${tN}.${clN}`;const iP=pK.has(cF);const iF=fK.has(cF);const rf=iF?fK.get(cF):''; cI.dataset.isPrimaryKey=iP?'true':'false';cI.dataset.isForeignKey=iF?'true':'false';cI.dataset.references=rf; if(iP){const i=document.createElement('span');i.className='key-icon primary-key-icon';i.title='PK';cI.appendChild(i);} else if(iF){const i=document.createElement('span');i.className='key-icon foreign-key-icon';i.title=`FK → ${rf}`;cI.appendChild(i);} cI.appendChild(document.createTextNode(clN));cI.addEventListener('click',handleColumnClick);cL.appendChild(cI);}); tE.appendChild(cL);mapCanvas.appendChild(tE);makeMapElementDraggable(tE); }); console.log("(Viz) Schema display generated."); }
+            function findPossibleJoins(sourceTable, targetTable) { const j = []; if (!dbMetadataVis?.relationships) return j; dbMetadataVis.relationships.forEach(r => { if (!r.from || !r.to || !r.from.includes('.') || !r.to.includes('.')) return; const [fT, fC] = r.from.split('.'); const [tT, tC] = r.to.split('.'); if ((fT === sourceTable && tT === targetTable)) j.push({ sourceTable, sourceColumn: fC, targetTable, targetColumn: tC }); else if ((fT === targetTable && tT === sourceTable)) j.push({ sourceTable, sourceColumn: tC, targetTable, targetColumn: fC }); }); return j; }
+            function setupSvgDefs() { if (!svgContainer || svgContainer.querySelector('defs')) return; const d = document.createElementNS('http://www.w3.org/2000/svg', 'defs'); d.innerHTML = `<marker id="arrowhead-active-cyan-vis" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z" fill="#00ffcc" stroke="none"></path></marker><marker id="arrowhead-inactive-vis" viewBox="-1 -5 12 10" refX="10" refY="0" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 -4 L 10 0 L 0 4 Z" fill="#888" stroke="none"></path></marker>`; svgContainer.insertBefore(d, svgContainer.firstChild); }
+            function getElementCenterRelativeTo(elementId, parentElement) { const e = document.getElementById(elementId); if (!e || !parentElement) return null; const er = e.getBoundingClientRect(); const pr = parentElement.getBoundingClientRect(); return { x: Math.round(er.left - pr.left + er.width / 2), y: Math.round(er.top - pr.top + er.height / 2) }; }
+            function makeMapElementDraggable(element) { let p1=0,p2=0,p3=0,p4=0; const h=element.querySelector('.table-header-vis')||element; h.onmousedown=dM; function dM(e){e=e||window.event;if(e.button!==0)return;e.preventDefault();p3=e.clientX;p4=e.clientY;document.addEventListener('mouseup',cDE,{once:true});document.addEventListener('mousemove',eD);element.style.cursor='grabbing';element.style.zIndex=20;} function eD(e){e=e||window.event;e.preventDefault();p1=p3-e.clientX;p2=p4-e.clientY;p3=e.clientX;p4=e.clientY;const mB=mapCanvas.getBoundingClientRect();const eB=element.getBoundingClientRect();let nT=element.offsetTop-p2;let nL=element.offsetLeft-p1;const pp=5;nT=Math.max(pp,Math.min(nT,mapCanvas.offsetHeight-eB.height-pp));nL=Math.max(pp,Math.min(nL,mapCanvas.offsetWidth-eB.width-pp));element.style.top=nT+"px";element.style.left=nL+"px";updateAllJoinLines();} function cDE(){document.removeEventListener('mousemove',eD);element.style.cursor='grab';element.style.zIndex=10;} }
+            function updateAllJoinLines() { if (!svgContainer || !lastParsedInfoVis || !lastParsedInfoVis.joinConditions) return; svgContainer.querySelectorAll('line.join-line-vis').forEach(el => el.remove()); setTimeout(() => { if (!lastParsedInfoVis?.joinConditions) return; lastParsedInfoVis.joinConditions.forEach(cond => { if (cond.from?.includes('.') && cond.to?.includes('.')) drawSimpleJoinLine(cond.from, cond.to); }); }, 0); }
+            function drawSimpleJoinLine(fromColFullId, toColFullId) { if (!svgContainer) return; const cF=fromColFullId.replace(/`/g,''); const cT=toColFullId.replace(/`/g,''); if (!cF.includes('.')||!cT.includes('.')) return; const [fT,fC]=cF.split('.'); const [tT,tC]=cT.split('.'); const fId=`vis-table-${fT}`; const tId=`vis-table-${tT}`; const sP=getElementCenterRelativeTo(fId,mapCanvas); const eP=getElementCenterRelativeTo(tId,mapCanvas); if (sP && eP && (sP.x!==eP.x||sP.y!==eP.y)){ const dx=eP.x-sP.x; const dy=eP.y-sP.y; const a=Math.atan2(dy,dx); const l=Math.sqrt(dx*dx+dy*dy); const aL=Math.max(0,l-(ARROWHEAD_ADJUSTMENT*1.5)); const eX=sP.x+aL*Math.cos(a); const eY=sP.y+aL*Math.sin(a); const line=document.createElementNS('http://www.w3.org/2000/svg','line'); line.setAttribute('x1',sP.x); line.setAttribute('y1',sP.y); line.setAttribute('x2',eX); line.setAttribute('y2',eY); line.classList.add('join-line-vis'); line.setAttribute('marker-end','url(#arrowhead-inactive-vis)'); svgContainer.appendChild(line); requestAnimationFrame(()=>{ if(line.parentElement){line.classList.add('active');line.setAttribute('marker-end','url(#arrowhead-active-cyan-vis)');}}); } }
+            function parseQueryForVis(query) { console.log("(Viz) Parsing query for graph:", query); const tA={}; const i={sC:new Set(), tI:new Map(), jC:[], a:tA}; const cQ=query.replace(/`/g,''); const cQL=cQ.toLowerCase(); function rC(cId){cId=cId.trim();if(!cId.includes('.')){let fT=null;for(const [tN]of i.tI){if(dbMetadataVis.tables[tN]?.columns.map(c=>c.replace(/`/g,'')).includes(cId)){if(fT&&fT!==tN)return`${tN}.${cId}`; fT=tN;}} if(fT)return`${fT}.${cId}`; return cId;} const p=cId.split('.');if(p.length!==2)return cId; const[pr,cN]=p; const rT=tA[pr]; if(rT)return`${rT}.${cN}`; if(i.tI.has(pr))return cId; return cId;} const fjM=cQL.match(/from\s+([\s\S]*?)(?:where|group\s+by|order\s+by|having|limit|$)/i); if(fjM&&fjM[1]){let fjS=fjM[1].trim(); const fTR= /^([\w_]+)(?:\s+(?:as\s+)?([\w_]+))?/i; const fTM=fjS.match(fTR); if(fTM){const fT=fTM[1]; const a=fTM[2]||fT; if(dbMetadataVis.tables[fT]){i.tI.set(fT,a);tA[a]=fT; fjS=fjS.substring(fTM[0].length).trim();}} const jR=/(?:(?:left|right|inner)\s+)?join\s+([\w_]+)(?:\s+(?:as\s+)?([\w_]+))?\s+on\s+([\w.*]+)\s*=\s*([\w.*]+)/gi; let jM; while((jM=jR.exec(fjS))!==null){const jT=jM[1];const a=jM[2]||jT; const cLR=jM[3].trim(); const cRR=jM[4].trim(); if(dbMetadataVis.tables[jT]){if(!i.tI.has(jT))i.tI.set(jT,a); tA[a]=jT; const rL=rC(cLR); const rR=rC(cRR); if(rL.includes('.')&&rR.includes('.'))i.jC.push({from:rL,to:rR});}}} const sM=cQ.match(/select\s+(.*?)\s+from/i); if(sM&&sM[1]){const cS=sM[1].trim();if(cS==='*'){i.tI.forEach((a,tN)=>{if(dbMetadataVis.tables[tN])dbMetadataVis.tables[tN].columns.forEach(c=>i.sC.add(`${tN}.${c.replace(/`/g,'')}`));});i.sC.add('*');}else{const sI=cS.split(/,(?![^()]*\))/); sI.forEach(itm=>{const cE=itm.trim();let bE=cE.split(/\s+as\s+/i)[0].trim();const cId=bE.match(/([\w_]+\.[\w_]+)|([\w_]+)/g)||[];const k=['distinct','all','count','sum','avg','max','min','coalesce','ifnull','nullif'];cId.forEach(id=>{if(!/^\d+$/.test(id)&&!k.includes(id.toLowerCase())){const r=rC(id);if(r.includes('.'))i.sC.add(r);}});});}} const tblA=Array.from(i.tI.keys()).map(tN=>({tableName:tN,alias:i.tI.get(tN)})); const fPI={selectColumns:i.sC,tablesInvolved:tblA,joinConditions:i.jC,aliases:i.a}; lastParsedInfoVis=fPI; return fPI;}
+            function updateVisualization(parsedInfo) { document.querySelectorAll('.db-table-vis').forEach(el=>{el.classList.remove('highlight-table'); const s=el.querySelector('.table-sequence-number'); if(s){s.textContent='';s.style.opacity='0';}}); if(svgContainer) svgContainer.querySelectorAll('line.join-line-vis').forEach(el=>el.remove()); if (!parsedInfo||!parsedInfo.tablesInvolved||parsedInfo.tablesInvolved.length===0){ lastParsedInfoVis=null; return; } parsedInfo.tablesInvolved.forEach(({tableName},idx)=>{ const tE=document.getElementById(`vis-table-${tableName}`); if(tE){tE.classList.add('highlight-table'); const s=tE.querySelector(`#seq-${tableName}`); if(s){s.textContent=idx+1; s.style.opacity='1';}}}); if(parsedInfo.joinConditions?.length>0){ setTimeout(()=>{if(!svgContainer||!lastParsedInfoVis?.joinConditions)return; svgContainer.querySelectorAll('line.join-line-vis').forEach(el=>el.remove()); lastParsedInfoVis.joinConditions.forEach(c=>{if(c.from?.includes('.')&&c.to?.includes('.'))drawSimpleJoinLine(c.from,c.to);});},50);} }
+
+            // --- Builder State & Interaction Logic ---
+
+            function clearBuilderState() {
+                selectedSchemaColumns = []; whereConditions = []; groupByColumns = []; orderByColumns = [];
+                currentLimit = 10; nextClauseAction = null; currentWhereLogic = 'AND';
+                document.querySelectorAll('.column-item-vis').forEach(el => { el.classList.remove('schema-item-selected', 'schema-item-target-for-clause'); el.title = `Click to add/remove ${el.dataset.tableName}.${el.dataset.columnName} from SELECT`; });
+                document.querySelectorAll('#sql-console-results td').forEach(el => { el.classList.remove('cell-selected-for-where'); });
+                clauseActionButtons.forEach(btn => btn.classList.remove('waiting-for-column'));
+                orderByOptionsDiv.style.display = 'none';
+                whereLogicAndBtn.classList.add('active-logic'); whereLogicOrBtn.classList.remove('active-logic');
+                updateClauseDisplays();
+                sorterInstruction.textContent = "Click GROUP BY or ORDER BY, then click a schema column.";
+                limitInput.value = currentLimit;
+            }
+
+            function updateClauseDisplays() {
+                whereConditionsDisplay.innerHTML = '<strong>WHERE:</strong> ';
+                if (whereConditions.length === 0) { whereConditionsDisplay.innerHTML += ' <em style="color:#888;">none</em>'; }
+                else { whereConditionsDisplay.innerHTML += whereConditions.map((cond, index) => `<span style="background:#4d2525; padding: 1px 3px; margin: 1px; border-radius: 2px;">` + `${index > 0 ? `<strong>${cond.logic || 'AND'}</strong> ` : ''}` + `\`${cond.alias || cond.column}\` ${cond.operator} '${cond.value}'` + `</span>`).join(' '); }
+                sortersDisplay.innerHTML = ''; let sT = [];
+                if (groupByColumns.length > 0) { sT.push(`<strong>GROUP BY:</strong> ${groupByColumns.map(item => `<span style="background:#665c00; padding: 1px 3px; margin: 1px; border-radius: 2px;">\`${item.alias || item.column}\`</span>`).join(', ')}`); }
+                if (orderByColumns.length > 0) { sT.push(`<strong>ORDER BY:</strong> ${orderByColumns.map(item => `<span style="background:#3a3a6e; padding: 1px 3px; margin: 1px; border-radius: 2px;">\`${item.alias || item.column}\` ${item.direction}</span>`).join(', ')}`); }
+                if (sT.length === 0) { sortersDisplay.innerHTML = '<em style="color:#888;">No GROUP BY or ORDER BY clauses.</em>'; }
+                else { sortersDisplay.innerHTML = sT.join('<br>'); }
+            }
+
+            function regenerateQuery() {
+                console.log("(Builder) Regenerating query...");
+                const allInvolvedCols = [...selectedSchemaColumns, ...whereConditions, ...groupByColumns, ...orderByColumns];
+                const involvedTbls = new Map(); let aliasCt = 1;
+                allInvolvedCols.forEach(item => { if (item.table && !involvedTbls.has(item.table)) { involvedTbls.set(item.table, { alias: `t${aliasCt++}` }); } });
+                const updateAlias = (item) => { if(item.table) item.alias = involvedTbls.get(item.table)?.alias; };
+                selectedSchemaColumns.forEach(updateAlias); whereConditions.forEach(updateAlias); groupByColumns.forEach(updateAlias); orderByColumns.forEach(updateAlias);
+
+                if (involvedTbls.size === 0) { sqlInput.value = "-- Click schema elements --"; updateVisualization(null); updateClauseDisplays(); return; }
+
+                let selParts = []; const selUnique = new Map();
+                selectedSchemaColumns.forEach(item => { const key = `${item.alias}.${item.column}`; if (item.alias && item.column && !selUnique.has(key)) { selUnique.set(key, `${item.alias}.\`${item.column}\` AS \`${item.table}_${item.column}\``); } });
+                selParts = Array.from(selUnique.values());
+                if (selParts.length === 0) { sqlInput.value = "-- Click columns for SELECT --"; updateVisualization(null); updateClauseDisplays(); return; }
+                const selClause = `SELECT ${selParts.join(', ')}`;
+
+                let fromClause = ""; let joinClauses = []; const tblsToJoin = Array.from(involvedTbls.keys());
+                if (tblsToJoin.length > 0) {
+                    const firstTbl = tblsToJoin[0]; const firstAlias = involvedTbls.get(firstTbl).alias; fromClause = `FROM \`${firstTbl}\` ${firstAlias}`; const joined = new Set([firstTbl]);
+                    for (let i = 1; i < tblsToJoin.length; i++) {
+                        const targetTbl = tblsToJoin[i]; let found = false;
+                        for (const srcTbl of joined) {
+                            const joins = findPossibleJoins(srcTbl, targetTbl);
+                            if (joins.length > 0) { const best = joins[0]; const srcAlias = involvedTbls.get(srcTbl).alias; const targetAlias = involvedTbls.get(targetTbl).alias; joinClauses.push(`JOIN \`${targetTbl}\` ${targetAlias} ON ${srcAlias}.\`${best.sourceColumn}\` = ${targetAlias}.\`${best.targetColumn}\``); joined.add(targetTbl); found = true; break; }
+                        }
+                        if (!found) { const targetAlias = involvedTbls.get(targetTbl).alias; const fAlias = involvedTbls.get(tblsToJoin[0]).alias; joinClauses.push(`-- WARN: No join found for ${targetTbl}:`); joinClauses.push(`JOIN \`${targetTbl}\` ${targetAlias} ON ${fAlias}.id = ${targetAlias}.id -- <<< CHECK!`); joined.add(targetTbl); showJoinNotification(`No relationship for ${targetTbl}. Verify JOIN.`); }
+                    }
+                }
+
+                let whereClause = "";
+                if (whereConditions.length > 0) {
+                    const conditions = whereConditions.map((cond, index) => {
+                        const escVal = typeof cond.value === 'string' ? cond.value.replace(/'/g, "''") : cond.value; const valStr = typeof cond.value === 'string' ? `'${escVal}'` : escVal;
+                        const colId = cond.alias ? `${cond.alias}.\`${cond.column}\`` : `\`${cond.column}\``;
+                        const logicPrefix = index > 0 ? `${cond.logic || 'AND'} ` : '';
+                        return `${logicPrefix}${colId} ${cond.operator} ${valStr}`;
+                    });
+                    whereClause = `WHERE ${conditions.join(' ')}`;
+                }
+
+                let gbClause = ""; if (groupByColumns.length > 0) { const g = groupByColumns.map(i => i.alias ? `${i.alias}.\`${i.column}\`` : `\`${i.column}\``); gbClause = `GROUP BY ${[...new Set(g)].join(', ')}`; }
+                let obClause = ""; if (orderByColumns.length > 0) { const o = orderByColumns.map(i => (i.alias ? `${i.alias}.\`${i.column}\`` : `\`${i.column}\``) + ` ${i.direction}`); obClause = `ORDER BY ${[...new Set(o)].join(', ')}`; }
+                const limitClause = `LIMIT ${currentLimit}`;
+                const finalQuery = [selClause, fromClause, ...joinClauses, whereClause, gbClause, obClause, limitClause].filter(p => p).join('\n');
+                sqlInput.value = finalQuery;
+                updateClauseDisplays();
+                try { updateVisualization(parseQueryForVis(finalQuery)); } catch (e) { updateVisualization(null); }
+            }
+
+            // --- Event Handlers ---
+
+            function handleColumnClick(event) {
+                try {
+                    const clickedElement = event.target.closest('.column-item-vis'); if (!clickedElement) return;
+                    const clickedTable = clickedElement.dataset.tableName; const clickedColumn = clickedElement.dataset.columnName; if (!clickedTable || !clickedColumn) return;
+                    console.log(`(Builder) Schema column clicked: ${clickedTable}.${clickedColumn}`);
+
+                    if (nextClauseAction) {
+                        const action = nextClauseAction; nextClauseAction = null;
+                        clauseActionButtons.forEach(btn => btn.classList.remove('waiting-for-column')); sorterInstruction.textContent = "Click GROUP BY or ORDER BY...";
+                        const columnData = { table: clickedTable, column: clickedColumn, element: clickedElement };
+
+                        if (action === 'groupby') {
+                             if (!groupByColumns.some(i=>i.table===columnData.table&&i.column===columnData.column)) groupByColumns.push(columnData);
+                        } else if (action === 'orderby') {
+                             orderByColumns = orderByColumns.filter(i => !(i.table === columnData.table && i.column === columnData.column));
+                             orderByColumns.push({ ...columnData, direction: 'ASC' });
+                             orderByOptionsDiv.style.display = 'inline-block'; nextClauseAction = 'orderby-direction'; sorterInstruction.textContent = `ORDER BY ${columnData.table}.${columnData.column}. Choose Direction:`;
+                        }
+                         if (!selectedSchemaColumns.some(i => i.table === columnData.table && i.column === columnData.column)) { selectedSchemaColumns.push({ ...columnData }); }
+                         updateSelectionVisuals(); regenerateQuery();
+                    } else {
+                        const selectIndex = selectedSchemaColumns.findIndex(i => i.table === clickedTable && i.column === clickedColumn);
+                        if (selectIndex > -1) { selectedSchemaColumns.splice(selectIndex, 1); clickedElement.classList.remove('schema-item-selected'); }
+                        else { selectedSchemaColumns.push({ table: clickedTable, column: clickedColumn, element: clickedElement }); clickedElement.classList.add('schema-item-selected'); }
+                        document.querySelectorAll('.column-item-vis').forEach(el => el.classList.remove('schema-item-target-for-clause'));
+                        regenerateQuery();
+                    }
+                } catch (e) { console.error("Error in handleColumnClick:", e); nextClauseAction = null; clauseActionButtons.forEach(btn => btn.classList.remove('waiting-for-column')); sorterInstruction.textContent = "Click GROUP BY or ORDER BY..."; }
+            }
+
+            function handleTableClick(event) { try{const tE=event.target.closest('[data-table-name]');if(!tE||tE.tagName!=='SPAN')return;const tN=tE.dataset.tableName;if(!tN)return; const tM=dbMetadataVis.tables[tN];if(tM?.columns){tM.columns.forEach(cN=>{const clN=cN.replace(/`/g,'');const isSel=selectedSchemaColumns.some(i=>i.table===tN&&i.column===clN);if(!isSel){const el=document.getElementById(`vis-col-${tN}-${clN}`);selectedSchemaColumns.push({table:tN,column:clN,element:el});}});}}catch(e){} nextClauseAction=null; clauseActionButtons.forEach(b=>b.classList.remove('waiting-for-column')); updateSelectionVisuals(); regenerateQuery(); }
+
+            function handleResultCellClick(event) {
+                console.log("(WHERE Builder) Result cell click triggered. Target:", event.target);
+                const targetCell = event.target.closest('td');
+                if (!targetCell) { console.log("(WHERE Builder) Click was not inside a TD cell."); return; }
+                if (targetCell.classList.contains('null-value')) { console.log("(WHERE Builder) Clicked on a NULL cell, ignoring."); return; }
+                const aliasedColName = targetCell.dataset.columnName; const value = targetCell.dataset.value;
+                if (typeof aliasedColName === 'undefined' || typeof value === 'undefined') { console.warn("(WHERE Builder) Missing data attributes on clicked cell:", targetCell.outerHTML); return; }
+                console.log(`(WHERE Builder) Cell data: Column='${aliasedColName}', Value='${value}'`);
+
+                let originalTable = null; let originalColumn = null;
+                for (const tableName in dbMetadataVis.tables) { if (aliasedColName.startsWith(tableName + '_')) { const pC = aliasedColName.substring(tableName.length + 1); if (dbMetadataVis.tables[tableName].columns.map(c => c.replace(/`/g,'')).includes(pC)) { originalTable=tableName; originalColumn=pC; console.log(`(WHERE Builder) Resolved via prefix: ${originalTable}.${originalColumn}`); break; } } }
+                if (!originalTable && aliasedColName.includes('_')) { const lU=aliasedColName.lastIndexOf('_'); const pT=aliasedColName.substring(0,lU); const pC=aliasedColName.substring(lU+1); if (dbMetadataVis.tables[pT] && dbMetadataVis.tables[pT].columns.map(c => c.replace(/`/g,'')).includes(pC)) { originalTable=pT; originalColumn=pC; console.log(`(WHERE Builder) Resolved via last _: ${originalTable}.${originalColumn}`); } }
+                if (!originalTable) { for (const tN in dbMetadataVis.tables) { if (dbMetadataVis.tables[tN].columns.map(c => c.replace(/`/g,'')).includes(aliasedColName)) { originalTable=tN; originalColumn=aliasedColName; console.log(`(WHERE Builder) Resolved via direct col match: ${originalTable}.${originalColumn}`); break; } } }
+                if (!originalTable) { for (const tN in dbMetadataVis.tables) { if (dbMetadataVis.tables[tN].columns.map(c => c.replace(/`/g,'')).includes(aliasedColName)) { originalTable=tN; originalColumn=aliasedColName; console.log(`(WHERE Builder) Resolved by exact match: ${originalTable}.${originalColumn}`); break; } } }
+                if (!originalTable || !originalColumn) { console.warn(`(WHERE Builder) Could not resolve T/C for alias: ${aliasedColName}.`); showJoinNotification(`Cannot find source for '${aliasedColName}'.`); return; }
+
+                const existingIndex = whereConditions.findIndex(c => c.table === originalTable && c.column === originalColumn && c.value === value && c.operator === '=');
+                console.log("(WHERE Builder) WHERE Conditions before:", JSON.parse(JSON.stringify(whereConditions)));
+                if (existingIndex > -1) { console.log("(Builder) WHERE condition found, removing."); whereConditions.splice(existingIndex, 1); targetCell.classList.remove('cell-selected-for-where'); if (whereConditions.length > 0) { whereConditions[0].logic = undefined; for (let i = 1; i < whereConditions.length; i++) { whereConditions[i].logic = whereConditions[i].logic || 'AND'; } } }
+                else { console.log("(Builder) Adding WHERE condition using logic:", currentWhereLogic); whereConditions.push({ table: originalTable, column: originalColumn, operator: '=', value: value, alias: aliasedColName, element: targetCell, logic: whereConditions.length > 0 ? currentWhereLogic : undefined }); targetCell.classList.add('cell-selected-for-where'); if (!selectedSchemaColumns.some(i => i.table === originalTable && i.column === originalColumn)) { console.log(`(Builder) Auto-adding ${originalTable}.${originalColumn} to SELECT.`); const el = document.getElementById(`vis-col-${originalTable}-${originalColumn}`); selectedSchemaColumns.push({ table: originalTable, column: originalColumn, element: el }); updateSelectionVisuals(); } }
+                console.log("(WHERE Builder) WHERE Conditions after:", JSON.parse(JSON.stringify(whereConditions)));
+                regenerateQuery();
+            }
+
+
+            function updateSelectionVisuals() {
+                 document.querySelectorAll('.column-item-vis').forEach(el => { el.classList.remove('schema-item-selected'); });
+                selectedSchemaColumns.forEach(item => { const el = document.getElementById(`vis-col-${item.table}-${item.column}`); if (el) el.classList.add('schema-item-selected'); });
+            }
+
+            function setupEventListeners() {
+                 submitBtn.addEventListener('click', executeQueryAndVisualize);
+                 clearBtn.addEventListener('click', () => { clearBuilderState(); regenerateQuery(); updateMapFromSQL_OL([]); updateVisualization(null); sqlInput.value = '-- Query Cleared --'; });
+                 sqlConsoleResultsDiv.addEventListener('click', handleResultCellClick);
+                 whereLogicAndBtn.addEventListener('click', () => setWhereLogic('AND'));
+                 whereLogicOrBtn.addEventListener('click', () => setWhereLogic('OR'));
+                 function setWhereLogic(logic) { if(currentWhereLogic === logic) return; currentWhereLogic = logic; whereLogicAndBtn.classList.toggle('active-logic', logic === 'AND'); whereLogicOrBtn.classList.toggle('active-logic', logic === 'OR'); }
+                 clauseActionButtons.forEach(button => { button.addEventListener('click', () => { const clauseType = button.dataset.clause; if (nextClauseAction === clauseType) { nextClauseAction = null; button.classList.remove('waiting-for-column'); sorterInstruction.textContent = "Click GROUP BY or ORDER BY..."; orderByOptionsDiv.style.display = 'none'; } else { clauseActionButtons.forEach(btn => btn.classList.remove('waiting-for-column')); orderByOptionsDiv.style.display = 'none'; nextClauseAction = clauseType; button.classList.add('waiting-for-column'); sorterInstruction.textContent = `Click schema column for ${clauseType.toUpperCase()}`; } }); });
+                 clearWhereBtn.addEventListener('click', () => { if (whereConditions.length===0) return; whereConditions = []; document.querySelectorAll('#sql-console-results td.cell-selected-for-where').forEach(el => el.classList.remove('cell-selected-for-where')); regenerateQuery(); });
+                 clearGroupbyBtn.addEventListener('click', () => { if (groupByColumns.length===0) return; groupByColumns = []; if (nextClauseAction === 'groupby') {nextClauseAction = null; clauseActionButtons.forEach(b => b.classList.remove('waiting-for-column'));} regenerateQuery(); });
+                 clearOrderbyBtn.addEventListener('click', () => { if (orderByColumns.length===0) return; orderByColumns = []; if (nextClauseAction?.startsWith('orderby')) {nextClauseAction = null; clauseActionButtons.forEach(b => b.classList.remove('waiting-for-column')); orderByOptionsDiv.style.display = 'none'; sorterInstruction.textContent = "Click GROUP BY or ORDER BY...";} regenerateQuery(); });
+                 orderbyAscBtn.addEventListener('click', () => applyOrderByDirection('ASC'));
+                 orderbyDescBtn.addEventListener('click', () => applyOrderByDirection('DESC'));
+                 function applyOrderByDirection(direction) { if (nextClauseAction !== 'orderby-direction' || orderByColumns.length === 0) { orderByOptionsDiv.style.display = 'none'; nextClauseAction = null; return; } orderByColumns[orderByColumns.length - 1].direction = direction; nextClauseAction = null; orderByOptionsDiv.style.display = 'none'; sorterInstruction.textContent = "Click GROUP BY or ORDER BY..."; regenerateQuery(); }
+                 limitInput.addEventListener('input', debounce(() => { const nL=parseInt(limitInput.value,10); if(!isNaN(nL)&&nL>0){currentLimit=nL;regenerateQuery();}else{limitInput.value=currentLimit;} }, 500));
+                 sqlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.shiftKey)) { e.preventDefault(); executeQueryAndVisualize(); } });
+                 toggleMapBtn.addEventListener('click', () => togglePanel(dbMapContainer));
+                 document.body.addEventListener('click', (event) => { const iIV = dbMapContainer.contains(event.target); const iIC = sqlConsoleWindow.contains(event.target); const isI = event.target.closest('.clickable-schema, #clause-controls button, #sql-console-results td, #tutorial-tooltip button'); if (!iIV && !iIC && !isI) { if (nextClauseAction) { console.log("Outside click, canceling pending action:", nextClauseAction); nextClauseAction = null; clauseActionButtons.forEach(btn => btn.classList.remove('waiting-for-column')); sorterInstruction.textContent = "Click GROUP BY or ORDER BY..."; orderByOptionsDiv.style.display = 'none'; } } }, true);
+                 startTutorialBtn.addEventListener('click', startTutorial);
+                 tutorialExitBtn.addEventListener('click', exitTutorial);
+                 tutorialPrevBtn.addEventListener('click', showPreviousTutorialStep);
+                 tutorialNextBtn.addEventListener('click', showNextTutorialStep);
+                 console.log("Main UI event listeners attached.");
+             }
+
+            // --- Tutorial Functions ---
+            function startTutorial() {
+                 console.log("Starting tutorial...");
+                 currentTutorialStep = 0;
+                 tutorialOverlay.style.display = 'block';
+                 showTutorialStep(currentTutorialStep);
+                 // Ensure tutorial button isn't flashing during tutorial
+                 startTutorialBtn.classList.remove('flash-red');
+            }
+
+            function exitTutorial() {
+                 console.log("Exiting tutorial.");
+                 tutorialOverlay.style.display = 'none';
+                 tutorialHighlightBox.style.display = 'none';
+                 tutorialTooltip.style.display = 'none';
+            }
+
+             function showTutorialStep(index) {
+                 if (index < 0 || index >= tutorialSteps.length) {
+                     exitTutorial(); return;
+                 }
+
+                 const step = tutorialSteps[index];
+                 console.log(`Showing tutorial step ${index + 1} targeting #${step.elementId}: ${step.title}`);
+                 const targetElement = document.getElementById(step.elementId);
+
+                 if (!targetElement) {
+                     console.error(`Tutorial target element not found: #${step.elementId}. Skipping step.`);
+                     if (currentTutorialStep < tutorialSteps.length - 1) { showNextTutorialStep(); }
+                     else { exitTutorial(); }
+                     return;
+                 }
+
+                 // Ensure elements are visible before getting rects
+                 tutorialHighlightBox.style.display = 'block';
+                 tutorialTooltip.style.display = 'block';
+
+                 const targetRect = targetElement.getBoundingClientRect();
+                 const PADDING = 5;
+
+                 tutorialHighlightBox.style.top = `${targetRect.top - PADDING}px`;
+                 tutorialHighlightBox.style.left = `${targetRect.left - PADDING}px`;
+                 tutorialHighlightBox.style.width = `${targetRect.width + (PADDING * 2)}px`;
+                 tutorialHighlightBox.style.height = `${targetRect.height + (PADDING * 2)}px`;
+
+                 tutorialTitle.textContent = step.title;
+                 tutorialText.textContent = step.text;
+
+                 positionTooltip(targetRect, step.position);
+
+                 tutorialPrevBtn.disabled = index === 0;
+                 tutorialNextBtn.disabled = index === tutorialSteps.length - 1;
+             }
+
+             function positionTooltip(targetRect, preferredPosition = 'bottom') {
+                const tooltipEl = tutorialTooltip; // Use direct reference
+                if (!tooltipEl) return;
+
+                // Temporarily make visible if hidden to get correct dimensions
+                const initialDisplay = tooltipEl.style.display;
+                tooltipEl.style.visibility = 'hidden'; // Keep invisible but allow size calc
+                tooltipEl.style.display = 'block';
+                const tooltipRect = tooltipEl.getBoundingClientRect();
+                 tooltipEl.style.display = initialDisplay; // Restore original display
+                 tooltipEl.style.visibility = 'visible';
+
+
+                const highlightPad = 5;
+                const tooltipMargin = 15;
+                const winWidth = window.innerWidth;
+                const winHeight = window.innerHeight;
+
+                let top, left;
+
+                // Calculate potential positions
+                const positions = {
+                    bottom: { top: targetRect.bottom + highlightPad + tooltipMargin, left: targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2) },
+                    top: { top: targetRect.top - highlightPad - tooltipMargin - tooltipRect.height, left: targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2) },
+                    right: { top: targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2), left: targetRect.right + highlightPad + tooltipMargin },
+                    left: { top: targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2), left: targetRect.left - highlightPad - tooltipMargin - tooltipRect.width }
+                };
+
+                 // Function to check if a position is within bounds
+                 const isInBounds = (pos) => {
+                     return pos.top >= tooltipMargin &&
+                            pos.left >= tooltipMargin &&
+                            (pos.top + tooltipRect.height) <= (winHeight - tooltipMargin) &&
+                            (pos.left + tooltipRect.width) <= (winWidth - tooltipMargin);
+                 };
+
+                 // Try preferred position first
+                 if (positions[preferredPosition] && isInBounds(positions[preferredPosition])) {
+                     top = positions[preferredPosition].top;
+                     left = positions[preferredPosition].left;
+                 } else {
+                     // Try alternatives if preferred doesn't fit
+                     const fallbacks = ['bottom', 'top', 'right', 'left'].filter(p => p !== preferredPosition);
+                     let foundFit = false;
+                     for (const posKey of fallbacks) {
+                         if (positions[posKey] && isInBounds(positions[posKey])) {
+                             top = positions[posKey].top;
+                             left = positions[posKey].left;
+                             foundFit = true;
+                             break;
+                         }
+                     }
+                     // If absolutely nothing fits, default to bottom-center and clamp
+                     if (!foundFit) {
+                         top = positions.bottom.top;
+                         left = positions.bottom.left;
+                     }
+                 }
+
+                 // Clamp final position just in case
+                 left = Math.max(tooltipMargin, Math.min(left, winWidth - tooltipRect.width - tooltipMargin));
+                 top = Math.max(tooltipMargin, Math.min(top, winHeight - tooltipRect.height - tooltipMargin));
+
+                 tooltipEl.style.top = `${top}px`;
+                 tooltipEl.style.left = `${left}px`;
+             }
+
+
+             function showNextTutorialStep() {
+                 if (currentTutorialStep < tutorialSteps.length - 1) {
+                     currentTutorialStep++;
+                     showTutorialStep(currentTutorialStep);
+                 } else {
+                     exitTutorial();
+                 }
+             }
+
+             function showPreviousTutorialStep() {
+                 if (currentTutorialStep > 0) {
+                     currentTutorialStep--;
+                     showTutorialStep(currentTutorialStep);
+                 }
+             }
+
+
+            // --- Draggable Console / Panel Toggle / Debounce (Unchanged) ---
+            function makeConsoleDraggable(element, handle) { let p1=0,p2=0,p3=0,p4=0; handle.onmousedown=dM; function dM(e){e=e||window.event;if(e.button!==0)return;e.preventDefault();p3=e.clientX;p4=e.clientY;const r=element.getBoundingClientRect();element.style.position='fixed';element.style.bottom='auto';element.style.top=r.top+'px';element.style.left=r.left+'px';document.addEventListener('mouseup',cDE,{once:true});document.addEventListener('mousemove',eD);handle.style.cursor='grabbing';element.style.zIndex=1011;} function eD(e){e=e||window.event;e.preventDefault();p1=p3-e.clientX;p2=p4-e.clientY;p3=e.clientX;p4=e.clientY;let nT=element.offsetTop-p2;let nL=element.offsetLeft-p1;const er=element.getBoundingClientRect();nT=Math.max(0,Math.min(nT,window.innerHeight-er.height));nL=Math.max(0,Math.min(nL,window.innerWidth-er.width));element.style.top=nT+"px";element.style.left=nL+"px";} function cDE(){document.removeEventListener('mousemove',eD);handle.style.cursor='grab';element.style.zIndex=1010;} }
+            function togglePanel(panelElement) { panelElement.classList.toggle('collapsed'); const iC=panelElement.classList.contains('collapsed'); toggleMapBtn.textContent=iC?'>':'<'; if(!iC)setTimeout(updateAllJoinLines,350); }
+            function debounce(func, delay) { let dT; return function(...a){const c=this;clearTimeout(dT);dT=setTimeout(()=>func.apply(c,a),delay);}; }
+
+            // --- Start Interface ---
+            initializeInterface();
+
+        }); // End DOMContentLoaded
+    </script>
+
+</body>
+</html>

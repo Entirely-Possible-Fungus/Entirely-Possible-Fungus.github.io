@@ -1,0 +1,251 @@
+{
+    "SolSystemPlanets": {
+        "columns": {
+            "planet_id": "INT PRIMARY KEY AUTO_INCREMENT",
+            "planet_name": "VARCHAR(100) NOT NULL UNIQUE",
+            "type": "VARCHAR(100)",
+            "orbital_position": "INT NOT NULL",
+            "biosignature_detected": "BOOLEAN",
+            "atmosphere_composition": "TEXT",
+            "magnetic_field_strength_tesla": "FLOAT",
+            "number_of_moons": "INT DEFAULT 0",
+            "mean_temperature_celsius": "FLOAT",
+            "rotation_period_days": "FLOAT",
+            "orbital_period_years": "FLOAT"
+        },
+        "data": [
+            {
+                "planet_id": 1,
+                "planet_name": "Mercury",
+                "type": "Rocky",
+                "orbital_position": 1,
+                "biosignature_detected": false,
+                "atmosphere_composition": "Trace amounts of He, Na, O2, K, H2, Ar - extremely thin exosphere",
+                "magnetic_field_strength_tesla": 0.0000033,
+                "number_of_moons": 0,
+                "mean_temperature_celsius": 167,
+                "rotation_period_days": 58.6,
+                "orbital_period_years": 0.24
+            },
+            {
+                "planet_id": 2,
+                "planet_name": "Venus",
+                "type": "Rocky",
+                "orbital_position": 2,
+                "biosignature_detected": false,
+                "atmosphere_composition": "96% CO2, 3.5% N2, traces of SO2, H2O, CO, Ar, He, Ne",
+                "magnetic_field_strength_tesla": 0.000003,
+                "number_of_moons": 0,
+                "mean_temperature_celsius": 464,
+                "rotation_period_days": -243,
+                "orbital_period_years": 0.62
+            },
+            {
+                "planet_id": 3,
+                "planet_name": "Earth",
+                "type": "Rocky",
+                "orbital_position": 3,
+                "biosignature_detected": true,
+                "atmosphere_composition": "78% N2, 21% O2, 0.9% Ar, 0.04% CO2, traces of other gases",
+                "magnetic_field_strength_tesla": 0.000045,
+                "number_of_moons": 1,
+                "mean_temperature_celsius": 15,
+                "rotation_period_days": 1.0,
+                "orbital_period_years": 1.0
+            },
+            {
+                "planet_id": 4,
+                "planet_name": "Mars",
+                "type": "Rocky",
+                "orbital_position": 4,
+                "biosignature_detected": false,
+                "atmosphere_composition": "95% CO2, 2.7% N2, 1.6% Ar, traces of O2, CO, H2O",
+                "magnetic_field_strength_tesla": 0.0000003,
+                "number_of_moons": 2,
+                "mean_temperature_celsius": -65,
+                "rotation_period_days": 1.03,
+                "orbital_period_years": 1.88
+            },
+            {
+                "planet_id": 5,
+                "planet_name": "Jupiter",
+                "type": "Gas Giant",
+                "orbital_position": 5,
+                "biosignature_detected": false,
+                "atmosphere_composition": "90% H2, 10% He, traces of CH4, NH3, HD, C2H6, H2O",
+                "magnetic_field_strength_tesla": 0.00043,
+                "number_of_moons": 79,
+                "mean_temperature_celsius": -110,
+                "rotation_period_days": 0.41,
+                "orbital_period_years": 11.86
+            },
+            {
+                "planet_id": 6,
+                "planet_name": "Saturn",
+                "type": "Gas Giant",
+                "orbital_position": 6,
+                "biosignature_detected": false,
+                "atmosphere_composition": "96% H2, 3% He, traces of CH4, NH3, HD, C2H6",
+                "magnetic_field_strength_tesla": 0.0002,
+                "number_of_moons": 82,
+                "mean_temperature_celsius": -140,
+                "rotation_period_days": 0.44,
+                "orbital_period_years": 29.45
+            },
+            {
+                "planet_id": 7,
+                "planet_name": "Uranus",
+                "type": "Ice Giant",
+                "orbital_position": 7,
+                "biosignature_detected": false,
+                "atmosphere_composition": "83% H2, 15% He, 2% CH4, traces of HD, H2O",
+                "magnetic_field_strength_tesla": 0.00023,
+                "number_of_moons": 27,
+                "mean_temperature_celsius": -195,
+                "rotation_period_days": -0.72,
+                "orbital_period_years": 84.02
+            },
+            {
+                "planet_id": 8,
+                "planet_name": "Neptune",
+                "type": "Ice Giant",
+                "orbital_position": 8,
+                "biosignature_detected": false,
+                "atmosphere_composition": "80% H2, 19% He, 1.5% CH4, traces of HD, C2H6",
+                "magnetic_field_strength_tesla": 0.00027,
+                "number_of_moons": 14,
+                "mean_temperature_celsius": -200,
+                "rotation_period_days": 0.67,
+                "orbital_period_years": 164.8
+            },
+            {
+                "planet_id": 9,
+                "planet_name": "Pluto",
+                "type": "Rocky/Dwarf",
+                "orbital_position": 9,
+                "biosignature_detected": false,
+                "atmosphere_composition": "Thin layer of N2, CH4, CO",
+                "magnetic_field_strength_tesla": 0.0000001,
+                "number_of_moons": 5,
+                "mean_temperature_celsius": -229,
+                "rotation_period_days": -6.39,
+                "orbital_period_years": 248.0
+            },
+            {
+                "planet_id": 10,
+                "planet_name": "Ceres",
+                "type": "Rocky/Dwarf",
+                "orbital_position": 3,
+                "biosignature_detected": false,
+                "atmosphere_composition": "Water vapor, possibly trace amounts of other volatiles",
+                "magnetic_field_strength_tesla": 0.0000002,
+                "number_of_moons": 0,
+                "mean_temperature_celsius": -105,
+                "rotation_period_days": 0.38,
+                "orbital_period_years": 4.6
+            },
+            {
+                "planet_id": 11,
+                "planet_name": "Eris",
+                "type": "Rocky/Dwarf",
+                "orbital_position": 10,
+                "biosignature_detected": false,
+                "atmosphere_composition": "Thin N2 atmosphere (seasonal)",
+                "magnetic_field_strength_tesla": 0.00000005,
+                "number_of_moons": 1,
+                "mean_temperature_celsius": -231,
+                "rotation_period_days": 15.9,
+                "orbital_period_years": 559.0
+            },
+            {
+                "planet_id": 12,
+                "planet_name": "Makemake",
+                "type": "Rocky/Dwarf",
+                "orbital_position": 10,
+                "biosignature_detected": false,
+                "atmosphere_composition": "Possible thin atmosphere of CH4, N2",
+                "magnetic_field_strength_tesla": 0.00000001,
+                "number_of_moons": 1,
+                "mean_temperature_celsius": -239,
+                "rotation_period_days": 0.95,
+                "orbital_period_years": 306.2
+            }
+        ]
+    },
+    "SolarAtmosphericGases": {
+        "columns": {
+            "gas_id": "INT PRIMARY KEY AUTO_INCREMENT",
+            "gas_name": "VARCHAR(100) NOT NULL",
+            "chemical_formula": "VARCHAR(20)",
+            "earth_atmosphere_percentage": "FLOAT",
+            "common_in_atmospheres": "BOOLEAN",
+            "description": "TEXT"
+        },
+        "data": [
+            {
+                "gas_id": 1,
+                "gas_name": "Nitrogen",
+                "chemical_formula": "N2",
+                "earth_atmosphere_percentage": 78.084,
+                "common_in_atmospheres": true,
+                "description": "Most abundant gas in Earth's atmosphere. Relatively inert, dilutes oxygen."
+            },
+            {
+                "gas_id": 2,
+                "gas_name": "Oxygen",
+                "chemical_formula": "O2",
+                "earth_atmosphere_percentage": 20.946,
+                "common_in_atmospheres": false,
+                "description": "Highly reactive gas necessary for aerobic life. High concentrations suggest biological activity."
+            },
+            {
+                "gas_id": 3,
+                "gas_name": "Argon",
+                "chemical_formula": "Ar",
+                "earth_atmosphere_percentage": 0.934,
+                "common_in_atmospheres": true,
+                "description": "Noble gas, inert. Third most common gas in Earth's atmosphere."
+            },
+            {
+                "gas_id": 4,
+                "gas_name": "Carbon Dioxide",
+                "chemical_formula": "CO2",
+                "earth_atmosphere_percentage": 0.0415,
+                "common_in_atmospheres": true,
+                "description": "Greenhouse gas, important for regulating planetary temperatures."
+            },
+            {
+                "gas_id": 5,
+                "gas_name": "Neon",
+                "chemical_formula": "Ne",
+                "earth_atmosphere_percentage": 0.001818,
+                "common_in_atmospheres": true,
+                "description": "Noble gas, inert. Used in lighting on Earth."
+            },
+            {
+                "gas_id": 6,
+                "gas_name": "Helium",
+                "chemical_formula": "He",
+                "earth_atmosphere_percentage": 0.000524,
+                "common_in_atmospheres": true,
+                "description": "Noble gas, very light, escapes Earth's atmosphere. Common in gas giants."
+            },
+            {
+                "gas_id": 7,
+                "gas_name": "Methane",
+                "chemical_formula": "CH4",
+                "earth_atmosphere_percentage": 0.00018,
+                "common_in_atmospheres": true,
+                "description": "Potent greenhouse gas, often biological in origin on Earth."
+            },
+            {
+                "gas_id": 8,
+                "gas_name": "Water Vapor",
+                "chemical_formula": "H2O",
+                "earth_atmosphere_percentage": 0.5,
+                "common_in_atmospheres": true,
+                "description": "Highly variable concentration. Critical for life as we know it."
+            }
+        ]
+    }
+}

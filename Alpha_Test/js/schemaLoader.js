@@ -3,6 +3,7 @@
 
 // Store loaded database schemas
 let databaseSchemas = {};
+let availableSchemasList = [];
 
 // Load a database schema from JSON file
 async function loadDatabaseSchema(dbAlias, jsonPath) {
@@ -16,7 +17,7 @@ async function loadDatabaseSchema(dbAlias, jsonPath) {
         
         const data = await response.json();
         databaseSchemas[dbAlias] = data;
-        console.log(`Database schema for ${dbAlias} loaded successfully:`, Object.keys(data));
+        // console.log(`Database schema for ${dbAlias} loaded successfully:`, Object.keys(data));
         return data;
     } catch (error) {
         console.error(`Error loading ${dbAlias} database schema:`, error);
@@ -24,43 +25,70 @@ async function loadDatabaseSchema(dbAlias, jsonPath) {
     }
 }
 
+// Load available schemas list from JSON file
+async function loadAvailableSchemasList() {
+    try {
+        // console.log("Loading available schemas list...");
+        const response = await fetch('./data/db_schemas/available_schemas.json');
+        if (!response.ok) {
+            throw new Error(`Failed to load available schemas list - HTTP status: ${response.status}`);
+        }
+        
+        availableSchemasList = await response.json();
+        // console.log("Available schemas list loaded:", availableSchemasList);
+        return availableSchemasList;
+    } catch (error) {
+        console.error("Error loading available schemas list:", error);
+        // Fallback to core schemas if available_schemas.json fails to load
+        availableSchemasList = ["mission_control", "maps", "galaxy1", "mainQuest"];
+        return availableSchemasList;
+    }
+}
+
 // Initialize all database schemas
 async function initializeDatabaseSchemas() {
     console.log("Loading database schemas...");
     
-    // Define the core databases with their schema paths
-    // Updated to include mainQuest database
-    const coreDbPaths = {
-        'mission_control': './data/db_schemas/mission_control.json',
-        'maps': './data/db_schemas/maps.json',
-        'galaxy1': './data/db_schemas/galaxy1.json',
-        'mainQuest': './data/db_schemas/mainQuest.json'
-    };
+    // First load the available schemas list
+    await loadAvailableSchemasList();
     
-    console.log("Core DB paths to load:", coreDbPaths);
-    
-    // Load core databases (required for the game)
-    const coreDbPromises = Object.entries(coreDbPaths).map(
-        ([alias, path]) => loadDatabaseSchema(alias, path)
-    );
+    // Then load each schema from the list
+    const schemaPromises = [];
+    for (const schemaName of availableSchemasList) {
+        const schemaPath = `./data/db_schemas/${schemaName}.json`;
+        schemaPromises.push(loadDatabaseSchema(schemaName, schemaPath));
+    }
     
     try {
-        await Promise.all(coreDbPromises);
-        console.log("Core database schemas loaded successfully");
+        await Promise.all(schemaPromises);
+        console.log("All database schemas loaded successfully");
         console.log("Available databases:", Object.keys(databaseSchemas));
+        
+        // Sync loaded schemas with GameSystem.gameData
+        if (window.GameSystem && window.GameSystem.gameData) {
+            window.GameSystem.gameData.databases = { ...databaseSchemas };
+            console.log("Synced database schemas with GameSystem");
+        } else {
+            console.warn("GameSystem or gameData not available for schema sync");
+        }
         
         // Debug: Log all loaded schema structures
         Object.entries(databaseSchemas).forEach(([dbName, schema]) => {
             console.log(`Database ${dbName} schema structure:`, Object.keys(schema));
         });
     } catch (error) {
-        console.error("Failed to load core database schemas:", error);
+        console.error("Failed to load database schemas:", error);
     }
 }
 
 // Get all loaded database schemas
 function getAllDatabaseSchemas() {
     return databaseSchemas;
+}
+
+// Get the list of available schema names
+function getAvailableSchemasList() {
+    return availableSchemasList;
 }
 
 // Get a specific database schema
@@ -199,13 +227,24 @@ function registerHardcodedSchemas() {
         }
     };
     
-    console.log("Registered hardcoded fallback schemas");
+    // Set availableSchemasList for fallback as well
+    availableSchemasList = Object.keys(databaseSchemas);
+    
+    // Sync hardcoded schemas with GameSystem.gameData
+    if (window.GameSystem && window.GameSystem.gameData) {
+        window.GameSystem.gameData.databases = { ...databaseSchemas };
+        // console.log("Synced hardcoded schemas with GameSystem");
+    } else {
+        console.warn("GameSystem or gameData not available for hardcoded schema sync");
+    }
+    
+    // console.log("Registered hardcoded fallback schemas");
     return databaseSchemas;
 }
 
 // Add logging function to debug mission database aliases
 function validateMissionDatabaseAliases() {
-    console.log("Validating mission database aliases...");
+    // console.log("Validating mission database aliases...");
     if (window.GameSystem && window.GameSystem.gameData && 
         window.GameSystem.gameData.databases && 
         window.GameSystem.gameData.databases.mission_control &&
@@ -213,7 +252,7 @@ function validateMissionDatabaseAliases() {
         
         const missions = window.GameSystem.gameData.databases.mission_control.missions.data;
         if (Array.isArray(missions)) {
-            console.log("Mission database aliases:");
+            // console.log("Mission database aliases:");
             missions.forEach(mission => {
                 console.log(`Mission ${mission.id}: ${mission.title} => dbAlias: ${mission.dbAlias}`);
             });
@@ -230,60 +269,11 @@ function validateMissionDatabaseAliases() {
         
         const missions = window.GameSystem.gameData.databases.mainQuest.missions.data;
         if (Array.isArray(missions)) {
-            console.log("MainQuest database aliases:");
+            // console.log("MainQuest database aliases:");
             missions.forEach(mission => {
                 console.log(`Mission ${mission.id}: ${mission.title} => dbAlias: ${mission.dbAlias}`);
             });
         }
-    }
-}
-
-// Call validation after schemas are loaded
-async function initializeSchemas() {
-    try {
-        // First fetch the list of available schemas
-        const response = await fetch('./data/db_schemas/available_schemas.json');
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        
-        const schemaList = await response.json();
-        const schemaPromises = [];
-        
-        // Load each schema file
-        for (const schemaName of schemaList) {
-            const schemaPromise = fetch(`./data/db_schemas/${schemaName}.json`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to load schema: ${schemaName}`);
-                    }
-                    return response.json();
-                })
-                .then(schemaData => {
-                    schemas[schemaName] = schemaData;
-                    console.log(`Database schema for ${schemaName} loaded successfully`);
-                    return schemaName;
-                })
-                .catch(error => {
-                    console.error(`Error loading schema ${schemaName}:`, error);
-                });
-            
-            schemaPromises.push(schemaPromise);
-        }
-        
-        // Wait for all schemas to load
-        await Promise.all(schemaPromises);
-        console.log("Core database schemas loaded successfully");
-        
-        // Call validation function after schemas are loaded
-        setTimeout(() => {
-            validateMissionDatabaseAliases();
-        }, 1000);
-        
-        return schemas;
-    } catch (error) {
-        console.error('Failed to initialize schemas:', error);
-        throw error;
     }
 }
 
@@ -292,5 +282,7 @@ window.SchemaLoader = {
     initialize: initializeDatabaseSchemas,
     getAll: getAllDatabaseSchemas,
     get: getDatabaseSchema,
-    registerHardcoded: registerHardcodedSchemas
+    registerHardcoded: registerHardcodedSchemas,
+    getAvailableSchemasList: getAvailableSchemasList,
+    validateMissionDatabaseAliases: validateMissionDatabaseAliases
 };

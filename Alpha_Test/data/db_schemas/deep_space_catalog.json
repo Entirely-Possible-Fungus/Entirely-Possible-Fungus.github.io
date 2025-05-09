@@ -1,0 +1,226 @@
+{
+    "DeepSpaceObjects": {
+        "columns": {
+            "object_id": "INT PRIMARY KEY AUTO_INCREMENT",
+            "object_name": "VARCHAR(255) NOT NULL",
+            "object_type": "VARCHAR(100)",
+            "star_system": "VARCHAR(255)",
+            "distance_ly": "FLOAT",
+            "is_habitable_candidate": "BOOLEAN",
+            "spectral_signature": "VARCHAR(100)",
+            "radiation_level_avg_mSv": "FLOAT",
+            "notes": "TEXT"
+        },
+        "data": [
+            {
+                "object_id": 1,
+                "object_name": "Xylos Alpha",
+                "object_type": "Star",
+                "star_system": "Xylos Sector",
+                "distance_ly": 45.7,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Helium",
+                "radiation_level_avg_mSv": 8540.2,
+                "notes": "Main sequence star, G-type similar to Sol but 1.2x larger"
+            },
+            {
+                "object_id": 2,
+                "object_name": "Xylos Beta",
+                "object_type": "Planet",
+                "star_system": "Xylos Sector",
+                "distance_ly": 45.7,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Methane",
+                "radiation_level_avg_mSv": 142.8,
+                "notes": "Gas giant, uninhabitable due to extreme pressure and temperatures"
+            },
+            {
+                "object_id": 3,
+                "object_name": "Xylos Gamma",
+                "object_type": "Planet",
+                "star_system": "Xylos Sector",
+                "distance_ly": 45.7,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Iron Oxide",
+                "radiation_level_avg_mSv": 86.3,
+                "notes": "Rocky planet with thin atmosphere, shows signs of past water activity"
+            },
+            {
+                "object_id": 4,
+                "object_name": "Xylos Delta",
+                "object_type": "Asteroid Belt",
+                "star_system": "Xylos Sector",
+                "distance_ly": 45.8,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Silicates",
+                "radiation_level_avg_mSv": 63.5,
+                "notes": "Dense asteroid field with significant mineral resources"
+            },
+            {
+                "object_id": 5,
+                "object_name": "Xylos Epsilon",
+                "object_type": "Moon",
+                "star_system": "Xylos Sector",
+                "distance_ly": 45.7,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Ice",
+                "radiation_level_avg_mSv": 22.1,
+                "notes": "Ice-covered moon of Xylos Beta with subsurface ocean potential"
+            },
+            {
+                "object_id": 6,
+                "object_name": "Kepler-186f",
+                "object_type": "Planet",
+                "star_system": "Kepler-186",
+                "distance_ly": 492.0,
+                "is_habitable_candidate": true,
+                "spectral_signature": "Water",
+                "radiation_level_avg_mSv": 4.2,
+                "notes": "First Earth-sized planet discovered in the habitable zone of its star"
+            },
+            {
+                "object_id": 7,
+                "object_name": "Kepler-186b",
+                "object_type": "Planet",
+                "star_system": "Kepler-186",
+                "distance_ly": 492.0,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Silicon",
+                "radiation_level_avg_mSv": 1286.3,
+                "notes": "Too close to its star for habitability"
+            },
+            {
+                "object_id": 8,
+                "object_name": "TRAPPIST-1b",
+                "object_type": "Planet",
+                "star_system": "TRAPPIST-1",
+                "distance_ly": 39.5,
+                "is_habitable_candidate": true,
+                "spectral_signature": "Water",
+                "radiation_level_avg_mSv": 12.8,
+                "notes": "Rocky planet in the TRAPPIST-1 system"
+            },
+            {
+                "object_id": 9,
+                "object_name": "TRAPPIST-1c",
+                "object_type": "Planet",
+                "star_system": "TRAPPIST-1",
+                "distance_ly": 39.5,
+                "is_habitable_candidate": true,
+                "spectral_signature": "Water Vapor",
+                "radiation_level_avg_mSv": 10.5,
+                "notes": "Second planet in the TRAPPIST-1 system"
+            },
+            {
+                "object_id": 10,
+                "object_name": "TRAPPIST-1d",
+                "object_type": "Planet",
+                "star_system": "TRAPPIST-1",
+                "distance_ly": 39.5,
+                "is_habitable_candidate": true,
+                "spectral_signature": "Oxygen",
+                "radiation_level_avg_mSv": 8.2,
+                "notes": "Third planet in the TRAPPIST-1 system, within habitable zone"
+            },
+            {
+                "object_id": 11,
+                "object_name": "TRAPPIST-1e",
+                "object_type": "Planet",
+                "star_system": "TRAPPIST-1",
+                "distance_ly": 39.5,
+                "is_habitable_candidate": true,
+                "spectral_signature": "Water",
+                "radiation_level_avg_mSv": 7.4,
+                "notes": "Fourth planet in the TRAPPIST-1 system, most Earth-like"
+            },
+            {
+                "object_id": 12,
+                "object_name": "Alpha Centauri Bb",
+                "object_type": "Planet",
+                "star_system": "Alpha Centauri",
+                "distance_ly": 4.37,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Iron",
+                "radiation_level_avg_mSv": 324.2,
+                "notes": "Rocky planet but too hot for habitability"
+            },
+            {
+                "object_id": 13,
+                "object_name": "Proxima Centauri b",
+                "object_type": "Planet",
+                "star_system": "Alpha Centauri",
+                "distance_ly": 4.24,
+                "is_habitable_candidate": true,
+                "spectral_signature": "Unknown",
+                "radiation_level_avg_mSv": 1680.0,
+                "notes": "Closest exoplanet to Earth, high radiation levels from flare star"
+            },
+            {
+                "object_id": 14,
+                "object_name": "Neptune-K4285",
+                "object_type": "Planet",
+                "star_system": "K4285",
+                "distance_ly": 762.8,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Methane",
+                "radiation_level_avg_mSv": 18.6,
+                "notes": "Ice giant planet with methane-rich atmosphere"
+            },
+            {
+                "object_id": 15,
+                "object_name": "Europa-K4285",
+                "object_type": "Moon",
+                "star_system": "K4285",
+                "distance_ly": 762.8,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Water Ice",
+                "radiation_level_avg_mSv": 5.2,
+                "notes": "Ice-covered moon with subsurface ocean potential, orbits Neptune-K4285"
+            },
+            {
+                "object_id": 16,
+                "object_name": "Sol",
+                "object_type": "Star",
+                "star_system": "Sol",
+                "distance_ly": 0.0000158,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Hydrogen",
+                "radiation_level_avg_mSv": 6300.0,
+                "notes": "G-type main-sequence star, hosts Earth and other planets"
+            },
+            {
+                "object_id": 17,
+                "object_name": "Earth",
+                "object_type": "Planet",
+                "star_system": "Sol",
+                "distance_ly": 0.0000158,
+                "is_habitable_candidate": true,
+                "spectral_signature": "Water",
+                "radiation_level_avg_mSv": 3.65,
+                "notes": "Third planet from Sol, only confirmed inhabited planet"
+            },
+            {
+                "object_id": 18,
+                "object_name": "Mars",
+                "object_type": "Planet",
+                "star_system": "Sol",
+                "distance_ly": 0.0000158,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Iron Oxide",
+                "radiation_level_avg_mSv": 8.8,
+                "notes": "Fourth planet from Sol, shows evidence of past water"
+            },
+            {
+                "object_id": 19,
+                "object_name": "Water World-HD42",
+                "object_type": "Planet",
+                "star_system": "HD42",
+                "distance_ly": 198.3,
+                "is_habitable_candidate": false,
+                "spectral_signature": "Water",
+                "radiation_level_avg_mSv": 2.3,
+                "notes": "Ocean world completely covered in liquid water"
+            }
+        ]
+    }
+}
