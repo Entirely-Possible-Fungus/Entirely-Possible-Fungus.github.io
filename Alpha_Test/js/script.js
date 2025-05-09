@@ -1970,7 +1970,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             isResizing = true;
             centralHandle.classList.add('dragging');
-            document.body.style.cursor = 'move';
+            document.body.style.cursor = 'move'; // 'move' shows a 4-way arrow cursor
             
             // Get the starting position of pointer
             startX = e.clientX;

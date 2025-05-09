@@ -1392,7 +1392,7 @@ body.resizing-vertical {
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
     border: 2px solid #555;
     top: 50%;
-    right: -39px;
+    right: -59px;
     /* transform: translate(50%, -50%); */
     /* user-select: none;
     touch-action: none; */
@@ -1404,15 +1404,31 @@ body.resizing-vertical {
 
 .central-resize-handle.dragging {
     background-color: #666;
+    cursor: grabbing; /* Change to grabbing hand when active */
     /* transform: translate(50%, -50%) scale(1.1); */
 }
 
 .central-grip {
-    width: 18px;
-    height: 18px;
-    background-color: #ffcc00;
-    clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
-    box-shadow: 0 0 8px rgba(255, 204, 0, 0.8);
+    width: 20px;
+    height: 20px;
+    background-color: #00ffcc;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 12px rgba(0, 255, 204, 0.8);
+    animation: pulse-grip 2s infinite ease-in-out;
+    border: 2px dashed #ffcc00;
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+
+.central-resize-handle:hover .central-grip {
+    transform: rotate(45deg);
+}
+
+@keyframes pulse-grip {
+    0% { box-shadow: 0 0 5px rgba(0, 255, 204, 0.5); }
+    50% { box-shadow: 0 0 15px rgba(0, 255, 204, 1); }
+    100% { box-shadow: 0 0 5px rgba(0, 255, 204, 0.5); }
 }
 
 .central-resize-handle.dragging {
@@ -1437,18 +1453,19 @@ body.resizing-vertical {
     position: relative;
     z-index: 50;
     background-color: #333;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: move;
+    cursor: grab; /* Hand/grab cursor */
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
-    border: 2px solid #555;
-    margin-right: 10px;
+    border: 2px solid #00ffcc;
+    margin-right: 50px;
     user-select: none;
     touch-action: none;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .central-resize-handle:hover {
@@ -1461,11 +1478,26 @@ body.resizing-vertical {
 }
 
 .central-grip {
-    width: 16px;
-    height: 16px;
-    background-color: #ffcc00;
-    clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
-    box-shadow: 0 0 8px rgba(255, 204, 0, 0.8);
+    width: 20px;
+    height: 20px;
+    background-color: #00ffcc;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 12px rgba(0, 255, 204, 0.8);
+    animation: pulse-grip 2s infinite ease-in-out;
+    border: 2px dashed #ffcc00;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Add handle icon to make it obvious it can be dragged */
+.central-grip::before {
+    content: "✥";
+    color: #333;
+    /* font-size: 14px; */
+    line-height: 1;
+    /* font-weight: bold; */
 }
 
 .button-group {
