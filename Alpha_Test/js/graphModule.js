@@ -188,7 +188,9 @@ function initializeGraphModule() {
         // Add the button hover sound effect
         newBtn.addEventListener('mouseenter', function() {
             try {
-                if (window.soundSettings && window.soundSettings.effectsEnabled) {
+                if (window.AudioPoolManager) {
+                    window.AudioPoolManager.playSound('hover', './audio/423167__plasterbrain__minimalist-sci-fi-ui-cancel.ogg', 0.15);
+                } else if (window.soundSettings && window.soundSettings.effectsEnabled) {
                     const hoverSound = new Audio('./audio/423167__plasterbrain__minimalist-sci-fi-ui-cancel.ogg');
                     hoverSound.volume = 0.15 * window.soundSettings.effectsVolume * window.soundSettings.masterVolume;
                     hoverSound.play().catch(err => console.error("Button hover sound failed:", err));

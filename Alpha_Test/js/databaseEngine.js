@@ -252,42 +252,48 @@ function playErrorSound() {
         const soundConfig = window.soundSettings || DEFAULT_SOUND_SETTINGS;
         
         if (soundConfig.effectsEnabled) {
-            // Create audio context for filters
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const errorSound = new Audio('./audio/619803__teh_bucket__error-fizzle.ogg');
-            
-            // Create media element source from our audio element
-            const source = audioContext.createMediaElementSource(errorSound);
-            
-            // Create high-pass filter to reduce low frequencies (bass)
-            const highPassFilter = audioContext.createBiquadFilter();
-            highPassFilter.type = "highpass";
-            highPassFilter.frequency.value = 300; // Cut frequencies below 300Hz
-            
-            // Create low-pass filter to reduce high frequencies (treble)
-            const lowPassFilter = audioContext.createBiquadFilter();
-            lowPassFilter.type = "lowpass";
-            lowPassFilter.frequency.value = 3000; // Cut frequencies above 3000Hz
-            
-            // Create gain node to control volume more precisely
-            const gainNode = audioContext.createGain();
-            gainNode.gain.value = 0.5; // Additional volume reduction
-            
-            // Connect nodes: source -> highpass -> lowpass -> gain -> output
-            source.connect(highPassFilter);
-            highPassFilter.connect(lowPassFilter);
-            lowPassFilter.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            // Calculate volume using either window.soundSettings or our DEFAULT_SOUND_SETTINGS
-            const masterVolume = soundConfig.masterVolume || 0.5;
-            const effectsVolume = soundConfig.effectsVolume || 0.5;
-            errorSound.volume = 0.4 * effectsVolume * masterVolume;
-            
-            // console.log("Playing SQL error sound with filters");
-            errorSound.play().catch(err => {
-                console.error("SQL error sound failed to play:", err);
-            });
+            // Check if AudioPoolManager exists and use it
+            if (window.AudioPoolManager) {
+                window.AudioPoolManager.playSound('error', './audio/619803__teh_bucket__error-fizzle.ogg', 0.4);
+            } else {
+                // Fallback to traditional method with audio filters
+                // Create audio context for filters
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const errorSound = new Audio('./audio/619803__teh_bucket__error-fizzle.ogg');
+                
+                // Create media element source from our audio element
+                const source = audioContext.createMediaElementSource(errorSound);
+                
+                // Create high-pass filter to reduce low frequencies (bass)
+                const highPassFilter = audioContext.createBiquadFilter();
+                highPassFilter.type = "highpass";
+                highPassFilter.frequency.value = 300; // Cut frequencies below 300Hz
+                
+                // Create low-pass filter to reduce high frequencies (treble)
+                const lowPassFilter = audioContext.createBiquadFilter();
+                lowPassFilter.type = "lowpass";
+                lowPassFilter.frequency.value = 3000; // Cut frequencies above 3000Hz
+                
+                // Create gain node to control volume more precisely
+                const gainNode = audioContext.createGain();
+                gainNode.gain.value = 0.5; // Additional volume reduction
+                
+                // Connect nodes: source -> highpass -> lowpass -> gain -> output
+                source.connect(highPassFilter);
+                highPassFilter.connect(lowPassFilter);
+                lowPassFilter.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Calculate volume using either window.soundSettings or our DEFAULT_SOUND_SETTINGS
+                const masterVolume = soundConfig.masterVolume || 0.5;
+                const effectsVolume = soundConfig.effectsVolume || 0.5;
+                errorSound.volume = 0.4 * effectsVolume * masterVolume;
+                
+                // console.log("Playing SQL error sound with filters");
+                errorSound.play().catch(err => {
+                    console.error("SQL error sound failed to play:", err);
+                });
+            }
         }
     } catch (err) {
         console.error("Error playing SQL error sound:", err);
@@ -1184,24 +1190,30 @@ function setupDatabaseBrowserEvents(mapCanvas, svgContainer) {
         
         try {
             if (window.soundSettings && window.soundSettings.effectsEnabled) {
-                // console.log("Sound settings OK, preparing to play hover sound");
-                const tempHoverSound = new Audio('./audio/423167__plasterbrain__minimalist-sci-fi-ui-cancel.ogg');
-                tempHoverSound.volume = 0.15 * window.soundSettings.effectsVolume * window.soundSettings.masterVolume;
-                
-                // Log before playing
-                // console.log(`Playing hover sound for ${buttonName}, volume: ${tempHoverSound.volume}`);
-                
-                // Play and handle errors properly
-                tempHoverSound.play().then(() => {
-                    // console.log("Hover sound played successfully");
-                }).catch(err => {
-                    console.error(`DB button hover sound failed: ${err.message}`);
-                });
-                
-                // Cleanup
-                tempHoverSound.addEventListener('ended', () => {
-                    tempHoverSound.src = '';
-                });
+                if (window.AudioPoolManager) {
+                    // Use the audio pool manager
+                    window.AudioPoolManager.playSound('hover', './audio/423167__plasterbrain__minimalist-sci-fi-ui-cancel.ogg', 0.15);
+                } else {
+                    // Fallback to traditional method
+                    // console.log("Sound settings OK, preparing to play hover sound");
+                    const tempHoverSound = new Audio('./audio/423167__plasterbrain__minimalist-sci-fi-ui-cancel.ogg');
+                    tempHoverSound.volume = 0.15 * window.soundSettings.effectsVolume * window.soundSettings.masterVolume;
+                    
+                    // Log before playing
+                    // console.log(`Playing hover sound for ${buttonName}, volume: ${tempHoverSound.volume}`);
+                    
+                    // Play and handle errors properly
+                    tempHoverSound.play().then(() => {
+                        // console.log("Hover sound played successfully");
+                    }).catch(err => {
+                        console.error(`DB button hover sound failed: ${err.message}`);
+                    });
+                    
+                    // Cleanup
+                    tempHoverSound.addEventListener('ended', () => {
+                        tempHoverSound.src = '';
+                    });
+                }
             } else {
                 console.warn("Sound settings unavailable or effects disabled");
             }
@@ -1300,15 +1312,22 @@ function setupDatabaseBrowserEvents(mapCanvas, svgContainer) {
             
             // Play button click sound
             try {
-                const clickSound = new Audio('./audio/button-202966.ogg');
-                let dbButtonVolume = 0.15;
-                if (window.soundSettings) {
-                    dbButtonVolume = 0.15 * window.soundSettings.effectsVolume * window.soundSettings.masterVolume;
+                if (window.AudioPoolManager) {
+                    // Use the audio pool manager
+                    window.AudioPoolManager.initPool('dbClick', './audio/button-202966.ogg', 5); // Initialize if not already done
+                    window.AudioPoolManager.playSound('dbClick', './audio/button-202966.ogg', 0.15);
+                } else {
+                    // Fallback to traditional method
+                    const clickSound = new Audio('./audio/button-202966.ogg');
+                    let dbButtonVolume = 0.15;
+                    if (window.soundSettings) {
+                        dbButtonVolume = 0.15 * window.soundSettings.effectsVolume * window.soundSettings.masterVolume;
+                    }
+                    clickSound.volume = dbButtonVolume;
+                    clickSound.play().catch(err => console.error("Button click audio play failed:", err));
                 }
-                clickSound.volume = dbButtonVolume;
-                clickSound.play().catch(err => console.error("Button click audio play failed:", err));
             } catch (err) {
-                console.error("Error creating button click sound:", err);
+                console.error("Error playing button click sound:", err);
             }
             
             if (button.classList.contains('db-restricted-button')) {

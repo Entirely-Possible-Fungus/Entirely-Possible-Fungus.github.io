@@ -53,8 +53,13 @@ function initDomElements() {
     submitAnswerBtn = document.getElementById('submit-answer-btn');
     answerFeedback = document.getElementById('answer-feedback');
     
-    // Initialize error sound
-    incorrectAnswerSound = new Audio('./audio/619803__teh_bucket__error-fizzle.ogg');
+    // Initialize error sound - either through pool manager or directly
+    if (window.AudioPoolManager) {
+        // Use AudioPoolManager - the actual sound will be retrieved when needed
+        window.AudioPoolManager.initPool('incorrectAnswer', './audio/619803__teh_bucket__error-fizzle.ogg', 3);
+    } else {
+        incorrectAnswerSound = new Audio('./audio/619803__teh_bucket__error-fizzle.ogg');
+    }
 }
 
 // Mission system initialization
@@ -758,18 +763,23 @@ function completeMission() {
     // Log the mission completion for debugging
     logMissionTransition('mission_complete', currentMissionId);
     
-    // Play the mission completion sound with appropriate volume
+    // Play the mission completion sound using the audio pool
     try {
-        const missionCompleteSound = new Audio('./audio/mixkit-water-sci-fi-bleep-902.ogg');
-        missionCompleteSound.volume = 0.15;
-        if (window.soundSettings) {
-            missionCompleteSound.volume = 0.15 * window.soundSettings.effectsVolume * window.soundSettings.masterVolume;
+        if (window.AudioPoolManager) {
+            window.AudioPoolManager.playSound('missionComplete', './audio/mixkit-water-sci-fi-bleep-902.ogg', 0.15);
+        } else {
+            // Fallback to traditional method if AudioPoolManager isn't available
+            const missionCompleteSound = new Audio('./audio/mixkit-water-sci-fi-bleep-902.ogg');
+            missionCompleteSound.volume = 0.15;
+            if (window.soundSettings) {
+                missionCompleteSound.volume = 0.15 * window.soundSettings.effectsVolume * window.soundSettings.masterVolume;
+            }
+            missionCompleteSound.play().catch(err => {
+                console.error("Mission complete sound failed to play:", err);
+            });
         }
-        missionCompleteSound.play().catch(err => {
-            console.error("Mission complete sound failed to play:", err);
-        });
     } catch (err) {
-        console.error("Error creating mission complete sound:", err);
+        console.error("Error playing mission complete sound:", err);
     }
     
     // Update score
@@ -1220,17 +1230,23 @@ function checkMissionAnswer() {
 // Play sound for incorrect answers
 function playIncorrectSound() {
     try {
-        // Set appropriate volume
-        incorrectAnswerSound.volume = 0.2;
-        if (window.soundSettings) {
-            incorrectAnswerSound.volume = 0.2 * window.soundSettings.effectsVolume * window.soundSettings.masterVolume;
+        if (window.AudioPoolManager) {
+            // Use the audio pool to play the sound
+            window.AudioPoolManager.playSound('incorrectAnswer', './audio/619803__teh_bucket__error-fizzle.ogg', 0.2);
+        } else {
+            // Fallback to traditional method
+            // Set appropriate volume
+            incorrectAnswerSound.volume = 0.2;
+            if (window.soundSettings) {
+                incorrectAnswerSound.volume = 0.2 * window.soundSettings.effectsVolume * window.soundSettings.masterVolume;
+            }
+            
+            // Play the sound
+            incorrectAnswerSound.currentTime = 0; // Restart the sound if it's already playing
+            incorrectAnswerSound.play().catch(err => {
+                console.error("Error sound failed to play:", err);
+            });
         }
-        
-        // Play the sound
-        incorrectAnswerSound.currentTime = 0; // Restart the sound if it's already playing
-        incorrectAnswerSound.play().catch(err => {
-            console.error("Error sound failed to play:", err);
-        });
     } catch (err) {
         console.error("Error playing incorrect answer sound:", err);
     }
