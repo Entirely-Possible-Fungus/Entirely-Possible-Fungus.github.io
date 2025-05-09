@@ -570,7 +570,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create a compatibility wrapper for backward compatibility
     window.errorSound = {
         play: function() {
-            return AudioPoolManager.playSound('error', sqlErrorSoundPath, 1.0);
+            // Return a promise-like object with catch method
+            const audioEl = AudioPoolManager.playSound('error', sqlErrorSoundPath, 1.0);
+            return {
+                catch: function(callback) {
+                    // Handle both cases - if audioEl is a real promise or not
+                    if (audioEl && typeof audioEl.catch === 'function') {
+                        return audioEl.catch(callback);
+                    }
+                    // Return a thenable object to keep promise chain working
+                    return {
+                        then: function() {
+                            return this;
+                        },
+                        catch: function() {
+                            return this;
+                        }
+                    };
+                }
+            };
         },
         volume: soundSettings.effectsVolume * soundSettings.masterVolume
     };

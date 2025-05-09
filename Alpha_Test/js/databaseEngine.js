@@ -215,6 +215,35 @@ function executeQuery(query) {
             return [{ status: 'Database Registry opened' }];
         }
         
+        // Auto-mount required database if the table exists in a known database
+        // Extract table name from query for improved user experience
+        const tableMatch = query.match(/\bFROM\s+([^,\s]+)/i);
+        if (tableMatch && tableMatch[1]) {
+            const tableName = tableMatch[1].replace(/`|"|'|\[|\]/g, '');
+            const suggestedDb = getSuggestedDatabase(tableName);
+            
+            // If the table belongs to a known database that's not mounted, try to mount it first
+            if (suggestedDb && !mountedDbAliases.has(suggestedDb)) {
+                console.log(`Auto-mounting database ${suggestedDb} for table ${tableName}`);
+                if (mountDatabase(suggestedDb)) {
+                    // Update visualization after auto-mounting
+                    generateVisualizerMetadata();
+                    const mapCanvas = document.getElementById('map-canvas');
+                    const svgContainer = document.getElementById('schema-relationship-svg');
+                    setupMap(mapCanvas, svgContainer);
+                    
+                    // Inform user
+                    if (window.GameSystem) {
+                        GameSystem.displayMessage(
+                            `Database "${suggestedDb}" auto-mounted for table "${tableName}".`,
+                            "status-success",
+                            3000
+                        );
+                    }
+                }
+            }
+        }
+        
         // Process query with AlaSQL
         const results = alasql(query);
         
@@ -314,7 +343,11 @@ function getSuggestedDatabase(tableName) {
         "earth": "maps",
         "solsystemplanets": "solar_system_archive",
         "solaratmosphericgases": "solar_system_archive",
-        "deepspaceobjects": "deep_space_catalog"
+        "deepspaceobjects": "deep_space_catalog",
+        // South American Economic tables
+        "economicactivities": "sa_econ",
+        "countryindicators": "sa_econ",
+        "regionaltradepacts": "sa_econ"
     };
     
     return tableToDbMap[tableName.toLowerCase()] || null;
@@ -690,6 +723,22 @@ function updateVisualization(parsedInfo, mapCanvas, svgContainer) {
     } 
     
     parsedInfo.tablesInvolved.forEach((tableName, index) => { 
+        // Check if the table exists in the schema before trying to highlight it
+        if (!dbMetadataVis.tables || !dbMetadataVis.tables[tableName]) {
+            console.warn(`Table "${tableName}" not found in schema visualization. It might not be mounted yet.`);
+            
+            // Suggest which database should be mounted
+            const suggestedDb = getSuggestedDatabase(tableName);
+            if (suggestedDb && !mountedDbAliases.has(suggestedDb)) {
+                const warningMsg = `Table "${tableName}" not found. Try mounting the "${suggestedDb}" database.`;
+                console.warn(warningMsg);
+                if (window.GameSystem) {
+                    GameSystem.displayMessage(warningMsg, "status-warning", 4000);
+                }
+            }
+            return;
+        }
+        
         const tableEl = document.getElementById(`vis-table-${tableName}`); 
         if (tableEl) { 
             tableEl.classList.add('highlight-table'); 
@@ -748,6 +797,12 @@ function updateVisualization(parsedInfo, mapCanvas, svgContainer) {
         colIdentifier = colIdentifier.trim(); 
         if (colIdentifier === '*') { 
             parsedInfo.tablesInvolved.forEach(tableName => { 
+                // First check if table exists in schema
+                if (!dbMetadataVis.tables || !dbMetadataVis.tables[tableName]) {
+                    console.warn(`Cannot highlight columns of table "${tableName}" - it doesn't exist in the schema visualization.`);
+                    return;
+                }
+                
                 const tableMeta = dbMetadataVis.tables[tableName]; 
                 if (tableMeta) { 
                     tableMeta.columns.forEach(colName => { 
@@ -1058,7 +1113,8 @@ function renderDatabaseBrowserItems() {
         galaxy1: "Star system data with planets, species and resources.",
         mainQuest: "Main storyline missions and alien investigation data.",
         deep_space_catalog: "Deep space objects and celestial bodies catalog.",
-        solar_system_archive: "Detailed information about planets in the Sol system."
+        solar_system_archive: "Detailed information about planets in the Sol system.",
+        sa_econ: "South American economic activities and regional trade data."
     };
     const sizes = { 
         mission_control: "5MB", 
@@ -1066,7 +1122,8 @@ function renderDatabaseBrowserItems() {
         galaxy1: "50MB",
         mainQuest: "100MB",
         deep_space_catalog: "75MB",
-        solar_system_archive: "30MB"
+        solar_system_archive: "30MB",
+        sa_econ: "40MB"
     };
     const accessLevels = { 
         mission_control: 1, 
@@ -1074,7 +1131,8 @@ function renderDatabaseBrowserItems() {
         galaxy1: 1,
         mainQuest: 2,
         deep_space_catalog: 1,
-        solar_system_archive: 1
+        solar_system_archive: 1,
+        sa_econ: 1
     };
 
     // Get available schemas list from SchemaLoader
