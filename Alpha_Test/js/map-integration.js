@@ -7,6 +7,8 @@
         let countriesLayer = null;
         let countrySource = null;
         let missionsLayer = null; // New layer for mission markers
+        let citiesLayer = null; // New layer for cities
+        let citiesSource = null; // Source for cities layer
         let currentView = 'countries';
         let selectInteraction = null;
         let isMapInitialized = false;
@@ -44,6 +46,64 @@
                 })
             })
         });
+        
+        // City style function - creates a small circle for each city
+        function cityStyleFunction(feature) {
+            return new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: 'rgba(51, 136, 255, 0.4)'  // Semi-transparent blue for city areas
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#3388ff',  // Blue border for cities
+                    width: 1.5
+                }),
+                // Display city name as text
+                text: new ol.style.Text({
+                    font: '10px "Share Tech Mono", monospace',
+                    text: feature.get('NAME') || '',
+                    fill: new ol.style.Fill({
+                        color: '#ffffff'
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: '#000000',
+                        width: 3
+                    }),
+                    offsetY: 0,
+                    padding: [2, 2, 2, 2],
+                    overflow: true,
+                    placement: 'point'
+                })
+            });
+        }
+        
+        // City hover style function
+        function cityHoverStyleFunction(feature) {
+            return new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: 'rgba(76, 175, 80, 0.6)'  // Semi-transparent green highlight when hovering
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#4CAF50',  // Green border when hovering
+                    width: 2.5
+                }),
+                // Display city name as text (with slightly larger font when hovering)
+                text: new ol.style.Text({
+                    font: '12px "Share Tech Mono", monospace',
+                    text: feature.get('NAME') || '',
+                    fill: new ol.style.Fill({
+                        color: '#ffffff'
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: '#000000',
+                        width: 3
+                    }),
+                    offsetY: 0,
+                    padding: [2, 2, 2, 2],
+                    overflow: true,
+                    placement: 'point'
+                })
+            });
+        }
 
         // Function to load mission locations from game data
         function loadMissionLocations() {
@@ -94,6 +154,14 @@
                     location: [2.3522, 48.8566],
                     description: "Active mission in Paris: Query sustainable tech.",
                     difficulty: 3
+                },
+                {
+                    missionId: "100",
+                    name: "Data Visualization: Using the Graph Button",
+                    country: "Global",
+                    location: [0, 0],
+                    description: "Visualizing global city data",
+                    difficulty: 1
                 },
             ];
             
@@ -239,6 +307,13 @@
                     country: "Japan",
                     location: [139.6917, 35.6895],
                     description: "Cultural Heritage Scan in Tokyo. Objective: Query significant sites."
+                },
+                // Mission 100 (Global - Data Visualization)
+                100: {
+                    showOnMap: true,
+                    country: "Global",
+                    location: [0, 0],
+                    description: "Visualizing global city data"
                 }
             };
             
@@ -406,7 +481,51 @@
         function hashStringToColor(str) { let hash = 0; for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); } let color = '#'; for (let i = 0; i < 3; i++) { const value = (hash >> (i * 8)) & 0xFF; color += ('00' + value.toString(16)).substr(-2); } return color; }
         function getUniqueValues(propertyName) { if (!countrySource) return []; const features = countrySource.getFeatures(); const uniqueValues = new Set(); features.forEach(feature => { const value = feature.get(propertyName); if (value) uniqueValues.add(value); }); return Array.from(uniqueValues).sort(); }
         function addLegendItem(label, color) { const legendContent = document.querySelector('#interactive-map-area #legend-content'); if (!legendContent) return; const item = document.createElement('div'); item.className = 'legend-item'; const colorBox = document.createElement('div'); colorBox.className = 'color-box'; colorBox.style.backgroundColor = color; const labelText = document.createElement('span'); labelText.textContent = label; item.appendChild(colorBox); item.appendChild(labelText); legendContent.appendChild(item); }
-        function updateLegend() { const legendContent = document.querySelector('#interactive-map-area #legend-content'); if (!legendContent) return; legendContent.innerHTML = ''; if (!countrySource || !countriesLayer) { addLegendItem('No data available', '#555'); return; } let propertyName, colorFunction; switch (currentView) { case 'continents': propertyName = GEOJSON_CONTINENT_PROPERTY; colorFunction = (value) => continentColors[value] || hashStringToColor(value); break; case 'regions': propertyName = GEOJSON_REGION_PROPERTY; colorFunction = hashStringToColor; break; case 'countries': default: addLegendItem('Countries', defaultFillColor); addLegendItem('Selected', 'rgba(76, 175, 80, 0.2)'); return; } const uniqueValues = getUniqueValues(propertyName); uniqueValues.forEach(value => { if (value) addLegendItem(value, colorFunction(value)); }); }
+        function updateLegend() { 
+            const legendContent = document.querySelector('#interactive-map-area #legend-content'); 
+            if (!legendContent) return; 
+            legendContent.innerHTML = ''; 
+            
+            // Show different legends based on current view
+            if (currentView === 'cities') {
+                if (!citiesLayer) {
+                    addLegendItem('No cities data available', '#555');
+                    return;
+                }
+                
+                addLegendItem('Cities', '#3388ff');
+                addLegendItem('Selected City', '#4CAF50');
+                return;
+            }
+            
+            // Countries/regions/continents views
+            if (!countrySource || !countriesLayer) { 
+                addLegendItem('No data available', '#555'); 
+                return; 
+            } 
+            
+            let propertyName, colorFunction; 
+            switch (currentView) { 
+                case 'continents': 
+                    propertyName = GEOJSON_CONTINENT_PROPERTY; 
+                    colorFunction = (value) => continentColors[value] || hashStringToColor(value); 
+                    break; 
+                case 'regions': 
+                    propertyName = GEOJSON_REGION_PROPERTY; 
+                    colorFunction = hashStringToColor; 
+                    break; 
+                case 'countries': 
+                default: 
+                    addLegendItem('Countries', defaultFillColor); 
+                    addLegendItem('Selected', 'rgba(76, 175, 80, 0.2)'); 
+                    return; 
+            } 
+            
+            const uniqueValues = getUniqueValues(propertyName); 
+            uniqueValues.forEach(value => { 
+                if (value) addLegendItem(value, colorFunction(value)); 
+            }); 
+        }
         function featureStyleFunction(feature) { let fillColor = defaultFillColor; if (currentView === 'continents') { const continent = feature.get(GEOJSON_CONTINENT_PROPERTY); fillColor = continent && continentColors[continent] ? continentColors[continent] : hashStringToColor(continent || 'unknown'); } else if (currentView === 'regions') { const region = feature.get(GEOJSON_REGION_PROPERTY); fillColor = region ? hashStringToColor(region) : defaultFillColor; } return new ol.style.Style({ fill: new ol.style.Fill({ color: fillColor }), stroke: defaultStroke }); }
         function updateInfoBox(feature) {
             const infoTitle = document.querySelector('#interactive-map-area #info-title');
@@ -432,6 +551,40 @@
                 return; 
             }
             
+            // Check if this is a city feature (in cities view)
+            if (currentView === 'cities') {
+                // Get city name
+                const cityName = feature.get('NAME') || 'Unknown City';
+                
+                // Get coordinates (first point of polygon)
+                const geometry = feature.getGeometry();
+                let coordinates = ["unknown", "unknown"];
+                
+                if (geometry) {
+                    // Try to get coordinates from polygon's first point
+                    try {
+                        if (geometry instanceof ol.geom.Polygon) {
+                            const coords = geometry.getCoordinates()[0][0];
+                            coordinates = [
+                                coords[0].toFixed(4),
+                                coords[1].toFixed(4)
+                            ];
+                        }
+                    } catch (e) {
+                        console.warn("Could not extract coordinates from city polygon:", e);
+                    }
+                }
+                
+                infoTitle.textContent = cityName;
+                infoContent.innerHTML = `
+                    <p><strong>Name:</strong> ${cityName}</p>
+                    <p><strong>Type:</strong> City</p>
+                    <p><strong>Coordinates:</strong> ${coordinates[0]}, ${coordinates[1]}</p>
+                `;
+                return;
+            }
+            
+            // Default country feature display
             const name = feature.get(GEOJSON_NAME_PROPERTY) || 'Unknown'; 
             const code = feature.get(GEOJSON_LINK_PROPERTY) || 'N/A'; 
             const region = feature.get(GEOJSON_REGION_PROPERTY) || 'N/A'; 
@@ -590,6 +743,9 @@
             countrySource.on('featuresloaderror', (event) => { console.error("Error loading GeoJSON:", event); setLoadingState(true, "Error loading map data.", true); });
             countriesLayer = new ol.layer.Vector({ source: countrySource, style: featureStyleFunction });
             worldMap.addLayer(countriesLayer);
+            
+            // Try to load cities from database after loading countries
+            await loadCitiesFromDatabase();
         }
         async function initializeMapInternal() {
             if (isMapInitialized) return;
@@ -637,15 +793,65 @@
                 setLoadingState(true, "Error initializing map", true);
             }
         }
-        function switchView(view) { if (currentView === view) return; currentView = view; updateViewButtons(); if (countriesLayer) { countriesLayer.setStyle(featureStyleFunction); } updateLegend(); }
-        function updateViewButtons() { document.querySelectorAll('#interactive-map-area .btn-group button').forEach(btn => { btn.classList.remove('active'); }); const activeBtn = document.querySelector(`#interactive-map-area #${currentView}-view`); if (activeBtn) { activeBtn.classList.add('active'); } }
+        function switchView(view) { 
+            if (currentView === view) return; 
+            
+            // Store previous view
+            const previousView = currentView;
+            currentView = view; 
+            
+            // Update UI buttons
+            updateViewButtons(); 
+            
+            // Handle cities view specially
+            if (view === 'cities') {
+                // Hide countries/regions/continents layer
+                if (countriesLayer) {
+                    countriesLayer.setVisible(false);
+                }
+                
+                // Show cities layer if it exists
+                if (citiesLayer) {
+                    citiesLayer.setVisible(true);
+                } else {
+                    console.warn("Cities layer not available");
+                }
+            } else {
+                // For non-cities views, show countries layer with appropriate styling
+                if (countriesLayer) {
+                    countriesLayer.setVisible(true);
+                    countriesLayer.setStyle(featureStyleFunction);
+                }
+                
+                // Hide cities layer if coming from cities view
+                if (previousView === 'cities' && citiesLayer) {
+                    citiesLayer.setVisible(false);
+                }
+            }
+            
+            updateLegend();
+        }
+        
+        function updateViewButtons() { 
+            document.querySelectorAll('#interactive-map-area .btn-group button').forEach(btn => { 
+                btn.classList.remove('active'); 
+            }); 
+            
+            const activeBtn = document.querySelector(`#interactive-map-area #${currentView}-view`); 
+            if (activeBtn) { 
+                activeBtn.classList.add('active'); 
+            } 
+        }
         function setupMapViewButtonListeners() {
             const countriesBtn = document.querySelector('#interactive-map-area #countries-view');
             const regionsBtn = document.querySelector('#interactive-map-area #regions-view');
             const continentsBtn = document.querySelector('#interactive-map-area #continents-view');
+            const citiesBtn = document.querySelector('#interactive-map-area #cities-view');
+            
             if (countriesBtn) { countriesBtn.addEventListener('click', () => switchView('countries')); }
             if (regionsBtn) { regionsBtn.addEventListener('click', () => switchView('regions')); }
             if (continentsBtn) { continentsBtn.addEventListener('click', () => switchView('continents')); }
+            if (citiesBtn) { citiesBtn.addEventListener('click', () => switchView('cities')); }
         }
 
         // Add a new function to show mission information
@@ -962,6 +1168,58 @@
             const missionInfoBox = document.getElementById('mission-info-box');
             if (missionInfoBox) {
                 missionInfoBox.style.display = 'none';
+            }
+        }
+
+        // Function to load cities from the database
+        async function loadCitiesFromDatabase() {
+            // Only attempt to load if AlaSQL is available
+            if (!window.alasql) {
+                console.warn("AlaSQL not available, cannot load cities data");
+                return false;
+            }
+            
+            try {
+                console.log("Loading cities from database...");
+                setLoadingState(true, "Loading Cities...");
+                
+                // Query the database for cities GeoJSON (ID 2)
+                const result = alasql("SELECT data FROM geojson WHERE id = 2");
+                
+                if (!result || result.length === 0) {
+                    console.warn("No cities GeoJSON data found in the database (ID 2)");
+                    setLoadingState(false);
+                    return false;
+                }
+                
+                // Parse the GeoJSON data
+                const citiesData = JSON.parse(result[0].data);
+                console.log(`Found cities data with ${citiesData.features.length} features`);
+                
+                // Create a new vector source with the cities data
+                citiesSource = new ol.source.Vector({
+                    features: new ol.format.GeoJSON().readFeatures(citiesData, {
+                        dataProjection: 'EPSG:4326',
+                        featureProjection: 'EPSG:3857'
+                    })
+                });
+                
+                // Create a new vector layer with the cities source
+                citiesLayer = new ol.layer.Vector({
+                    source: citiesSource,
+                    style: cityStyleFunction,
+                    visible: false  // Initially hidden
+                });
+                
+                // Add the cities layer to the map
+                worldMap.addLayer(citiesLayer);
+                console.log(`Added cities layer with ${citiesSource.getFeatures().length} features`);
+                setLoadingState(false);
+                return true;
+            } catch (error) {
+                console.error("Error loading cities from database:", error);
+                setLoadingState(false);
+                return false;
             }
         }
 
