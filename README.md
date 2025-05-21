@@ -1,15 +1,15 @@
-# Entirely-Possible-Fungus.github.io
+# The SQL Saga: Extra Terrestrial Loader
 
-# Purpose
+## Purpose
 This game was a submission in the QS impact 2025 Hackathon and was a finalist.
 
-# Group Members:
+## Group Members:
 Warren Martin
 Jo Peterson
 Rebecca Hurtado
 Yuda Wang
 
-# Game assets
+## Game assets
 
 
 Sound Track selectionhttps://xdeviruchi.itch.io/8-bit-fantasy-adventure-music-pack - ice cave
