@@ -4,10 +4,10 @@
 This game was a submission in the QS impact 2025 Hackathon and was a finalist.
 
 ## Group Members:
-Warren Martin
-Jo Peterson
-Rebecca Hurtado
-Yuda Wang
+- Warren Martin
+- Jo Peterson
+- Rebecca Hurtado
+- Yuda Wang
 
 ## Game assets
 
