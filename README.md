@@ -1,3 +1,4 @@
+
 # The SQL Saga: Extra-Terrestrial Loaders
 
 **An interactive SQL learning framework with a sci-fi theme**
@@ -127,5 +128,7 @@ SQL Saga can be extended with:
 - Index text OS style: [Codepen by Oleg Milshtein](https://codepen.io/olegmilshtein/pen/jrWrqV)
 
 ---
+=======
+
 
 *Note: This project is currently in active development. Features and capabilities are continuously being expanded.*
