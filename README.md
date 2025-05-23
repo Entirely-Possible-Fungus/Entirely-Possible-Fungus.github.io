@@ -100,13 +100,17 @@ SQL Saga can be extended with:
 
 ---
 
-## Team
+## Hackathon Team - Ended
+
+- Finished the hackathon in the top 10 finalists among 210 other countries.
 
 ### Group Members:
 - Warren Martin
 - Jo Peterson
 - Rebecca Hurtado
 - Yuda Wang
+
+THe Hackathon ended 
 
 ## Game Assets
 
