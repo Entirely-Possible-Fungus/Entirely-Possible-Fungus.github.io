@@ -1,4 +1,4 @@
-# The SQL Saga: Extra-Terrestrial Loaders
+# The SQL Saga: Extra-Terrestrial Loader
 
 **An interactive SQL learning framework with a sci-fi theme**
 
