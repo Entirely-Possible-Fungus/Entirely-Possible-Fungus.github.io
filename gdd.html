@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL SAGA - Game Design Document</title>
+    <!-- Silkscreen Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- CRT Styles -->
+    <link rel="stylesheet" href="Alpha_Test/css/crt.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Silkscreen', monospace;
+            background-color: #0a0a0a;
+            color: #00ffcc;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #00b3ff;
+            padding-bottom: 30px;
+        }
+
+        .title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            color: #00ffcc;
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.8);
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: #00b3ff;
+            margin-bottom: 20px;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background-color: #00ffcc;
+            color: #050c14;
+            border: none;
+            font-family: 'Silkscreen', monospace;
+            font-size: 14px;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+            letter-spacing: 1px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.7);
+        }
+
+        .nav-btn.secondary {
+            background-color: #00b3ff;
+        }
+
+        .content-section {
+            background-color: rgba(20, 40, 60, 0.8);
+            border: 2px solid #00b3ff;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 179, 255, 0.2);
+        }
+
+        .section-title {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            color: #00ffcc;
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.6);
+            margin-bottom: 20px;
+            border-bottom: 1px solid #00b3ff;
+            padding-bottom: 10px;
+        }
+
+        .subsection-title {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            color: #00b3ff;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .text-content {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            color: #00ffcc;
+            text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            background-color: rgba(0, 179, 255, 0.1);
+            border-left: 4px solid #00b3ff;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .story-quote {
+            background-color: rgba(0, 255, 204, 0.1);
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            font-style: italic;
+            text-align: center;
+            color: #00ffcc;
+        }
+
+        .media-placeholder {
+            background-color: rgba(0, 179, 255, 0.1);
+            border: 2px dashed #00b3ff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            color: #00b3ff;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+        }
+
+        .game-pillars {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .pillar-card {
+            background-color: rgba(0, 255, 204, 0.05);
+            border: 1px solid #00ffcc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .tech-specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .spec-card {
+            background-color: rgba(0, 179, 255, 0.1);
+            border: 1px solid #00b3ff;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .bottom-nav {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 2px solid #00b3ff;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-btn {
+                width: 200px;
+            }
+        }
+
+        /* Additional visual effects */
+        .glitch-text {
+            animation: textGlitch 8s infinite;
+        }
+
+        @keyframes textGlitch {
+            0% { text-shadow: 0 0 10px rgba(0, 255, 204, 0.6); }
+            98% { text-shadow: 0 0 10px rgba(0, 255, 204, 0.6); }
+            99% { text-shadow: -2px 0 0 #ff0000, 2px 0 0 #00ff00; }
+            100% { text-shadow: 0 0 10px rgba(0, 255, 204, 0.6); }
+        }
+    </style>
+</head>
+<body>
+    <!-- CRT Monitor Effects Overlay -->
+    <div class="crt-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="color-distortion"></div>
+    <div class="glitch"></div>
+    <div class="vignette"></div>
+    <div class="flicker"></div>
+    <div class="noise"></div>
+    <div class="monitor-frame"></div>
+
+    <div class="container">
+        <header class="header">
+            <h1 class="title glitch-text">SQL SAGA</h1>
+            <p class="subtitle">Game Design Document v2.1.7</p>
+            <div class="navigation">
+                <a href="index.html" class="nav-btn">← BACK TO MAIN</a>
+                <a href="Alpha_Test/Main_content.html" class="nav-btn secondary">PLAY GAME</a>
+            </div>
+        </header>
+        
+        <!-- Game Music Section -->
+        <section class="content-section">
+            <h2 class="section-title">GAME MUSIC</h2>
+            <div class="text-content">
+                The soundtrack of <span class="highlight">SQL SAGA</span> will feature a blend of ambient cyberpunk soundscapes and dynamic music that reacts to player choices and actions.
+            </div>
+            <div class="music-player-container" style="text-align: center;">
+                <h3 class="subsection-title">Play as you read</h3>
+                <div class="music-player" style="display: flex; justify-content: center;">
+                    <iframe 
+                        style="border: 2px solid #00b3ff; border-radius: 8px; width: 100%; max-width: 450px; height: 373px;" 
+                        src="https://bandcamp.com/EmbeddedPlayer/album=1765463837/size=large/bgcol=0a0a0a/linkcol=00ffcc/artwork=small/transparent=true/" 
+                        seamless>
+                        <a href="https://grlherme.bandcamp.com/album/space-ambient">Space Ambient by grlherme</a>
+                    </iframe>
+                </div>
+                <p class="text-content" style="text-align: center;">
+                    <em>Example soundtrack inspiration - "Space Ambient" by grlherme</em>
+                </p>
+            </div>
+        </section>
+        <!-- Game Overview Section -->
+        <section class="content-section">
+            <h2 class="section-title">THE VISION</h2>
+            <div class="story-quote">
+                "In a galaxy where information is the ultimate currency, every query could be your last."
+            </div>
+            
+            <div class="text-content">
+                <span class="highlight">SQL SAGA</span> is an ambitious evolution of our current educational framework. What began as <span class="highlight">"The SQL Saga: Extra-Terrestrial Loaders"</span> - an interactive SQL learning platform - will transform into a deep, narrative-driven cyberpunk space opera that rivals <span class="highlight">The Witcher</span> and <span class="highlight">Cyberpunk 2077</span> in philosophical depth and moral complexity.
+            </div>
+
+            <div class="game-pillars">
+                <div class="pillar-card">
+                    <h3 class="subsection-title">Investigation Through Data</h3>
+                    <p>SQL queries drive narrative discovery. Your HSC (Hand-held SQL Console) is your primary weapon against corporate corruption and galactic conspiracy.</p>
+                </div>
+                <div class="pillar-card">
+                    <h3 class="subsection-title">Meaningful Choices</h3>
+                    <p>Every decision creates ripples across the galaxy. Faction allegiances, moral stances, and data discoveries all carry lasting consequences.</p>
+                </div>
+                <div class="pillar-card">
+                    <h3 class="subsection-title">Emergent Exploration</h3>
+                    <p>A procedurally generated galaxy with handcrafted story beats. Dynamic faction conflicts reshape the universe around your actions.</p>
+                </div>
+            </div>
+        </section>
+
+        
+
+        <!-- Current State Section -->
+        <section class="content-section">
+            <h2 class="section-title">CURRENT FRAMEWORK</h2>
+            
+            <div class="media-placeholder">
+                <div class="gallery-container">
+                    <div class="gallery-item">
+                        <h3 class="subsection-title">Dashboard View with Schema Visualization</h3>
+                        <img src="/Alpha_Test/images/TSS_Dashboard.webp" alt="Dashboard View" style="max-width: 100%; height: auto;">
+                    </div>
+                    
+                    <div class="gallery-item">
+                        <h3 class="subsection-title">Interactive World Map Integration</h3>
+                        <img src="/Alpha_Test/images/TSS_Map.webp" alt="World Map Integration" style="max-width: 100%; height: auto;">
+                    </div>
+                    
+                    <div class="gallery-item">
+                        <h3 class="subsection-title">Database Schema View</h3>
+                        <img src="/Alpha_Test/images/TSS_Schema.webp" alt="Database Schema" style="max-width: 100%; height: auto;">
+                    </div>
+                </div>
+                <em>Interactive SQL Console with Schema Visualization</em>
+            </div>
+            
+            <h3 class="subsection-title">What We Have Built</h3>
+            <ul class="feature-list">
+                <li><strong>Interactive SQL Console:</strong> Real-time query execution with syntax highlighting</li>
+                <li><strong>Dynamic Schema Visualization:</strong> Visual database structure representation</li>
+                <li><strong>Geographic Integration:</strong> Query results displayed on interactive world maps</li>
+                <li><strong>Mission Framework:</strong> Progressive learning with guided tutorials (needs work)</li>
+                
+            </ul>
+
+            <div class="text-content">
+                Our current implementation serves as the <span class="highlight">technical foundation</span> for the expanded vision. The SQL engine, visualization systems, and educational framework will be repurposed as the core mechanics of our detective thriller.
+            </div>
+        </section>
+
+        <!-- Story & Narrative Section -->
+        <section class="content-section">
+            <h2 class="section-title">THE NARRATIVE</h2>
+            
+            <div class="story-quote">
+                "You thought you were just a data analyst. You were wrong.<br>
+                You're about to become the galaxy's most wanted truth-seeker."
+            </div>
+
+            <div class="media-placeholder">
+                <p>Concept art for the corporate space station, not my own.</p>
+                <img src="Alpha_Test/images/GDD/spaceStation-outside.png" alt="Corporate Station Exterior" style="max-width: 80%; height: auto; width: 400px;">
+                <br><em>Space Station</em>
+                <div style="font-size: 0.8em; color: #00b3ff;">source: <a href="https://maxparata.itch.io/voxelspacecolony" target="_blank" rel="noopener noreferrer" style="color: #00b3ff;">https://maxparata.itch.io/voxelspacecolony</a></div>
+            </div>
+
+            <h3 class="subsection-title">Main Narrative Arc</h3>
+            <div class="text-content">
+                The player begins as a <span class="highlight">down-on-their-luck data analyst</span> taking a corporate job to survive. Through investigating seemingly routine corporate data, they uncover a web of <span class="highlight">corruption, conspiracy, and galactic-scale conflict</span> that threatens the stability of entire star systems.
+            </div>
+
+            <div class="game-pillars">
+                <div class="pillar-card">
+                    <h4 style="color: #00ffcc; margin-bottom: 10px;">Information as Power</h4>
+                    <p>Knowledge determines survival and success in this data-driven galaxy</p>
+                </div>
+                <div class="pillar-card">
+                    <h4 style="color: #00ffcc; margin-bottom: 10px;">Corporate Corruption</h4>
+                    <p>The price of unchecked corporate influence across star systems</p>
+                </div>
+                <div class="pillar-card">
+                    <h4 style="color: #00ffcc; margin-bottom: 10px;">Individual Agency</h4>
+                    <p>How one person's choices can impact entire galactic systems</p>
+                </div>
+                <div class="pillar-card">
+                    <h4 style="color: #00ffcc; margin-bottom: 10px;">Truth vs. Survival</h4>
+                    <p>Sometimes knowing the truth comes at a dangerous cost</p>
+                </div>
+            </div>
+
+            <div class="text-content">
+                The player character evolves from a <span class="highlight">passive corporate employee</span> to an <span class="highlight">active agent of change</span>, developing from someone who follows orders to someone who makes decisions that shape the galaxy's future.
+            </div>
+
+            <!-- Opening Sequence Section -->
+            <h3 class="subsection-title">Opening Sequence: "The Analyst's Awakening"</h3>
+            
+            <div style="background-color: rgba(0, 255, 204, 0.05); border-left: 4px solid #00ccff; padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+                <h4 style="color: #00b3ff; margin-bottom: 15px;">Act 1: The Interview</h4>
+                <div class="text-content" style="margin-bottom: 15px;">
+                    The player awakens in a cramped apartment on <span class="highlight">Nexus Station</span>, a mid-tier space station struggling with economic decline. A message from <span class="highlight">DataCorp Solutions</span> offers hope—a group interview for an Analyst position.
+                </div>
+                
+                <div class="story-quote" style="font-family: 'Courier New', monospace; background-color: rgba(0, 179, 255, 0.1); border: 1px solid #00b3ff; text-align: left; font-style: normal;">
+                    <strong style="color: #00ffcc;">Subject:</strong> Group Interview for Analyst Position<br><br>
+                    Hello [Player Name],<br><br>
+                    We are excited to announce a group interview opportunity for an Analyst position. If interested, please visit DataCorp Solutions. We've recently been registered in the galactic HSC database—look us up!<br><br>
+                    Best regards,<br>
+                    [Manager Name]<br>
+                    <span style="color: #00ffcc;">DataCorp Solutions</span>
+                </div>
+            </div>
+
+            <div style="background-color: rgba(0, 179, 255, 0.05); border-left: 4px solid #00b3ff; padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+                <h4 style="color: #00ffcc; margin-bottom: 15px;">Act 2: First Steps</h4>
+                <ul class="feature-list">
+                    <li><strong>HSC Tutorial:</strong> Player learns to query the galactic database to research DataCorp</li>
+                    <li><strong>Navigation:</strong> Following database-generated waypoints to reach the company</li>
+                    <li><strong>Initial Assessment:</strong> SQL competency test during the interview process</li>
+                    <li><strong>Employment:</strong> Acceptance into DataCorp as a junior analyst</li>
+                </ul>
+            </div>
+
+            <div style="background-color: rgba(255, 204, 0, 0.05); border-left: 4px solid #ffcc00; padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+                <h4 style="color: #ffcc00; margin-bottom: 15px;">Act 3: The Discovery</h4>
+                <ul class="feature-list">
+                    <li><strong>Routine Work:</strong> Training missions that teach advanced SQL concepts</li>
+                    <li><strong>Suspicious Activity:</strong> Encounter with [Rebel Contact Name], an apparent corporate infiltrator</li>
+                    <li><strong>The Choice:</strong> First major decision point—report the suspicious employee or investigate further</li>
+                </ul>
+            </div>
+
+            <!-- The Asteroid Conspiracy Section -->
+            <h3 class="subsection-title">The Asteroid Conspiracy</h3>
+            <div class="text-content">
+                The central mystery revolves around <span class="highlight">DataCorp's mining operations</span> in the Kepler Asteroid Field. What begins as routine data analysis reveals a complex web of corporate malfeasance and faction warfare.
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 25px 0;">
+                <div style="background-color: rgba(255, 64, 64, 0.1); border: 1px solid #ff4040; border-radius: 8px; padding: 20px;">
+                    <h4 style="color: #ff4040; margin-bottom: 10px;">🚨 Safety Violations</h4>
+                    <p>DataCorp ignoring critical safety protocols in their mining operations</p>
+                </div>
+                <div style="background-color: rgba(255, 165, 0, 0.1); border: 1px solid #ffa500; border-radius: 8px; padding: 20px;">
+                    <h4 style="color: #ffa500; margin-bottom: 10px;">📂 Cover-ups</h4>
+                    <p>Systematic deletion of incident reports and whistleblower testimonies</p>
+                </div>
+                <div style="background-color: rgba(0, 179, 255, 0.1); border: 1px solid #00b3ff; border-radius: 8px; padding: 20px;">
+                    <h4 style="color: #00b3ff; margin-bottom: 10px;">⚔️ Competing Interests</h4>
+                    <p>The Miners' Coalition faction seeking to expose the truth</p>
+                </div>
+                <div style="background-color: rgba(138, 43, 226, 0.1); border: 1px solid #8a2be2; border-radius: 8px; padding: 20px;">
+                    <h4 style="color: #8a2be2; margin-bottom: 10px;">🎭 Hidden Agenda</h4>
+                    <p>The Coalition's true motivation—seizing the asteroid field for themselves</p>
+                </div>
+            </div>
+
+            <!-- Branching Consequences Section -->
+            <h3 class="subsection-title">Branching Consequences: Three Paths Forward</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin: 30px 0;">
+                <!-- Path A -->
+                <div style="background: linear-gradient(135deg, rgba(0, 179, 255, 0.1), rgba(0, 255, 204, 0.05)); border: 2px solid #00b3ff; border-radius: 12px; padding: 25px; position: relative;">
+                    <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #00b3ff; font-weight: bold;">PATH A</div>
+                    <h4 style="color: #00b3ff; margin-bottom: 15px; margin-top: 10px;">🏢 Corporate Loyalty</h4>
+                    <ul style="list-style: none; padding: 0; color: #e0e0e0;">
+                        <li style="margin-bottom: 8px;">• Player reports the infiltrator</li>
+                        <li style="margin-bottom: 8px;">• Gains access to higher corporate clearance</li>
+                        <li style="margin-bottom: 8px;">• Uncovers Coalition's ulterior motives</li>
+                        <li style="margin-bottom: 8px;">• Leads to corporate counter-intelligence missions</li>
+                    </ul>
+                </div>
+
+                <!-- Path B -->
+                <div style="background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 204, 0, 0.05)); border: 2px solid #ffa500; border-radius: 12px; padding: 25px; position: relative;">
+                    <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #ffa500; font-weight: bold;">PATH B</div>
+                    <h4 style="color: #ffa500; margin-bottom: 15px; margin-top: 10px;">📢 Whistleblower</h4>
+                    <ul style="list-style: none; padding: 0; color: #e0e0e0;">
+                        <li style="margin-bottom: 8px;">• Player allies with the Coalition</li>
+                        <li style="margin-bottom: 8px;">• Exposes corporate corruption</li>
+                        <li style="margin-bottom: 8px;">• Faces corporate retaliation</li>
+                        <li style="margin-bottom: 8px;">• Opens faction-based questlines</li>
+                    </ul>
+                </div>
+
+                <!-- Path C -->
+                <div style="background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(255, 20, 147, 0.05)); border: 2px solid #8a2be2; border-radius: 12px; padding: 25px; position: relative;">
+                    <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #8a2be2; font-weight: bold;">PATH C</div>
+                    <h4 style="color: #8a2be2; margin-bottom: 15px; margin-top: 10px;">🔍 Independent Investigation</h4>
+                    <ul style="list-style: none; padding: 0; color: #e0e0e0;">
+                        <li style="margin-bottom: 8px;">• Player gathers evidence independently</li>
+                        <li style="margin-bottom: 8px;">• Reveals both corporate and Coalition corruption</li>
+                        <li style="margin-bottom: 8px;">• Enables formation of new "Protector" faction</li>
+                        <li style="margin-bottom: 8px;">• Unlocks unique neutral storylines</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Long-term Consequences Section -->
+            <h3 class="subsection-title">Long-term Galactic Consequences</h3>
+            <div class="text-content">
+                The asteroid situation escalates into one of three major outcomes that <span class="highlight">reshape the entire galaxy</span>:
+            </div>
+
+            <div style="margin: 25px 0; display: flex; flex-direction: column; gap: 20px;">
+                <div style="background-color: rgba(0, 179, 255, 0.08); border-left: 6px solid #00b3ff; padding: 20px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #00b3ff; margin-bottom: 10px;">🏢 Corporate Victory</h4>
+                    <p>Station becomes corporate-controlled, increased security but decreased freedom. Citizens live under surveillance but with guaranteed employment and safety.</p>
+                </div>
+                
+                <div style="background-color: rgba(255, 165, 0, 0.08); border-left: 6px solid #ffa500; padding: 20px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #ffa500; margin-bottom: 10px;">⚒️ Coalition Takeover</h4>
+                    <p>Economic collapse as Coalition proves incapable of management. Freedom increases but resources dwindle and infrastructure deteriorates.</p>
+                </div>
+                
+                <div style="background-color: rgba(138, 43, 226, 0.08); border-left: 6px solid #8a2be2; padding: 20px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #8a2be2; margin-bottom: 10px;">🛡️ Protector Solution</h4>
+                    <p>New faction emerges with a balanced approach, but ongoing political tension creates dynamic, ever-changing galactic landscape.</p>
+                </div>
+            </div>
+
+            <div class="story-quote" style="margin-top: 30px;">
+                "Your choices don't just change your story—they rewrite the fate of entire civilizations."
+            </div>
+        </section>
+
+        <!-- Game Systems Section -->
+        <section class="content-section">
+            <h2 class="section-title">GAME SYSTEMS</h2>
+            
+            <div class="story-quote">
+                "Every system is interconnected—your database skills, faction standing, and ship configuration all determine your path through the galaxy."
+            </div>
+
+            <!-- Database Progression System -->
+            <h3 class="subsection-title">Database Progression System</h3>
+            <div class="text-content">
+                Your <span class="highlight">Hand-held SQL Console (HSC)</span> evolves throughout the game, gaining access to increasingly sensitive and valuable information networks.
+            </div>
+
+            <h4 class="subsection-title" style="font-size: 1.4rem; color: #00b3ff; margin-top: 25px;">Data Access Levels</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 25px 0;">
+                <div style="background: linear-gradient(135deg, rgba(34, 139, 34, 0.1), rgba(0, 255, 0, 0.05)); border: 2px solid #228B22; border-radius: 10px; padding: 20px;">
+                    <h5 style="color: #32CD32; margin-bottom: 10px;">📊 Public Records</h5>
+                    <p style="font-size: 0.9rem;">Basic company information, public announcements, available to all citizens</p>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 215, 0, 0.05)); border: 2px solid #FFA500; border-radius: 10px; padding: 20px;">
+                    <h5 style="color: #FFD700; margin-bottom: 10px;">🏢 Restricted Corporate</h5>
+                    <p style="font-size: 0.9rem;">Employee records, internal communications, requires corporate clearance</p>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, rgba(255, 69, 0, 0.1), rgba(220, 20, 60, 0.05)); border: 2px solid #FF4500; border-radius: 10px; padding: 20px;">
+                    <h5 style="color: #FF6347; margin-bottom: 10px;">🛡️ Classified Government</h5>
+                    <p style="font-size: 0.9rem;">Security reports, faction intelligence, highly restricted access</p>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, rgba(75, 0, 130, 0.1), rgba(138, 43, 226, 0.05)); border: 2px solid #4B0082; border-radius: 10px; padding: 20px;">
+                    <h5 style="color: #9370DB; margin-bottom: 10px;">🕳️ Black Market</h5>
+                    <p style="font-size: 0.9rem;">Illegal data, criminal networks, dangerous but valuable information</p>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, rgba(139, 0, 0, 0.1), rgba(178, 34, 34, 0.05)); border: 2px solid #8B0000; border-radius: 10px; padding: 20px;">
+                    <h5 style="color: #DC143C; margin-bottom: 10px;">🌐 Deep Web</h5>
+                    <p style="font-size: 0.9rem;">Hidden conspiracy information, faction secrets, ultimate truth</p>
+                </div>
+            </div>
+
+            <h4 class="subsection-title" style="font-size: 1.4rem; color: #00ffcc; margin-top: 25px;">Information Acquisition Methods</h4>
+            <ul class="feature-list">
+                <li><strong>Purchase:</strong> Direct currency transactions for legal data access</li>
+                <li><strong>Trade:</strong> Information bartering with NPCs and contacts</li>
+                <li><strong>Quest Rewards:</strong> Completing missions unlocks new database access</li>
+                <li><strong>Exploration:</strong> Scanning objects and locations reveals hidden data</li>
+                <li><strong>Social Engineering:</strong> Conversations with NPCs reveal classified information</li>
+                <li><strong>Hacking:</strong> Illegal access to restricted systems (high risk, high reward)</li>
+            </ul>
+
+            <!-- Ship Building System -->
+            <h3 class="subsection-title">Modular Ship Building System</h3>
+            <div class="text-content">
+                Your ship is more than transportation—it's your <span class="highlight">mobile headquarters</span>, investigation platform, and lifeline in hostile space.
+            </div>
+            <div class="ship-gallery" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 25px 0;">
+                <div style="text-align: center; flex: 0 1 300px;">
+                    <img src="Alpha_Test/images/GDD/Ships/1Ydy0X.gif" alt="Ship 1" style="max-width: 100%; height: auto; border: 2px solid #00b3ff; border-radius: 8px;">
+                    <p style="color: #00ffcc; margin-top: 10px;">Corporate Cruiser</p>
+                </div>
+                <div style="text-align: center; flex: 0 1 300px;">
+                    <img src="Alpha_Test/images/GDD/Ships/AADDxC.gif" alt="Ship 2" style="max-width: 100%; height: auto; border: 2px solid #00b3ff; border-radius: 8px;">
+                    <p style="color: #00ffcc; margin-top: 10px;">Mining Vessel</p>
+                </div>
+                <div style="text-align: center; flex: 0 1 300px;">
+                    <img src="Alpha_Test/images/GDD/Ships/ywlX9f.gif" alt="Ship 3" style="max-width: 100%; height: auto; border: 2px solid #00b3ff; border-radius: 8px;">
+                    <p style="color: #00ffcc; margin-top: 10px;">Scout Ship</p>
+                </div>
+                <div style="font-size: 0.8em; color: #00b3ff;">source: <a href="https://maxparata.itch.io/voxelspacecolony" target="_blank" rel="noopener noreferrer" style="color: #00b3ff;">https://maxparata.itch.io/voxel-spaceships</a></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 25px 0;">
+                <div style="background-color: rgba(0, 179, 255, 0.08); border-left: 6px solid #00b3ff; padding: 20px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #00b3ff; margin-bottom: 10px;">🚀 Hull Type</h4>
+                    <p>Determines base capacity, durability, and aesthetic. From sleek corporate vessels to rugged industrial haulers.</p>
+                </div>
+                
+                <div style="background-color: rgba(255, 165, 0, 0.08); border-left: 6px solid #ffa500; padding: 20px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #ffa500; margin-bottom: 10px;">⚡ Engine Array</h4>
+                    <p>Speed, fuel efficiency, and travel range. Better engines unlock distant sectors and escape routes.</p>
+                </div>
+                
+                <div style="background-color: rgba(0, 255, 204, 0.08); border-left: 6px solid #00ffcc; padding: 20px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #00ffcc; margin-bottom: 10px;">📡 Scanner Package</h4>
+                    <p>Database query range and object detection. Advanced scanners reveal hidden clues and data sources.</p>
+                </div>
+                
+                <div style="background-color: rgba(255, 64, 64, 0.08); border-left: 6px solid #ff4040; padding: 20px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #ff4040; margin-bottom: 10px;">🔫 Weapons Systems</h4>
+                    <p>Combat capabilities and power consumption. Necessary for survival but affects faction relationships.</p>
+                </div>
+                
+                <div style="background-color: rgba(138, 43, 226, 0.08); border-left: 6px solid #8a2be2; padding: 20px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #8a2be2; margin-bottom: 10px;">📦 Storage Modules</h4>
+                    <p>Cargo capacity and specialized storage for evidence, data archives, and valuable resources.</p>
+                </div>
+                
+                <div style="background-color: rgba(34, 139, 34, 0.08); border-left: 6px solid #228b22; padding: 20px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #32cd32; margin-bottom: 10px;">🏠 Living Quarters</h4>
+                    <p>Crew capacity and comfort rating. Better quarters attract skilled crew members and contacts.</p>
+                </div>
+            </div>
+
+            <div style="background-color: rgba(0, 255, 204, 0.1); border: 1px solid #00ffcc; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h4 style="color: #00ffcc; margin-bottom: 15px;">💻 Database Terminal Integration</h4>
+                <div class="text-content" style="margin-bottom: 0;">
+                    Your ship's <span class="highlight">Database Terminal</span> provides enhanced HSC functionality when docked, including:
+                    <ul style="margin-top: 10px; color: #e0e0e0;">
+                        <li>• Extended query processing power for complex investigations</li>
+                        <li>• Secure communication with trusted contacts and informants</li>
+                        <li>• Advanced data visualization and pattern recognition</li>
+                        <li>• Encrypted storage for sensitive evidence and discoveries</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Faction System -->
+            <h3 class="subsection-title">Dynamic Faction Reputation System</h3>
+            <div class="text-content">
+                Every action ripples through the galaxy's political landscape. Faction standing determines <span class="highlight">available quests, accessible areas, and story outcomes</span>.
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; margin: 30px 0;">
+                <!-- DataCorp Solutions -->
+                <div style="background: linear-gradient(135deg, rgba(0, 179, 255, 0.1), rgba(0, 255, 204, 0.05)); border: 2px solid #00b3ff; border-radius: 12px; padding: 25px; position: relative;">
+                    <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #00b3ff; font-weight: bold;">DATACORP</div>
+                    <h4 style="color: #00b3ff; margin-bottom: 15px; margin-top: 10px;">🏢 DataCorp Solutions</h4>
+                    <p style="margin-bottom: 15px;"><strong>Focus:</strong> Corporate control, profit maximization</p>
+                    <p style="margin-bottom: 15px;"><strong>Resources:</strong> Advanced technology, financial power</p>
+                    <p style="margin-bottom: 15px;"><strong>Questlines:</strong> Corporate espionage, hostile takeovers</p>
+                    <p><strong>Rewards:</strong> High-end equipment, monetary compensation</p>
+                </div>
+
+                <!-- Miners' Coalition -->
+                <div style="background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 204, 0, 0.05)); border: 2px solid #ffa500; border-radius: 12px; padding: 25px; position: relative;">
+                    <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #ffa500; font-weight: bold;">COALITION</div>
+                    <h4 style="color: #ffa500; margin-bottom: 15px; margin-top: 10px;">⚒️ Miners' Coalition</h4>
+                    <p style="margin-bottom: 15px;"><strong>Focus:</strong> Worker rights, resource distribution</p>
+                    <p style="margin-bottom: 15px;"><strong>Resources:</strong> Raw materials, grassroots networks</p>
+                    <p style="margin-bottom: 15px;"><strong>Questlines:</strong> Labor disputes, exposing corruption</p>
+                    <p><strong>Rewards:</strong> Ship components, faction loyalty bonuses</p>
+                </div>
+
+                <!-- The Protectors -->
+                <div style="background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(255, 20, 147, 0.05)); border: 2px solid #8a2be2; border-radius: 12px; padding: 25px; position: relative;">
+                    <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #8a2be2; font-weight: bold;">PROTECTORS</div>
+                    <h4 style="color: #8a2be2; margin-bottom: 15px; margin-top: 10px;">🛡️ The Protectors <span style="font-size: 0.8em; color: #ff69b4;">(Unlockable)</span></h4>
+                    <p style="margin-bottom: 15px;"><strong>Focus:</strong> Station security, balanced governance</p>
+                    <p style="margin-bottom: 15px;"><strong>Resources:</strong> Military assets, diplomatic connections</p>
+                    <p style="margin-bottom: 15px;"><strong>Questlines:</strong> Peacekeeping, investigation support</p>
+                    <p><strong>Rewards:</strong> Unique equipment, special access privileges</p>
+                </div>
+
+                <!-- Independent Traders -->
+                <div style="background: linear-gradient(135deg, rgba(34, 139, 34, 0.1), rgba(0, 255, 127, 0.05)); border: 2px solid #228b22; border-radius: 12px; padding: 25px; position: relative;">
+                    <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #32cd32; font-weight: bold;">TRADERS</div>
+                    <h4 style="color: #32cd32; margin-bottom: 15px; margin-top: 10px;">🚛 Independent Traders</h4>
+                    <p style="margin-bottom: 15px;"><strong>Focus:</strong> Free commerce, information brokering</p>
+                    <p style="margin-bottom: 15px;"><strong>Resources:</strong> Market networks, smuggling routes</p>
+                    <p style="margin-bottom: 15px;"><strong>Questlines:</strong> Trade runs, information gathering</p>
+                    <p><strong>Rewards:</strong> Rare components, market access</p>
+                </div>
+            </div>
+
+            <h4 class="subsection-title" style="font-size: 1.4rem; color: #00ffcc; margin-top: 25px;">Reputation Mechanics</h4>
+            <div style="background-color: rgba(0, 255, 204, 0.05); border: 1px solid #00ffcc; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <ul style="list-style: none; padding: 0; color: #e0e0e0;">
+                    <li style="margin-bottom: 10px;">• <strong style="color: #ff4040;">Standing Levels:</strong> Hostile (-100) to Trusted (+100)</li>
+                    <li style="margin-bottom: 10px;">• <strong style="color: #ffa500;">Cross-Faction Impact:</strong> Actions affecting multiple factions simultaneously</li>
+                    <li style="margin-bottom: 10px;">• <strong style="color: #00b3ff;">Redemption Paths:</strong> Opportunities to repair damaged relationships</li>
+                    <li style="margin-bottom: 10px;">• <strong style="color: #8a2be2;">Hidden Factions:</strong> Secret organizations revealed through investigation</li>
+                </ul>
+            </div>
+
+            <div class="story-quote" style="margin-top: 30px;">
+                "In the galaxy of information warfare, your reputation is your most valuable currency."
+            </div>
+        </section>
+
+        <!-- Gameplay Evolution Section -->
+        <section class="content-section">
+            <h2 class="section-title">GAMEPLAY EVOLUTION</h2>
+
+            <h3 class="subsection-title">From Learning Tool to Detective Thriller</h3>
+            <div class="text-content">
+                Our current educational missions will evolve into <span class="highlight">investigation cases</span>. Instead of learning basic SQL for academic purposes, players use complex queries to:
+            </div>
+            <ul class="feature-list">
+                <li>Uncover corporate cover-ups by analyzing deleted records</li>
+                <li>Track financial flows between competing factions</li>
+                <li>Decode encrypted communications using pattern recognition</li>
+                <li>Identify double agents through behavioral data analysis</li>
+                <li>Predict faction movements using historical trend analysis</li>
+            </ul>
+
+            <div class="media-placeholder">
+                <img src="Alpha_Test/images/GDD/SQL Consle.png" alt="Hand-held SQL Console" style="max-width: 100%; height: auto;">
+                <br>
+                <em>Hand-held SQL Consoleem>
+            </div>
+
+            <h3 class="subsection-title">The HSC System</h3>
+            <div class="text-content">
+                Your <span class="highlight">Hand-held SQL Console</span> becomes more than a learning tool - it's your lifeline in a hostile galaxy:
+            </div>
+            <ul class="feature-list">
+                <li><strong>Limited Storage:</strong> Forces strategic decisions about what data to keep</li>
+                <li><strong>Upgradeable Processing:</strong> Better hardware enables more complex investigations</li>
+                <li><strong>Network Dependent:</strong> Different locations provide access to different databases</li>
+                <li><strong>Security Risks:</strong> Advanced queries might trigger corporate security systems</li>
+            </ul>
+        </section>
+
+        <!-- Faction System Section -->
+        <section class="content-section">
+            <h2 class="section-title">FACTION WARFARE</h2>
+
+            
+
+            <h3 class="subsection-title">DataCorp Solutions</h3>
+            <div class="text-content">
+                <strong>Philosophy:</strong> Corporate efficiency through information control<br>
+                <strong>Methods:</strong> Surveillance, data monopolization, economic pressure<br>
+                <strong>Questlines:</strong> Corporate espionage, hostile takeovers, "cleaning" inconvenient data
+            </div>
+
+            <h3 class="subsection-title">The Miners' Coalition</h3>
+            <div class="text-content">
+                <strong>Philosophy:</strong> Worker solidarity and resource equality<br>
+                <strong>Methods:</strong> Labor strikes, data leaks, grassroots organizing<br>
+                <strong>Hidden Truth:</strong> Their idealism masks a desire to replace corporate tyranny with their own
+            </div>
+
+            <h3 class="subsection-title">The Protectors (Unlockable)</h3>
+            <div class="text-content">
+                <strong>Philosophy:</strong> Balanced governance through transparency<br>
+                <strong>Requirements:</strong> Can only be formed through specific narrative choices<br>
+                <strong>Challenge:</strong> Maintaining ideals while wielding necessary power
+            </div>
+
+            <div class="story-quote">
+                "Every faction believes they're the hero of their own story.<br>
+                Your job is to decide which story you want to live in."
+            </div>
+        </section>
+
+        <!-- Technical Implementation Section -->
+        <section class="content-section">
+            <h2 class="section-title">TECHNICAL EVOLUTION</h2>
+
+            <h3 class="subsection-title">Current Foundation</h3>
+            <div class="tech-specs">
+                <div class="spec-card">
+                    <strong>Frontend:</strong><br>
+                    HTML5, CSS3, JavaScript
+                </div>
+                <div class="spec-card">
+                    <strong>Database:</strong><br>
+                    SQL.js, AlaSQL for processing
+                </div>
+                <div class="spec-card">
+                    <strong>Visualization:</strong><br>
+                    OpenLayers, Chart.js, Custom libraries
+                </div>
+                <div class="spec-card">
+                    <strong>Audio:</strong><br>
+                    8-bit Fantasy, Ambient Themes
+                </div>
+            </div>
+
+            <h3 class="subsection-title">Future Technical Goals</h3>
+            <div class="text-content">
+                <span class="highlight">Phase 1:</span> Enhanced Web Implementation
+                <ul class="feature-list">
+                    <li>Advanced 2D raycasting engine for station interiors</li>
+                    <li>Procedural galaxy generation</li>
+                    <li>Dynamic faction AI systems</li>
+                    <li>Enhanced audio implementation</li>
+                </ul>
+            </div>
+
+            <div class="text-content">
+                <span class="highlight">Phase 2:</span> Engine Migration
+                <ul class="feature-list">
+                    <li>Unity/Unreal/Bevy for enhanced graphics</li>
+                    <li>3D ship customization and combat</li>
+                    <li>Advanced physics simulation</li>
+                    <li>VR compatibility considerations</li>
+                </ul>
+            </div>
+
+          
+        </section>
+
+        <!-- Art Direction Section -->
+        <section class="content-section">
+            <h2 class="section-title">VISUAL IDENTITY</h2>
+            
+            <div class="text-content">
+                Our visual evolution will blend <span class="highlight">cyberpunk corporate dystopia</span> with <span class="highlight">classic space opera adventure</span>, emphasizing the contrast between sterile corporate environments and the vast, mysterious cosmos.
+            </div>
+
+            <div class="media-placeholder">
+                <img src="Alpha_Test/images/GDD/Cityblock_1.jpg" alt="Cityblock Concept Art 1" style="max-width: 100%; height: auto;">
+                <img src="Alpha_Test/images/GDD/Cityblock_2.jpg" alt="Cityblock Concept Art 2" style="max-width: 100%; height: auto;">
+                <img src="Alpha_Test/images/GDD/Cityblock_3.jpg" alt="Cityblock Concept Art 3" style="max-width: 100%; height: auto;">
+                <em>Concept art of environment as voxels</em><br>
+                <div style="font-size: 0.8em; color: #00b3ff;">source: <a href="https://maxparata.itch.io/cyberpunkcity-monogon" target="_blank" rel="noopener noreferrer" style="color: #00b3ff;">https://maxparata.itch.io/cyberpunkcity-monogon</a></div>
+            </div>
+
+            <h3 class="subsection-title">Color Psychology</h3>
+            <ul class="feature-list">
+                <li><strong>Corporate Areas:</strong> Cool blues and sterile whites suggest surveillance and control</li>
+                <li><strong>Industrial Zones:</strong> Warm oranges and rust browns evoke worker solidarity</li>
+                <li><strong>Space Environments:</strong> Deep purples and cosmic blues represent freedom and mystery</li>
+                <li><strong>Data Interfaces:</strong> Bright greens and amber create technological authenticity</li>
+            </ul>
+
+            <div class="media-placeholder">
+                <img src="Alpha_Test/images/GDD/RayCast-display.png" alt="Raycasting engine showcase - Station interior design" style="max-width: 100%; height: auto;">
+                
+                <br><em>Raycasting example:</em>
+                <a href="https://store.steampowered.com/app/611820/Xenosis_Alien_Infection/" target="_blank" rel="noopener noreferrer" style="color: #00b3ff;"><br>Source: Xenosis: Alien Infection</a>
+                
+                <br><br><br><img src="Alpha_Test/images/GDD/Raycast-display-basic.png" alt="Basic Raycasting Example" style="max-width: 100%; height: auto;">
+                <br><em>Basic Raycasting Example, I think the simplicity of this is really good.</em>
+                <div style="font-size: 0.8em; color: #00b3ff;">source: <a href="https://codepen.io/PixelatedOre/pen/awKzQG" target="_blank" rel="noopener noreferrer" style="color: #00b3ff;">https://codepen.io/PixelatedOre/pen/awKzQG</a></div>
+            </div>
+            
+        </section>
+
+        <!-- Development Roadmap Section -->
+        <section class="content-section">
+            <h2 class="section-title">DEVELOPMENT ROADMAP: Arbitrary deadlines and timeline</h2>
+
+           
+
+            <!-- Phase 1: Proof of Concept -->
+            <div style="background: linear-gradient(135deg, rgba(0, 179, 255, 0.1), rgba(0, 255, 204, 0.05)); border: 2px solid #00b3ff; border-radius: 12px; padding: 25px; margin: 25px 0; position: relative;">
+                <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #00b3ff; font-weight: bold;">PHASE 1</div>
+                <h3 style="color: #00b3ff; margin-bottom: 15px; margin-top: 10px;">Proof of Concept (Current Phase)</h3>
+                
+                <div class="text-content" style="margin-bottom: 20px;">
+                    <span class="highlight">Goal:</span> Establish core mechanics and technical feasibility for the detective thriller transformation
+                </div>
+
+                <h4 style="color: #00ffcc; margin-bottom: 15px;">Core Features Progress</h4>
+                
+                <div style="margin-bottom: 20px;">
+                    <h5 style="color: #32cd32; margin-bottom: 10px;">Completed Features:</h5>
+                    <ul class="feature-list">
+                        <li></li>
+                        <li>Fundamental database integration</li>
+                        <li>Initial ship building mechanics</li>
+                        <li>Visual Overlay</li>
+                        
+                    </ul>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h5 style="color: #ffa500; margin-bottom: 10px;">In Progress:</h5>
+                    <ul class="feature-list">
+                        <li>Story elements integration</li>
+                        <li>Galaxy generation prototype</li>
+                        <img src="Alpha_Test/images/GDD/Galaxy_Gen.png" alt="Galaxy Generation Prototype" style="max-width: 100%; height: auto;">
+                        Generates a universe or galaxay with particles. Each particle is collected within a databased and is queryable with SQL and get highlighted in green.
+                    </ul>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h5 style="color: #ff4040; margin-bottom: 10px;">Not Started:</h5>
+                    <ul class="feature-list">
+                        <li>Interactive world map for spacestation</li>
+                        <li>2D and 3D sections</li>
+                        <li> Artwork/models</li>
+                        <li>PostgreSQL backend setup</li>
+                        <li>Space station navigation</li>
+                        <li>Initial faction system implementation</li>
+                        <li>Basic ship customization</li>
+                        <li>Opening story sequence completion</li>
+                        <li>Mission framework overhaul</li>
+                    </ul>
+                </div>
+
+                <div style="background-color: rgba(0, 255, 204, 0.1); border: 1px solid #00ffcc; border-radius: 8px; padding: 15px; margin-top: 20px;">
+                    <h5 style="color: #00ffcc; margin-bottom: 10px;">Success Metrics</h5>
+                    <ul style="margin: 0; color: #e0e0e0;">
+                        <li>Player can complete full opening sequence (30-45 minutes)</li>
+                        <li>All core SQL mechanics functional and engaging</li>
+                        <li>Basic faction choice consequences implemented</li>
+                        <li>Ship building tutorial complete</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Phase 2: Minimum Viable Product -->
+            <div style="background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 204, 0, 0.05)); border: 2px solid #ffa500; border-radius: 12px; padding: 25px; margin: 25px 0; position: relative;">
+                <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #ffa500; font-weight: bold;">PHASE 2</div>
+                <h3 style="color: #ffa500; margin-bottom: 15px; margin-top: 10px;">Minimum Viable Product</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <div style="color: #ffa500; font-weight: bold; margin-bottom: 5px;">Timeline</div>
+                        <div>6-8 months from proof of concept</div>
+                    </div>
+                    <div>
+                        <div style="color: #ffa500; font-weight: bold; margin-bottom: 5px;">Target Content</div>
+                        <div>2-3 hours of compelling gameplay</div>
+                    </div>
+                    <div>
+                        <div style="color: #ffa500; font-weight: bold; margin-bottom: 5px;">Core Goal</div>
+                        <div>Complete opening arc with all three major endings</div>
+                    </div>
+                </div>
+
+                <h4 style="color: #ffcc00; margin-bottom: 15px;">Expanded Features</h4>
+                <ul class="feature-list" style="margin-bottom: 20px;">
+                    <li><strong>Complete Opening Arc:</strong> Full DataCorp storyline with all three major endings</li>
+                    <li><strong>Core Ship Building:</strong> Essential ship customization with functional impact</li>
+                    <li><strong>Faction System:</strong> All major factions with basic questlines</li>
+                    <li><strong>Galaxy Generation:</strong> At least 3 fully developed star systems</li>
+                    <li><strong>Enhanced UI/UX:</strong> Polished interface design and user experience</li>
+                </ul>
+
+                <div style="background-color: rgba(255, 165, 0, 0.1); border: 1px solid #ffa500; border-radius: 8px; padding: 15px;">
+                    <div style="color: #ffcc00; font-weight: bold; margin-bottom: 10px;">Monthly Development Cycle</div>
+                    <div style="color: #e0e0e0;">Monthly milestone reviews and feature iteration with community feedback integration throughout development</div>
+                </div>
+            </div>
+
+            <!-- Phase 3: Full Release Vision -->
+            <div style="background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(255, 20, 147, 0.05)); border: 2px solid #8a2be2; border-radius: 12px; padding: 25px; margin: 25px 0; position: relative;">
+                <div style="position: absolute; top: -12px; left: 20px; background: #0a0a0a; padding: 0 10px; color: #8a2be2; font-weight: bold;">PHASE 3</div>
+                <h3 style="color: #8a2be2; margin-bottom: 15px; margin-top: 10px;">Full Release Vision</h3>
+                
+                <div class="text-content" style="margin-bottom: 20px;">
+                    <span class="highlight">Ultimate Goal:</span> Complete galaxy with 15+ hours of content rivaling AAA detective games
+                </div>
+
+                <h4 style="color: #ff69b4; margin-bottom: 15px;">Complete Feature Set</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background-color: rgba(138, 43, 226, 0.1); border-left: 4px solid #8a2be2; padding: 15px; border-radius: 0 5px 5px 0;">
+                        <div style="color: #ff69b4; font-weight: bold; margin-bottom: 8px;">🌌 Expanded Universe</div>
+                        <div>10+ star systems with unique characteristics and storylines</div>
+                    </div>
+                    <div style="background-color: rgba(138, 43, 226, 0.1); border-left: 4px solid #8a2be2; padding: 15px; border-radius: 0 5px 5px 0;">
+                        <div style="color: #ff69b4; font-weight: bold; margin-bottom: 8px;">🚀 Advanced Ship Building</div>
+                        <div>Complex component interactions and deep customization</div>
+                    </div>
+                    <div style="background-color: rgba(138, 43, 226, 0.1); border-left: 4px solid #8a2be2; padding: 15px; border-radius: 0 5px 5px 0;">
+                        <div style="color: #ff69b4; font-weight: bold; margin-bottom: 8px;">🏛️ Deep Faction Politics</div>
+                        <div>Intricate relationship web with long-term consequences</div>
+                    </div>
+                    <div style="background-color: rgba(138, 43, 226, 0.1); border-left: 4px solid #8a2be2; padding: 15px; border-radius: 0 5px 5px 0;">
+                        <div style="color: #ff69b4; font-weight: bold; margin-bottom: 8px;">🔍 End-game Content</div>
+                        <div>High-level investigations and galactic-scale mysteries</div>
+                    </div>
+                </div>
+
+                <h4 style="color: #ff69b4; margin-bottom: 15px;">Post-Launch Support Strategy</h4>
+                <ul style="list-style: none; padding: 0; color: #e0e0e0;">
+                    <li style="margin-bottom: 10px;">🌟 <strong>Content Updates:</strong> New star systems, factions, and story arcs</li>
+                    <li style="margin-bottom: 10px;">👥 <strong>Community Features:</strong> Player-created content tools, shared databases</li>
+                    <li style="margin-bottom: 10px;">📱 <strong>Platform Expansion:</strong> Console adaptations, mobile companion apps</li>
+                    <li style="margin-bottom: 10px;">🤝 <strong>Multiplayer Consideration:</strong> Collaborative investigation features</li>
+                </ul>
+
+                <div style="background-color: rgba(255, 20, 147, 0.1); border: 1px solid #ff1493; border-radius: 8px; padding: 15px; margin-top: 20px;">
+                    <div style="color: #ff69b4; font-weight: bold; margin-bottom: 10px;">Steam Early Access Pathway</div>
+                    <div style="color: #e0e0e0;">Platform consideration for Phase 3 with community-driven development and regular content updates</div>
+                </div>
+            </div>
+
+            
+        </section>
+
+       
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <a href="Alpha_Test/Main_content.html" class="nav-btn" style="font-size: 18px; padding: 20px 40px;">
+                EXPERIENCE THE CURRENT PROTOTYPE
+            </a>
+            <p style="margin-top: 20px; color: #00b3ff; font-size: 14px;">
+                Document Version 2.1.7 | Last Updated: May 2025
+            </p>
+        </div>
+    </div>
+</body>
+</html>

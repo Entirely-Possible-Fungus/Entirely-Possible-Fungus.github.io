@@ -1,12 +1,12 @@
-# The SQL Saga: Extra-Terrestrial Loaders
+# The SQL Sage: Extra-Terrestrial Loaders
 
 **An interactive SQL learning framework with a sci-fi theme**
 
-![The SQL Saga Title Image](/Alpha_Test/images/THE_SQL_SAGA.png)
+![The SQL Sage Title Image](/Alpha_Test/images/THE_SQL_SAGA.png)
 
 ## Overview
 
-**The SQL Saga** is a customizable, interactive framework for teaching SQL concepts through engaging game-like experiences. The application combines a science fiction narrative with practical SQL learning, allowing users to write and execute queries while visualizing their results in multiple ways.
+**The SQL Sage** is a customizable, interactive framework for teaching SQL concepts through engaging game-like experiences. The application combines a science fiction narrative with practical SQL learning, allowing users to write and execute queries while visualizing their results in multiple ways.
 
 ---
 
